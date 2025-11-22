@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'services/admin_seeder.dart';
 import 'views/splash/splash_screen.dart';
-import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
+import 'views/admin/admin_screen.dart'; // Make sure this is imported
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,10 +46,43 @@ class MyApp extends StatelessWidget {
           ),
           scaffoldBackgroundColor: Colors.white,
         ),
-        home: const SplashScreen(),
+        home: const AppStartup(),
         debugShowCheckedModeBanner: false,
       ),
     );
+  }
+}
+
+class AppStartup extends StatefulWidget {
+  const AppStartup({super.key});
+
+  @override
+  State<AppStartup> createState() => _AppStartupState();
+}
+
+class _AppStartupState extends State<AppStartup> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 7), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showSplash) {
+      return const SplashScreen();
+    }
+
+    return const AuthWrapper();
   }
 }
 
@@ -64,16 +97,37 @@ class AuthWrapper extends StatelessWidget {
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
-        if (snapshot.hasData) {
-          // User is logged in
+        if (snapshot.hasData && snapshot.data != null) {
+          return FutureBuilder(
+            future: authService.getCurrentUserData(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              final user = userSnapshot.data;
+
+              if (user?.role == 'admin') {
+                return const AdminScreen();
+              } else {
+                return const HomeScreen();
+              }
+            },
+          );
+        } else {
           return const HomeScreen();
         }
-
-        // User is not logged in
-        return const LoginScreen();
       },
     );
   }

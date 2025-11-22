@@ -58,7 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
-            onPressed: () {},
+            onPressed: () {
+              _showGuestMessage(context, 'Shopping Cart');
+            },
           ),
           // User profile menu
           if (currentUser != null)
@@ -124,6 +126,39 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  void _showGuestMessage(BuildContext context, String feature) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    if (authService.currentUser == null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Login Required'),
+            content: Text('Please login to access $feature'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                  );
+                },
+                child: const Text('Login'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   void _handleMenuSelection(
@@ -256,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () async {
                 Navigator.pop(context); // Close dialog
                 await authService.signOut();
-                // User will be automatically redirected to login screen via AuthWrapper
+                // User will be automatically redirected to home screen in guest mode via AuthWrapper
               },
               child: const Text(
                 'Logout',
@@ -315,6 +350,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: primaryGreen.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: primaryGreen,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Browse as Guest',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -485,6 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProductCard(Product product) {
     return GestureDetector(
       onTap: () {
+        // Allow both guests and logged-in users to view product details
         Navigator.push(
           context,
           MaterialPageRoute(

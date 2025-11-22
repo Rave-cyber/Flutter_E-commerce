@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -18,13 +17,9 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(vsync: this);
 
-    // Navigate to home after animation completes
-    Future.delayed(const Duration(seconds: 8), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    });
+    // You can control the animation duration here
+    // For example, make the animation loop for 3 seconds
+    _controller.duration = const Duration(seconds: 7);
   }
 
   @override
@@ -45,9 +40,13 @@ class _SplashScreenState extends State<SplashScreen>
               'assets/animations/shopping.json',
               controller: _controller,
               onLoaded: (composition) {
+                // Set the duration and play the animation
                 _controller
                   ..duration = composition.duration
                   ..forward();
+
+                // OR if you want to loop the animation for a specific time:
+                // _controller.repeat(); // This will loop indefinitely
               },
               height: 300,
               width: 300,
