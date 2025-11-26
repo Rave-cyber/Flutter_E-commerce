@@ -9,7 +9,7 @@ class AdminSeeder {
   // Make this a STATIC method
   static Future<void> seedAdmin() async {
     try {
-      // Check if admin already exists
+      // Check if an admin already exists
       final adminQuery = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'admin')
@@ -17,10 +17,14 @@ class AdminSeeder {
           .get();
 
       if (adminQuery.docs.isEmpty) {
-        // Create admin user
-        final adminEmail = 'admin@example.com';
-        final adminPassword = 'admin123';
-        final adminName = 'Administrator';
+        // Admin account details
+        const adminEmail = 'admin@example.com';
+        const adminPassword = 'admin123';
+
+        // Split name into your new format
+        const firstname = 'System';
+        const middlename = '';
+        const lastname = 'Administrator';
 
         // Create auth user
         final credential = await _auth.createUserWithEmailAndPassword(
@@ -32,12 +36,15 @@ class AdminSeeder {
         final adminUser = UserModel(
           uid: credential.user!.uid,
           email: adminEmail,
-          name: adminName,
+          firstname: firstname,
+          middlename: middlename,
+          lastname: lastname,
           role: 'admin',
           createdAt: DateTime.now(),
           isActive: true,
         );
 
+        // Save to Firestore
         await _firestore
             .collection('users')
             .doc(credential.user!.uid)

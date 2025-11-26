@@ -216,7 +216,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ListTile(
                     leading: const Icon(Icons.person),
                     title: const Text('Name'),
-                    subtitle: Text(user?.name ?? 'Not provided'),
+                    subtitle: Text(
+                      [
+                        user?.firstname ?? '',
+                        user?.middlename?.isNotEmpty == true
+                            ? user!.middlename
+                            : '',
+                        user?.lastname ?? ''
+                      ].where((e) => e.isNotEmpty).join(' '),
+                    ),
                   ),
                   ListTile(
                     leading: const Icon(Icons.email),
