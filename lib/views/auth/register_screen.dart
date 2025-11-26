@@ -13,9 +13,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstnameController = TextEditingController();
-  final _middlenameController = TextEditingController();
-  final _lastnameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -45,9 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final user = await authService.registerWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        _firstnameController.text.trim(),
-        _middlenameController.text.trim(),
-        _lastnameController.text.trim(),
+        _nameController.text.trim(),
       );
 
       if (user != null) {
@@ -111,41 +107,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Name Field
                 TextFormField(
-                  controller: _firstnameController,
+                  controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                TextFormField(
-                  controller: _middlenameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Middle Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                TextFormField(
-                  controller: _lastnameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Name',
+                    labelText: 'Full Name',
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(),
                   ),
@@ -292,9 +256,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _firstnameController.dispose();
-    _middlenameController.dispose();
-    _lastnameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
