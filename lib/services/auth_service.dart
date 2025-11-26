@@ -34,9 +34,14 @@ class AuthService {
     }
   }
 
-  // Register new user
+  // Register new user with separate name fields
   Future<UserModel?> registerWithEmailAndPassword(
-      String email, String password, String name) async {
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+    String? middleName,
+  ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -47,8 +52,11 @@ class AuthService {
       final user = UserModel(
         uid: credential.user!.uid,
         email: email,
-        name: name,
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
         role: 'user',
+        createdAt: DateTime.now(),
         isActive: true,
       );
 
@@ -60,6 +68,63 @@ class AuthService {
       return user;
     } catch (e) {
       throw Exception('Registration failed: $e');
+    }
+  }
+
+  // Update user profile
+  Future<void> updateUserProfile({
+    required String uid,
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    String? email,
+  }) async {
+    try {
+      final userData = <String, dynamic>{};
+
+      if (firstName != null) userData['firstName'] = firstName;
+      if (middleName != null) userData['middleName'] = middleName;
+      if (lastName != null) userData['lastName'] = lastName;
+      if (email != null) userData['email'] = email;
+
+      if (userData.isNotEmpty) {
+        await _firestore.collection('users').doc(uid).update(userData);
+      }
+
+      // If email is updated, also update in Firebase Auth
+      if (email != null) {
+        await _auth.currentUser!.updateEmail(email);
+      }
+    } catch (e) {
+      throw Exception('Profile update failed: $e');
+    }
+  }
+
+  // Get user by ID
+  Future<UserModel?> getUserById(String uid) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        return UserModel.fromMap(userDoc.data()!);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get user: $e');
+    }
+  }
+
+  // Delete user account
+  Future<void> deleteUserAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        // Delete from Firestore
+        await _firestore.collection('users').doc(user.uid).delete();
+        // Delete from Auth
+        await user.delete();
+      }
+    } catch (e) {
+      throw Exception('Account deletion failed: $e');
     }
   }
 
@@ -78,5 +143,24 @@ class AuthService {
       }
     }
     return null;
+  }
+
+  // Reset password
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      throw Exception('Password reset failed: $e');
+    }
+  }
+
+  // Check if user exists by email
+  Future<bool> checkUserExists(String email) async {
+    try {
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      return methods.isNotEmpty;
+    } catch (e) {
+      throw Exception('Error checking user existence: $e');
+    }
   }
 }
