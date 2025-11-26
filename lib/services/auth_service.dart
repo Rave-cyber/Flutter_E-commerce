@@ -12,7 +12,9 @@ class AuthService {
   // Stream of user authentication state
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign in with email and password
+  // ------------------------------
+  // Sign in
+  // ------------------------------
   Future<UserModel?> signInWithEmailAndPassword(
       String email, String password) async {
     try {
@@ -21,7 +23,6 @@ class AuthService {
         password: password,
       );
 
-      // Get user data from Firestore
       final userDoc =
           await _firestore.collection('users').doc(credential.user!.uid).get();
 
@@ -34,24 +35,35 @@ class AuthService {
     }
   }
 
-  // Register new user
+  // ------------------------------
+  // Register user
+  // ------------------------------
   Future<UserModel?> registerWithEmailAndPassword(
-      String email, String password, String name) async {
+    String email,
+    String password,
+    String firstname,
+    String middlename,
+    String lastname,
+  ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Create user document in Firestore
+      // Create user model
       final user = UserModel(
         uid: credential.user!.uid,
         email: email,
-        name: name,
+        firstname: firstname,
+        middlename: middlename,
+        lastname: lastname,
         role: 'user',
         isActive: true,
+        createdAt: DateTime.now(),
       );
 
+      // Save to Firestore
       await _firestore
           .collection('users')
           .doc(credential.user!.uid)
@@ -63,12 +75,16 @@ class AuthService {
     }
   }
 
+  // ------------------------------
   // Sign out
+  // ------------------------------
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // Get current user data
+  // ------------------------------
+  // Get current user profile
+  // ------------------------------
   Future<UserModel?> getCurrentUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
