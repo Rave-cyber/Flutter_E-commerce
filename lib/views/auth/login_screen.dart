@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../models/user_model.dart';
 import 'register_screen.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -20,34 +22,46 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
+
+      // Firebase login
       await authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
-      // Close the login screen after successful login
-      // AuthWrapper will automatically redirect to appropriate screen
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login failed: $e'),
-          backgroundColor: Colors.red,
+      // Load Firestore UserModel
+      final user = await authService.getCurrentUserData();
+
+      if (user == null) throw 'User data not found';
+
+      if (!mounted) return;
+
+      // Go to HomeScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(
+            user: user,
+            // customer: null, // 🔥 REMOVE or add if you want customer model later
+          ),
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -64,7 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 60),
-                // Title
                 const Text(
                   'Welcome Back',
                   style: TextStyle(
@@ -82,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
 
-                // Email Field
+                // Email
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -90,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: Icon(Icons.email),
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
@@ -103,9 +115,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Password Field
+                // Password
                 TextFormField(
                   controller: _passwordController,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
@@ -113,15 +126,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icon(_obscurePassword
                           ? Icons.visibility
                           : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                      onPressed: () => setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      }),
                     ),
                     border: const OutlineInputBorder(),
                   ),
-                  obscureText: _obscurePassword,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
@@ -134,15 +144,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Login Button
+                // Login button
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF2C8610), // Your green color
+                      backgroundColor: const Color(0xFF2C8610),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -155,53 +164,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text(
                             'Sign In',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // Register Link
+                // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Don't have an account?",
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
+                    Text("Don't have an account?",
+                        style: TextStyle(color: Colors.grey[600])),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RegisterScreen(),
+                            builder: (_) => const RegisterScreen(),
                           ),
                         );
                       },
                       child: const Text(
                         'Sign Up',
-                        style: TextStyle(
-                          color: Color(0xFF2C8610), // Your green color
-                        ),
+                        style: TextStyle(color: Color(0xFF2C8610)),
                       ),
                     ),
                   ],
                 ),
-
-                // Admin credentials hint (remove in production)
-                const SizedBox(height: 40),
-                const Divider(),
-                const Text(
-                  'Demo Credentials:',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text('Admin: admin@shoppe.com / admin123'),
-                const Text(
-                    'User: user@example.com / any password (register first)'),
               ],
             ),
           ),

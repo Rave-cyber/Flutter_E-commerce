@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
+import '../../models/customer_model.dart';
 import '../home/home_screen.dart';
 import 'login_screen.dart';
 
@@ -20,6 +22,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _contactController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -44,19 +48,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
+
+      // 1️⃣ Register user as 'user' role
       final user = await authService.registerWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        _firstnameController.text.trim(),
-        _middlenameController.text.trim(),
-        _lastnameController.text.trim(),
+        role: 'customer', // enforce customer role
       );
 
       if (user != null) {
-        Navigator.pushAndRemoveUntil(
+        // Create the customer record in Firestore
+        final customerDoc =
+            FirebaseFirestore.instance.collection('customers').doc();
+        final customer = CustomerModel(
+          id: customerDoc.id,
+          user_id: user.id,
+          firstname: _firstnameController.text.trim(),
+          middlename: _middlenameController.text.trim(),
+          lastname: _lastnameController.text.trim(),
+          address: _addressController.text.trim(),
+          contact: _contactController.text.trim(),
+          created_at: DateTime.now(),
+        );
+
+        await customerDoc.set(customer.toMap());
+
+        // Navigate to HomeScreen
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-          (route) => false,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              user: user,
+              customer: customer,
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -85,13 +110,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-                // Back button
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back),
                 ),
                 const SizedBox(height: 20),
-                // Title
                 const Text(
                   'Create Account',
                   style: TextStyle(
@@ -107,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Colors.grey[600],
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
                 // First Name
                 TextFormField(
                   controller: _firstnameController,
@@ -118,12 +141,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
+                      return 'Please enter your first name';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 // Middle Name
                 TextFormField(
                   controller: _middlenameController,
@@ -132,14 +155,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 // Last Name
                 TextFormField(
                   controller: _lastnameController,
@@ -150,12 +167,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
+                      return 'Please enter your last name';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                // Address
+                TextFormField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Address',
+                    prefixIcon: Icon(Icons.home),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Contact
+                TextFormField(
+                  controller: _contactController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contact',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // Email
                 TextFormField(
                   controller: _emailController,
@@ -175,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 // Password
                 TextFormField(
                   controller: _passwordController,
@@ -207,7 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 // Confirm Password
                 TextFormField(
                   controller: _confirmPasswordController,
@@ -236,8 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 30),
-                // Register Button
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -258,8 +294,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Login Link
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -296,6 +331,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _addressController.dispose();
+    _contactController.dispose();
     super.dispose();
   }
 }

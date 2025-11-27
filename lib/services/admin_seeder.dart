@@ -18,30 +18,23 @@ class AdminSeeder {
 
       if (adminQuery.docs.isEmpty) {
         // Admin account details
-        const adminEmail = 'admin@example.com';
-        const adminPassword = 'admin123';
+        const adminEmail = 'admin@gmail.com';
+        const adminPassword = '123456';
 
-        // Split name into your new format
-        const firstname = 'System';
-        const middlename = '';
-        const lastname = 'Administrator';
-
-        // Create auth user
+        // Create Firebase Auth user
         final credential = await _auth.createUserWithEmailAndPassword(
           email: adminEmail,
           password: adminPassword,
         );
 
-        // Create admin user document
+        // Create Firestore user record WITHOUT storing password
         final adminUser = UserModel(
-          uid: credential.user!.uid,
+          id: credential.user!.uid,
           email: adminEmail,
-          firstname: firstname,
-          middlename: middlename,
-          lastname: lastname,
           role: 'admin',
-          createdAt: DateTime.now(),
-          isActive: true,
+          display_name: 'System Administrator',
+          created_at: DateTime.now(),
+          is_archived: false,
         );
 
         // Save to Firestore
@@ -52,7 +45,7 @@ class AdminSeeder {
 
         print('✅ Admin user created successfully');
         print('📧 Email: $adminEmail');
-        print('🔑 Password: $adminPassword');
+        print('🔑 Password: $adminPassword (not stored in Firestore)');
       } else {
         print('ℹ️ Admin user already exists');
       }

@@ -40,11 +40,10 @@ class AuthService {
   // ------------------------------
   Future<UserModel?> registerWithEmailAndPassword(
     String email,
-    String password,
-    String firstname,
-    String middlename,
-    String lastname,
-  ) async {
+    String password, {
+    String? display_name,
+    required String role,
+  }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -53,14 +52,12 @@ class AuthService {
 
       // Create user model
       final user = UserModel(
-        uid: credential.user!.uid,
+        id: credential.user!.uid,
         email: email,
-        firstname: firstname,
-        middlename: middlename,
-        lastname: lastname,
-        role: 'user',
-        isActive: true,
-        createdAt: DateTime.now(),
+        role: role,
+        display_name: display_name,
+        is_archived: false,
+        created_at: DateTime.now(),
       );
 
       // Save to Firestore

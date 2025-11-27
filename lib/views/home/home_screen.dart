@@ -1,3 +1,5 @@
+import 'package:firebase/models/customer_model.dart';
+import 'package:firebase/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -13,7 +15,8 @@ import '../auth/login_screen.dart';
 import '../widgets/animated_bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({Key? key, required UserModel user, CustomerModel? customer})
+      : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -207,7 +210,16 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            final user = snapshot.data;
+            final user = snapshot.data as UserModel?;
+
+            final customer = snapshot.data as CustomerModel?;
+
+            final displayName = [
+              customer?.firstname ?? '',
+              customer?.middlename ?? '',
+              customer?.lastname ?? ''
+            ].where((e) => e.isNotEmpty).join(' ');
+
             return AlertDialog(
               title: const Text('User Profile'),
               content: Column(
@@ -217,15 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ListTile(
                     leading: const Icon(Icons.person),
                     title: const Text('Name'),
-                    subtitle: Text(
-                      [
-                        user?.firstname ?? '',
-                        user?.middlename?.isNotEmpty == true
-                            ? user!.middlename
-                            : '',
-                        user?.lastname ?? ''
-                      ].where((e) => e.isNotEmpty).join(' '),
-                    ),
+                    subtitle: Text(displayName),
                   ),
                   ListTile(
                     leading: const Icon(Icons.email),

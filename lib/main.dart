@@ -1,3 +1,6 @@
+import 'package:firebase/models/customer_model.dart';
+import 'package:firebase/models/user_model.dart';
+import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -96,38 +99,45 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
+        // Show loading while waiting for auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
+        // User is signed in
         if (snapshot.hasData && snapshot.data != null) {
-          return FutureBuilder(
+          return FutureBuilder<UserModel?>(
             future: authService.getCurrentUserData(),
             builder: (context, userSnapshot) {
               if (userSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  body: Center(child: CircularProgressIndicator()),
                 );
               }
 
-              final user = userSnapshot.data;
+              if (userSnapshot.hasError || userSnapshot.data == null) {
+                return const Scaffold(
+                  body: Center(child: Text('Failed to load user data')),
+                );
+              }
 
-              if (user?.role == 'admin') {
+              final user = userSnapshot.data!;
+
+              // Navigate based on role
+              if (user.role == 'admin') {
                 return const AdminScreen();
               } else {
-                return const HomeScreen();
+                // If you want customer data, fetch separately in HomeScreen or via another FutureBuilder
+                return HomeScreen(user: user);
               }
             },
           );
-        } else {
-          return const HomeScreen();
         }
+
+        // No user signed in
+        return const LoginScreen();
       },
     );
   }
