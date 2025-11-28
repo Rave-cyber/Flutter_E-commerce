@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
+import '../../models/customer_model.dart';
 import 'register_screen.dart';
 import '../home/home_screen.dart';
 
@@ -34,19 +35,23 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Load Firestore UserModel
-      final user = await authService.getCurrentUserData();
-
+      final UserModel? user = await authService.getCurrentUserData();
       if (user == null) throw 'User data not found';
+
+      // Load CustomerModel
+      final customer = await authService.getCustomerData();
+
+      if (customer == null) throw 'Customer profile not found';
 
       if (!mounted) return;
 
-      // Go to HomeScreen
+      // Navigation to HomeScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomeScreen(
-            user: user,
-            // customer: null, // 🔥 REMOVE or add if you want customer model later
+            user: user!,
+            customer: customer, // can be null if admin
           ),
         ),
       );
@@ -90,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Sign in to continue shopping',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: Colors.grey,
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -123,12 +128,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () => setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      }),
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     border: const OutlineInputBorder(),
                   ),
@@ -155,8 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                            height: 20,
                             width: 20,
+                            height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation(Colors.white),
@@ -168,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                 ),
+
                 const SizedBox(height: 20),
 
                 // Register link

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import '../models/customer_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -73,10 +74,22 @@ class AuthService {
   }
 
   // ------------------------------
-  // Sign out
+  // Get customer data
   // ------------------------------
-  Future<void> signOut() async {
-    await _auth.signOut();
+  Future<CustomerModel?> getCustomerData() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final querySnapshot = await _firestore
+          .collection('customers')
+          .where('user_id', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return CustomerModel.fromMap(querySnapshot.docs.first.data());
+      }
+    }
+    return null;
   }
 
   // ------------------------------
@@ -86,10 +99,18 @@ class AuthService {
     final user = _auth.currentUser;
     if (user != null) {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
       if (userDoc.exists) {
         return UserModel.fromMap(userDoc.data()!);
       }
     }
     return null;
+  }
+
+  // ------------------------------
+  // Sign out
+  // ------------------------------
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }

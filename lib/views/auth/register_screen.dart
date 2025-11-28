@@ -49,17 +49,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
-      // 1️⃣ Register user as 'user' role
+      // 🔐 Register user with CUSTOMER role
       final user = await authService.registerWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        role: 'customer', // enforce customer role
+        role: 'customer',
       );
 
       if (user != null) {
-        // Create the customer record in Firestore
+        // 🔥 Create Firestore customer document
         final customerDoc =
             FirebaseFirestore.instance.collection('customers').doc();
+
         final customer = CustomerModel(
           id: customerDoc.id,
           user_id: user.id,
@@ -73,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         await customerDoc.set(customer.toMap());
 
-        // Navigate to HomeScreen
+        // 🎉 Navigate to home screen with data
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -131,7 +132,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // First Name
+
+                // FIRST NAME
                 TextFormField(
                   controller: _firstnameController,
                   decoration: const InputDecoration(
@@ -139,15 +141,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your first name';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Enter first name'
+                      : null,
                 ),
+
                 const SizedBox(height: 16),
-                // Middle Name
+
+                // MIDDLE NAME
                 TextFormField(
                   controller: _middlenameController,
                   decoration: const InputDecoration(
@@ -156,8 +157,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+
                 const SizedBox(height: 16),
-                // Last Name
+
+                // LAST NAME
                 TextFormField(
                   controller: _lastnameController,
                   decoration: const InputDecoration(
@@ -165,15 +168,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.person),
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your last name';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Enter last name' : null,
                 ),
+
                 const SizedBox(height: 16),
-                // Address
+
+                // ADDRESS
                 TextFormField(
                   controller: _addressController,
                   decoration: const InputDecoration(
@@ -182,18 +183,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+
                 const SizedBox(height: 16),
-                // Contact
+
+                // CONTACT
                 TextFormField(
                   controller: _contactController,
                   decoration: const InputDecoration(
-                    labelText: 'Contact',
+                    labelText: 'Contact Number',
                     prefixIcon: Icon(Icons.phone),
                     border: OutlineInputBorder(),
                   ),
                 ),
+
                 const SizedBox(height: 16),
-                // Email
+
+                // EMAIL
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -201,42 +206,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.email),
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return 'Enter your email';
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return 'Enter a valid email';
                     }
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
-                // Password
+
+                // PASSWORD
                 TextFormField(
                   controller: _passwordController,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
                     border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
                   ),
-                  obscureText: _obscurePassword,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Enter password';
                     }
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters';
@@ -244,49 +245,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
-                // Confirm Password
+
+                // CONFIRM PASSWORD
                 TextFormField(
                   controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
                     border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                      onPressed: () => setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword),
+                    ),
                   ),
-                  obscureText: _obscureConfirmPassword,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    return null;
-                  },
                 ),
+
                 const SizedBox(height: 24),
+
+                // BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _register,
                     child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
+                        ? const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
                           )
                         : const Text(
                             'Create Account',
@@ -294,7 +285,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -307,7 +300,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
+                            builder: (_) => const LoginScreen(),
                           ),
                         );
                       },
