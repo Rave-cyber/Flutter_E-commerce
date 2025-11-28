@@ -1,3 +1,4 @@
+import 'package:firebase/views/admin/admin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -40,25 +41,32 @@ class _LoginScreenState extends State<LoginScreen> {
       final UserModel? user = await authService.getCurrentUserData();
       if (user == null) throw 'User data not found';
 
-      // Load CustomerModel (only for customers)
-      CustomerModel? customer;
-      if (user.role == 'customer') {
-        customer = await authService.getCustomerData();
-        if (customer == null) throw 'Customer profile not found';
-      }
-
       if (!mounted) return;
 
-      // Navigate to HomeScreen with both user & customer
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            user: user,
-            customer: customer, // null for admin
+      // Check role and navigate accordingly
+      if (user.role == 'admin') {
+        // Navigate to AdminScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminScreen()),
+        );
+      } else if (user.role == 'customer') {
+        // Load CustomerModel for customers
+        final CustomerModel? customer = await authService.getCustomerData();
+        if (customer == null) throw 'Customer profile not found';
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              user: user,
+              customer: customer,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        throw 'Invalid user role';
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

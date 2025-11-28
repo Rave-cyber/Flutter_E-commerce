@@ -289,7 +289,17 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context); // Close dialog
-                await authService.signOut();
+                await authService.signOut(); // Sign out
+
+                // Navigate to login screen and remove all previous routes
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               },
               child: const Text(
                 'Logout',
