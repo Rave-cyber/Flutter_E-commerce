@@ -29,29 +29,33 @@ class _LoginScreenState extends State<LoginScreen> {
       final authService = Provider.of<AuthService>(context, listen: false);
 
       // Firebase login
-      await authService.signInWithEmailAndPassword(
+      final firebaseUser = await authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
-      // Load Firestore UserModel
+      if (firebaseUser == null) throw 'Login failed';
+
+      // Load UserModel
       final UserModel? user = await authService.getCurrentUserData();
       if (user == null) throw 'User data not found';
 
-      // Load CustomerModel
-      final customer = await authService.getCustomerData();
-
-      if (customer == null) throw 'Customer profile not found';
+      // Load CustomerModel (only for customers)
+      CustomerModel? customer;
+      if (user.role == 'customer') {
+        customer = await authService.getCustomerData();
+        if (customer == null) throw 'Customer profile not found';
+      }
 
       if (!mounted) return;
 
-      // Navigation to HomeScreen
+      // Navigate to HomeScreen with both user & customer
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomeScreen(
-            user: user!,
-            customer: customer, // can be null if admin
+            user: user,
+            customer: customer, // null for admin
           ),
         ),
       );
@@ -65,9 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
