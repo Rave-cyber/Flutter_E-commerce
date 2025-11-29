@@ -22,16 +22,6 @@ class AdminLayout extends StatelessWidget {
         title: const Text('Admin'),
         backgroundColor: Colors.blueGrey,
         elevation: 0,
-        actions: [
-          Consumer<AuthService>(
-            builder: (context, authService, _) {
-              return IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () => _confirmLogout(context, authService),
-              );
-            },
-          ),
-        ],
       ),
       body: child,
     );
@@ -77,7 +67,7 @@ class AdminLayout extends StatelessWidget {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const AdminCustomers()),
+                MaterialPageRoute(builder: (_) => const AdminCustomersIndex()),
               );
             },
           ),

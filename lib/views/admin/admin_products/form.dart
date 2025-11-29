@@ -1,4 +1,4 @@
-import 'package:firebase/controllers/admin/product_controller.dart';
+import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
 import '/models/product.dart';
