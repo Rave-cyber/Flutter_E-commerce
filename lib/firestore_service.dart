@@ -55,4 +55,10 @@ class FirestoreService {
   Stream<List<ProductModel>>? getProducts() {}
 }
 
-class ProductModel {}
+class ProductModel {
+  String? get id => null;
+
+  Object? toMap() {}
+
+  static fromMap(Map<String, dynamic> data) {}
+}

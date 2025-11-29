@@ -90,7 +90,7 @@ class AdminLayout extends StatelessWidget {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const AdminProducts()),
+                MaterialPageRoute(builder: (_) => const AdminProductsIndex()),
               );
             },
           ),
