@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/models/customer_model.dart';
+import 'package:firebase/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -13,7 +16,14 @@ import '../auth/login_screen.dart';
 import '../widgets/animated_bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final UserModel user;
+  final CustomerModel? customer;
+
+  const HomeScreen({
+    Key? key,
+    required this.user,
+    this.customer,
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,6 +31,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+
   final List<String> categories = [
     'All',
     'Sofa',
@@ -29,8 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     'Bed',
     'Electronics'
   ];
-  String _selectedCategory = 'All';
 
+  String _selectedCategory = 'All';
   final Color primaryGreen = const Color(0xFF2C8610);
 
   @override
@@ -177,109 +188,89 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return FutureBuilder(
+        return FutureBuilder<UserModel?>(
           future: authService.getCurrentUserData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
+              return const AlertDialog(
+                title: Text("Profile"),
+                content: CircularProgressIndicator(),
+              );
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
               return AlertDialog(
-                title: const Text('Profile'),
-                content: const CircularProgressIndicator(),
+                title: const Text("Error"),
+                content: Text(
+                    "Failed to load profile: ${snapshot.error ?? 'User not found'}"),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
+                    child: const Text("Close"),
                   ),
                 ],
               );
             }
 
-            if (snapshot.hasError) {
-              return AlertDialog(
-                title: const Text('Error'),
-                content: Text('Failed to load profile: ${snapshot.error}'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
-                ],
+            final user = snapshot.data!;
+            if (user.role != "customer") {
+              return const AlertDialog(
+                title: Text("Access Denied"),
+                content: Text("This page is only for customers."),
               );
             }
 
-            final user = snapshot.data;
-            return AlertDialog(
-              title: const Text('User Profile'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.person),
-                    title: const Text('Name'),
-                    subtitle: Text(
-                      [
-                        user?.firstname ?? '',
-                        user?.middlename?.isNotEmpty == true
-                            ? user!.middlename
-                            : '',
-                        user?.lastname ?? ''
-                      ].where((e) => e.isNotEmpty).join(' '),
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.email),
-                    title: const Text('Email'),
-                    subtitle: Text(user?.email ?? 'Not provided'),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.verified_user),
-                    title: const Text('Role'),
-                    subtitle: Text(
-                      user?.role.toUpperCase() ?? 'USER',
-                      style: TextStyle(
-                        color: user?.role == 'admin'
-                            ? Colors.orange
-                            : primaryGreen,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (user?.role == 'admin')
-                    Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.admin_panel_settings,
-                              color: Colors.orange, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Admin Mode',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-              ],
-            );
+            final customer = widget.customer;
+
+            final displayName = customer != null
+                ? [customer.firstname, customer.middlename, customer.lastname]
+                    .where((e) => e.isNotEmpty)
+                    .join(" ")
+                : user.display_name ?? "Unknown User";
+
+            return _buildProfileDialog(user, displayName);
           },
         );
       },
+    );
+  }
+
+  Widget _buildProfileDialog(UserModel? user, String displayName) {
+    return AlertDialog(
+      title: const Text('User Profile'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Name'),
+            subtitle: Text(displayName),
+          ),
+          ListTile(
+            leading: const Icon(Icons.email),
+            title: const Text('Email'),
+            subtitle: Text(user?.email ?? 'Not provided'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.verified_user),
+            title: const Text('Role'),
+            subtitle: Text(
+              user?.role.toUpperCase() ?? 'USER',
+              style: TextStyle(
+                color: user?.role == 'admin' ? Colors.orange : Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        )
+      ],
     );
   }
 
@@ -298,8 +289,17 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context); // Close dialog
-                await authService.signOut();
-                // User will be automatically redirected to home screen in guest mode via AuthWrapper
+                await authService.signOut(); // Sign out
+
+                // Navigate to login screen and remove all previous routes
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               },
               child: const Text(
                 'Logout',
@@ -545,7 +545,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProductCard(Product product) {
     return GestureDetector(
       onTap: () {
-        // Allow both guests and logged-in users to view product details
         Navigator.push(
           context,
           MaterialPageRoute(

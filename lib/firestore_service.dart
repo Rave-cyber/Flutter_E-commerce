@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/views/home/home_screen.dart';
 import 'models/product_model.dart';
 
 class FirestoreService {
@@ -50,4 +51,8 @@ class FirestoreService {
   static Future<void> addProduct(Product product) {
     return _firestore.collection('products').add(product.toMap());
   }
+
+  Stream<List<ProductModel>>? getProducts() {}
 }
+
+class ProductModel {}

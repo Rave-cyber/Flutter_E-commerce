@@ -1,52 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
-  final String uid;
+  final String id;
   final String email;
-  final String firstname;
-  final String middlename;
-  final String lastname;
   final String role; // 'admin' or 'user'
-  final DateTime? createdAt;
-  final bool isActive;
+  final String? display_name; // optional
+  final DateTime? created_at;
+  final bool is_archived;
 
   UserModel({
-    required this.uid,
+    required this.id,
     required this.email,
-    required this.firstname,
-    required this.middlename,
-    required this.lastname,
     required this.role,
-    this.createdAt,
-    required this.isActive,
+    this.display_name,
+    this.created_at,
+    required this.is_archived,
   });
 
   // Convert UserModel to Map
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
+      'id': id,
       'email': email,
-      'firstname': firstname,
-      'middlename': middlename,
-      'lastname': lastname,
       'role': role,
-      'createdAt':
-          createdAt != null ? Timestamp.fromDate(createdAt!) : Timestamp.now(),
-      'isActive': isActive,
+      if (display_name != null) 'display_name': display_name,
+      'created_at': created_at != null
+          ? Timestamp.fromDate(created_at!)
+          : Timestamp.now(),
+      'is_archived': is_archived,
     };
   }
 
   // Create UserModel from Firestore Map
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      uid: map['uid'] ?? '',
+      id: map['id'] ?? '',
       email: map['email'] ?? '',
-      firstname: map['firstname'] ?? '',
-      middlename: map['middlename'] ?? '',
-      lastname: map['lastname'] ?? '',
       role: map['role'] ?? 'user',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
-      isActive: map['isActive'] ?? true,
+      display_name: map['display_name'],
+      created_at: (map['created_at'] as Timestamp?)?.toDate(),
+      is_archived: map['is_archived'] ?? false,
     );
   }
 }

@@ -6,56 +6,65 @@ class AdminSeeder {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Make this a STATIC method
+  // STATIC method to seed the admin user
   static Future<void> seedAdmin() async {
     try {
-      // Check if an admin already exists
+      // Check if an admin already exists in Firestore
       final adminQuery = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'admin')
           .limit(1)
           .get();
 
-      if (adminQuery.docs.isEmpty) {
-        // Admin account details
-        const adminEmail = 'admin@example.com';
-        const adminPassword = 'admin123';
+      if (adminQuery.docs.isNotEmpty) {
+        print('ℹ️ Admin user already exists.');
+        return;
+      }
 
-        // Split name into your new format
-        const firstname = 'System';
-        const middlename = '';
-        const lastname = 'Administrator';
+      // Admin credentials
+      const adminEmail = 'admin@gmail.com';
+      const adminPassword = '123456';
 
-        // Create auth user
-        final credential = await _auth.createUserWithEmailAndPassword(
+      // Check if email already exists in Firebase Auth (optional safety)
+      final existingMethods =
+          await _auth.fetchSignInMethodsForEmail(adminEmail);
+
+      UserCredential credential;
+
+      if (existingMethods.isEmpty) {
+        // Create Firebase Auth user
+        credential = await _auth.createUserWithEmailAndPassword(
           email: adminEmail,
           password: adminPassword,
         );
-
-        // Create admin user document
-        final adminUser = UserModel(
-          uid: credential.user!.uid,
-          email: adminEmail,
-          firstname: firstname,
-          middlename: middlename,
-          lastname: lastname,
-          role: 'admin',
-          createdAt: DateTime.now(),
-          isActive: true,
-        );
-
-        // Save to Firestore
-        await _firestore
-            .collection('users')
-            .doc(credential.user!.uid)
-            .set(adminUser.toMap());
-
-        print('✅ Admin user created successfully');
-        print('📧 Email: $adminEmail');
-        print('🔑 Password: $adminPassword');
       } else {
-        print('ℹ️ Admin user already exists');
+        // Email already exists — retrieve existing user instead of failing
+        final existingUser = await _auth.signInWithEmailAndPassword(
+          email: adminEmail,
+          password: adminPassword,
+        );
+        credential = existingUser;
       }
+
+      // Build the UserModel for Firestore
+      final adminUser = UserModel(
+        id: credential.user!.uid,
+        email: adminEmail,
+        role: 'admin',
+        display_name: 'System Administrator', // valid for admin-only
+        created_at: DateTime.now(),
+        is_archived: false,
+      );
+
+      // Save admin data to Firestore
+      await _firestore
+          .collection('users')
+          .doc(adminUser.id)
+          .set(adminUser.toMap());
+
+      print('✅ Admin user created/verified successfully.');
+      print('📧 Email: $adminEmail');
+      print('🔑 Password: $adminPassword (not stored in Firestore)');
     } catch (e) {
       print('❌ Error seeding admin: $e');
     }
