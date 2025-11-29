@@ -1,4 +1,4 @@
-import 'package:firebase/views/admin/admin_screen.dart';
+import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to AdminScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const AdminScreen()),
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
         );
       } else if (user.role == 'customer') {
         // Load CustomerModel for customers

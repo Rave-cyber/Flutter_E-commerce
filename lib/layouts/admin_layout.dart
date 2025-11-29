@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../services/auth_service.dart';
 import '../views/auth/login_screen.dart';
 
-// Import admin pages
-import '../views/admin/admin_dashboard.dart';
-import '../views/admin/admin_customers.dart';
-import '../views/admin/admin_products.dart';
+// Updated Import Paths
+import '../views/admin/admin_dashboard/index.dart';
+import '../views/admin/admin_customers/index.dart';
+import '../views/admin/admin_products/index.dart';
 
 class AdminLayout extends StatelessWidget {
   final Widget child;

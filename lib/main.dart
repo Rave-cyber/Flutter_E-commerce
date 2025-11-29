@@ -1,5 +1,6 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
+import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,7 +10,6 @@ import 'services/auth_service.dart';
 import 'services/admin_seeder.dart';
 import 'views/splash/splash_screen.dart';
 import 'views/home/home_screen.dart';
-import 'views/admin/admin_screen.dart'; // Make sure this is imported
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,7 +127,7 @@ class AuthWrapper extends StatelessWidget {
 
               // Navigate based on role
               if (user.role == 'admin') {
-                return const AdminScreen();
+                return const AdminDashboard();
               } else {
                 // If you want customer data, fetch separately in HomeScreen or via another FutureBuilder
                 return HomeScreen(user: user);

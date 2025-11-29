@@ -1,10 +1,8 @@
-// lib/views/admin/admin_dashboard.dart
-
 import 'package:flutter/material.dart';
-import '../../layouts/admin_layout.dart';
+import '../../../layouts/admin_layout.dart';
 
 class AdminDashboard extends StatelessWidget {
-  const AdminDashboard({Key? key}) : super(key: key);
+  const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +29,8 @@ class AdminDashboard extends StatelessWidget {
                   children: const [
                     Text(
                       'Admin Features',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 10),
                     Text('• Manage Products'),
