@@ -1,8 +1,10 @@
+// lib/views/admin/admin_dashboard.dart
+
 import 'package:flutter/material.dart';
 import '../../layouts/admin_layout.dart';
 
-class AdminScreen extends StatelessWidget {
-  const AdminScreen({Key? key}) : super(key: key);
+class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
