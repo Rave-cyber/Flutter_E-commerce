@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/models/user_model.dart';
 import 'models/product.dart'; // Import the correct model
 
 class FirestoreService {
@@ -71,5 +72,101 @@ class FirestoreService {
   // Add new product (for admin)
   static Future<void> addProduct(ProductModel product) {
     return _firestore.collection('products').add(product.toMap());
+  }
+
+  // Check if product is in favorites
+  static Future<bool> isProductInFavorites(
+      String userId, String productId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .doc(productId)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      print('Error checking favorite: $e');
+      return false;
+    }
+  }
+
+  // Toggle favorite status
+  static Future<void> toggleFavorite(String userId, String productId) async {
+    try {
+      final favoritesRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('favorites')
+          .doc(productId);
+
+      final doc = await favoritesRef.get();
+      if (doc.exists) {
+        await favoritesRef.delete();
+      } else {
+        await favoritesRef.set({
+          'productId': productId,
+          'addedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      throw e;
+    }
+  }
+
+  // Add to cart
+  static Future<void> addToCart({
+    required String userId,
+    required String productId,
+    required String productName,
+    required String productImage,
+    required double price,
+    required int quantity,
+  }) async {
+    try {
+      final cartRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('cart')
+          .doc(productId);
+
+      final doc = await cartRef.get();
+      if (doc.exists) {
+        // Update quantity if item already in cart
+        await cartRef.update({
+          'quantity': FieldValue.increment(quantity),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Add new item to cart
+        await cartRef.set({
+          'productId': productId,
+          'productName': productName,
+          'productImage': productImage,
+          'price': price,
+          'quantity': quantity,
+          'addedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      print('Error adding to cart: $e');
+      throw e;
+    }
+  }
+
+  // Add this method to your existing FirestoreService class
+  static Future<UserModel?> getUserData(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user data: $e');
+      return null;
+    }
   }
 }

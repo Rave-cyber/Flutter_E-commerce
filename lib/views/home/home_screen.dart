@@ -1,15 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
+import 'package:firebase/views/cart/cart_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:provider/provider.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
-import '../../services/auth_service.dart';
 import '../../services/navigation_service.dart';
 import '../product/product_detail_screen.dart';
 import '../categories/categories_screen.dart';
@@ -43,6 +41,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _selectedCategory = 'All';
   final Color primaryGreen = const Color(0xFF2C8610);
+  int _currentBannerIndex = 0;
+
+  // Banner data with online images for furniture and appliances
+  final List<Map<String, dynamic>> _banners = [
+    {
+      'image':
+          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      'title': 'Modern Living Room',
+      'subtitle': 'Create your dream space with our premium furniture',
+      'buttonText': 'Shop Now'
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2058&q=80',
+      'title': 'Smart Appliances',
+      'subtitle': 'Upgrade your home with the latest technology',
+      'buttonText': 'Discover'
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+      'title': 'Bedroom Collection',
+      'subtitle': 'Sleep in comfort and style',
+      'buttonText': 'Explore'
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
+      'title': 'Kitchen Essentials',
+      'subtitle': 'Modern appliances for modern kitchens',
+      'buttonText': 'Browse'
+    },
+    {
+      'image':
+          'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2067&q=80',
+      'title': 'Office Furniture',
+      'subtitle': 'Productive spaces start with great furniture',
+      'buttonText': 'Shop Office'
+    },
+  ];
 
   @override
   void initState() {
@@ -90,7 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
             onPressed: () {
-              // Cart functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
             },
           ),
         ],
@@ -103,7 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Your existing home content methods (hero banner, categories, products, etc.)
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       child: Column(
@@ -121,75 +161,176 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroBanner() {
-    return Container(
-      height: 200,
-      width: double.infinity,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            primaryGreen.withOpacity(0.2),
-            primaryGreen.withOpacity(0.1)
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -50,
-            top: -20,
-            child: Lottie.asset(
-              'assets/animations/furniture-banner.json',
-              height: 250,
-              width: 250,
-            ),
+    return Column(
+      children: [
+        CarouselSlider(
+          items: _banners.map((banner) {
+            return _buildBannerItem(banner);
+          }).toList(),
+          options: CarouselOptions(
+            height: 200,
+            autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 5),
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enlargeCenterPage: true,
+            aspectRatio: 16 / 9,
+            viewportFraction: 0.9,
+            onPageChanged: (index, reason) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Summer Sale',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: primaryGreen,
-                  ),
-                ),
-                Text(
-                  'Up to 50% off on premium furniture',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: primaryGreen.withOpacity(0.8),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: primaryGreen,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Browse as Guest',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 10),
+        _buildBannerIndicator(),
+      ],
+    );
+  }
+
+  Widget _buildBannerItem(Map<String, dynamic> banner) {
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Background Image
+            Image.network(
+              banner['image'],
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: const Center(
+                    child: Icon(Icons.error, color: Colors.red),
+                  ),
+                );
+              },
+            ),
+
+            // Gradient Overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.3),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+
+            // Content - with constrained height and padding
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              top: 0, // Take full height but with proper constraints
+              child: Padding(
+                padding: const EdgeInsets.all(16.0), // Reduced padding
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Title with max lines
+                    Text(
+                      banner['title'],
+                      style: const TextStyle(
+                        fontSize: 20, // Slightly smaller font
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6), // Reduced spacing
+                    // Subtitle with max lines
+                    Text(
+                      banner['subtitle'],
+                      style: const TextStyle(
+                        fontSize: 14, // Slightly smaller font
+                        color: Colors.white,
+                      ),
+                      maxLines: 2, // Allow 2 lines for subtitle
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12), // Reduced spacing
+                    // Button
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16, // Reduced padding
+                        vertical: 8, // Reduced padding
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryGreen,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        banner['buttonText'],
+                        style: const TextStyle(
+                          fontSize: 12, // Smaller font
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerIndicator() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: _banners.asMap().entries.map((entry) {
+        return Container(
+          width: 8.0,
+          height: 8.0,
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: primaryGreen.withOpacity(
+              _currentBannerIndex == entry.key ? 1.0 : 0.4,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
