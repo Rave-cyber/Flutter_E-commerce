@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:firebase/models/attribute_model.dart';
+import 'package:firebase/models/attribute_value_model.dart';
 import 'package:image_picker/image_picker.dart';
 import '/models/product.dart';
 import '/models/category_model.dart';
 import '/models/brand_model.dart';
+import '/models/product_variant_model.dart';
 
 class PickedImage {
   final File file;
@@ -17,11 +20,20 @@ class ProductService {
   final CollectionReference _productCollection =
       FirebaseFirestore.instance.collection('products');
 
+  final CollectionReference _variantCollection =
+      FirebaseFirestore.instance.collection('product_variants');
+
   final CollectionReference _categoryCollection =
       FirebaseFirestore.instance.collection('categories');
 
   final CollectionReference _brandCollection =
       FirebaseFirestore.instance.collection('brands');
+
+  final CollectionReference _attributeCollection =
+      FirebaseFirestore.instance.collection('attributes');
+
+  final CollectionReference _attributeValueCollection =
+      FirebaseFirestore.instance.collection('attribute_values');
 
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
     'drwoht0pd',
@@ -133,6 +145,86 @@ class ProductService {
           'Product "${product.name}" is now ${!product.is_archived ? 'active' : 'archived'}');
     } catch (e) {
       throw Exception('Failed to toggle archive status: $e');
+    }
+  }
+
+  /// CREATE or UPDATE a product variant
+  Future<void> createOrUpdateVariant(ProductVariantModel variant) async {
+    try {
+      final docRef = _variantCollection.doc(variant.id);
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        // UPDATE
+        await docRef.update(variant.toMap());
+        print('Variant updated successfully!');
+      } else {
+        // CREATE
+        await docRef.set(variant.toMap());
+        print('Variant created successfully!');
+      }
+    } catch (e) {
+      throw Exception('Failed to create/update variant: $e');
+    }
+  }
+
+  /// FETCH variants for a specific product
+  Future<List<ProductVariantModel>> fetchVariants(String productId) async {
+    try {
+      final snapshot = await _variantCollection
+          .where('product_id', isEqualTo: productId)
+          .where('is_archived', isEqualTo: false)
+          .get();
+
+      return snapshot.docs
+          .map((doc) =>
+              ProductVariantModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch variants: $e');
+    }
+  }
+
+  /// DELETE a variant
+  Future<void> deleteVariant(String id) async {
+    try {
+      await _variantCollection.doc(id).delete();
+      print('Variant deleted successfully!');
+    } catch (e) {
+      throw Exception('Failed to delete variant: $e');
+    }
+  }
+
+  /// FETCH all attributes (non-archived)
+  Future<List<AttributeModel>> fetchAttributes() async {
+    try {
+      final snapshot = await _attributeCollection
+          .where('is_archived', isEqualTo: false)
+          .get();
+      return snapshot.docs
+          .map((doc) =>
+              AttributeModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch attributes: $e');
+    }
+  }
+
+  /// FETCH attribute values for a specific attribute
+  Future<List<AttributeValueModel>> fetchAttributeValues(
+      String attributeId) async {
+    try {
+      final snapshot = await _attributeValueCollection
+          .where('attribute_id', isEqualTo: attributeId)
+          .where('is_archived', isEqualTo: false)
+          .get();
+
+      return snapshot.docs
+          .map((doc) =>
+              AttributeValueModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch attribute values: $e');
     }
   }
 }
