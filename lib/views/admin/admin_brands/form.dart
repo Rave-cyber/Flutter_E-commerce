@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '/models/category_model.dart';
-import '/services/admin/category_service.dart';
+import '/models/brand_model.dart';
+import '/services/admin/brand_service.dart';
 
-class AdminCategoryForm extends StatefulWidget {
-  final CategoryModel? category;
-  const AdminCategoryForm({Key? key, this.category}) : super(key: key);
+class AdminBrandForm extends StatefulWidget {
+  final BrandModel? brand;
+  const AdminBrandForm({Key? key, this.brand}) : super(key: key);
 
   @override
-  State<AdminCategoryForm> createState() => _AdminCategoryFormState();
+  State<AdminBrandForm> createState() => _AdminBrandFormState();
 }
 
-class _AdminCategoryFormState extends State<AdminCategoryForm> {
+class _AdminBrandFormState extends State<AdminBrandForm> {
   final _formKey = GlobalKey<FormState>();
-  final CategoryService _categoryService = CategoryService();
+  final BrandService _brandService = BrandService();
 
   late TextEditingController _nameController;
   bool _isArchived = false;
@@ -21,29 +21,29 @@ class _AdminCategoryFormState extends State<AdminCategoryForm> {
   @override
   void initState() {
     super.initState();
-    final category = widget.category;
-    _nameController = TextEditingController(text: category?.name ?? '');
-    _isArchived = category?.is_archived ?? false;
+    final brand = widget.brand;
+    _nameController = TextEditingController(text: brand?.name ?? '');
+    _isArchived = brand?.is_archived ?? false;
   }
 
-  Future<void> _saveCategory() async {
+  Future<void> _saveBrand() async {
     if (!_formKey.currentState!.validate()) return;
 
     final id =
-        widget.category?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+        widget.brand?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-    final category = CategoryModel(
+    final brand = BrandModel(
       id: id,
       name: _nameController.text.trim(),
       is_archived: _isArchived,
-      created_at: widget.category?.created_at ?? DateTime.now(),
+      created_at: widget.brand?.created_at ?? DateTime.now(),
       updated_at: DateTime.now(),
     );
 
-    if (widget.category == null) {
-      await _categoryService.createCategory(category);
+    if (widget.brand == null) {
+      await _brandService.createBrand(brand);
     } else {
-      await _categoryService.updateCategory(category);
+      await _brandService.updateBrand(brand);
     }
 
     if (context.mounted) Navigator.pop(context);
@@ -73,8 +73,7 @@ class _AdminCategoryFormState extends State<AdminCategoryForm> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Category Name'),
+                    decoration: const InputDecoration(labelText: 'Brand Name'),
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Required' : null,
                   ),
@@ -90,8 +89,8 @@ class _AdminCategoryFormState extends State<AdminCategoryForm> {
                   const SizedBox(height: 20),
 
                   ElevatedButton(
-                    onPressed: _saveCategory,
-                    child: Text(widget.category == null ? 'Create' : 'Update'),
+                    onPressed: _saveBrand,
+                    child: Text(widget.brand == null ? 'Create' : 'Update'),
                   ),
                 ],
               ),

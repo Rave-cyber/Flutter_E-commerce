@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '/models/category_model.dart';
-import '/services/admin/category_service.dart';
-import '/views/admin/admin_categories/form.dart';
+import '/models/brand_model.dart';
+import '/services/admin/brand_service.dart';
+import '/views/admin/admin_brands/form.dart';
 
-class AdminCategoriesIndex extends StatefulWidget {
-  const AdminCategoriesIndex({Key? key}) : super(key: key);
+class AdminBrandsIndex extends StatefulWidget {
+  const AdminBrandsIndex({Key? key}) : super(key: key);
 
   @override
-  State<AdminCategoriesIndex> createState() => _AdminCategoriesIndexState();
+  State<AdminBrandsIndex> createState() => _AdminBrandsIndexState();
 }
 
-class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
-  final CategoryService _categoryService = CategoryService();
+class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
+  final BrandService _brandService = BrandService();
   final TextEditingController _searchController = TextEditingController();
 
   String _filterStatus = 'active';
@@ -25,19 +25,18 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
     super.dispose();
   }
 
-  List<CategoryModel> _applyFilterSearchPagination(
-      List<CategoryModel> categories) {
+  List<BrandModel> _applyFilterSearchPagination(List<BrandModel> brands) {
     // FILTER
-    List<CategoryModel> filtered = categories.where((cat) {
-      if (_filterStatus == 'active') return !cat.is_archived;
-      if (_filterStatus == 'archived') return cat.is_archived;
+    List<BrandModel> filtered = brands.where((brand) {
+      if (_filterStatus == 'active') return !brand.is_archived;
+      if (_filterStatus == 'archived') return brand.is_archived;
       return true;
     }).toList();
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
       filtered = filtered
-          .where((cat) => cat.name
+          .where((brand) => brand.name
               .toLowerCase()
               .contains(_searchController.text.toLowerCase()))
           .toList();
@@ -74,7 +73,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                labelText: 'Search Categories',
+                labelText: 'Search Brands',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -108,61 +107,58 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
 
-            // CATEGORY LIST
+            // BRAND LIST
             Expanded(
-              child: StreamBuilder<List<CategoryModel>>(
-                stream: _categoryService.getCategories(),
+              child: StreamBuilder<List<BrandModel>>(
+                stream: _brandService.getBrands(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No categories found.'));
+                    return const Center(child: Text('No brands found.'));
                   }
 
-                  final categories = snapshot.data!;
-                  final paginatedCategories =
-                      _applyFilterSearchPagination(categories);
+                  final brands = snapshot.data!;
+                  final paginatedBrands = _applyFilterSearchPagination(brands);
 
                   return Column(
                     children: [
                       Expanded(
                         child: ListView.builder(
-                          itemCount: paginatedCategories.length,
+                          itemCount: paginatedBrands.length,
                           itemBuilder: (context, index) {
-                            final category = paginatedCategories[index];
+                            final brand = paginatedBrands[index];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
                               child: ListTile(
                                 title: Text(
-                                  category.name,
+                                  brand.name,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: category.is_archived
+                                    color: brand.is_archived
                                         ? Colors.grey
                                         : Colors.black,
                                   ),
                                 ),
-                                subtitle: Text(category.is_archived
-                                    ? 'Archived'
-                                    : 'Active'),
+                                subtitle: Text(
+                                    brand.is_archived ? 'Archived' : 'Active'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Archive / Unarchive
                                     IconButton(
                                       icon: Icon(
-                                        category.is_archived
+                                        brand.is_archived
                                             ? Icons.unarchive
                                             : Icons.archive,
                                         color: Colors.orange,
                                       ),
                                       onPressed: () async {
-                                        final action = category.is_archived
+                                        final action = brand.is_archived
                                             ? 'unarchive'
                                             : 'archive';
                                         final confirm = await showDialog<bool>(
@@ -170,7 +166,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                           builder: (_) => AlertDialog(
                                             title: Text('Confirm $action'),
                                             content: Text(
-                                              'Are you sure you want to $action "${category.name}"?',
+                                              'Are you sure you want to $action "${brand.name}"?',
                                             ),
                                             actions: [
                                               TextButton(
@@ -182,16 +178,15 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                                 onPressed: () => Navigator.pop(
                                                     context, true),
                                                 child: Text(
-                                                    action[0].toUpperCase() +
-                                                        action.substring(1)),
+                                                    '${action[0].toUpperCase()}${action.substring(1)}'),
                                               ),
                                             ],
                                           ),
                                         );
 
                                         if (confirm == true) {
-                                          await _categoryService
-                                              .toggleArchive(category);
+                                          await _brandService
+                                              .toggleArchive(brand);
                                         }
                                       },
                                     ),
@@ -203,8 +198,9 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => AdminCategoryForm(
-                                                category: category),
+                                            builder: (_) => AdminBrandForm(
+                                              brand: brand,
+                                            ),
                                           ),
                                         );
                                       },
@@ -219,7 +215,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                           builder: (_) => AlertDialog(
                                             title: const Text('Confirm Delete'),
                                             content: Text(
-                                                'Are you sure you want to delete "${category.name}"?'),
+                                                'Are you sure you want to delete "${brand.name}"?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.pop(
@@ -236,8 +232,8 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                         );
 
                                         if (confirm == true) {
-                                          await _categoryService
-                                              .deleteCategory(category.id);
+                                          await _brandService
+                                              .deleteBrand(brand.id);
                                         }
                                       },
                                     ),
@@ -260,7 +256,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                           Text('Page $_currentPage'),
                           IconButton(
                             icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(categories.length),
+                            onPressed: () => _nextPage(brands.length),
                           ),
                         ],
                       ),
@@ -278,12 +274,12 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const AdminCategoryForm(),
+                      builder: (_) => const AdminBrandForm(),
                     ),
                   );
                 },
                 child: const Icon(Icons.add),
-                tooltip: 'Add Category',
+                tooltip: 'Add Brand',
               ),
             ),
           ],
