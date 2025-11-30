@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
+import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -9,11 +10,11 @@ import 'package:provider/provider.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/navigation_service.dart';
 import '../product/product_detail_screen.dart';
-import '../auth/login_screen.dart';
-
-// Custom Animated Bottom Nav
-import '../widgets/animated_bottom_nav_bar.dart';
+import '../categories/categories_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -30,8 +31,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
+  final NavigationService _navService = NavigationService();
   final List<String> categories = [
     'All',
     'Sofa',
@@ -45,10 +45,30 @@ class _HomeScreenState extends State<HomeScreen> {
   final Color primaryGreen = const Color(0xFF2C8610);
 
   @override
-  Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final currentUser = authService.currentUser;
+  void initState() {
+    super.initState();
+    _initializeScreens();
+  }
 
+  void _initializeScreens() {
+    final screens = [
+      _buildHomeContent(), // Home content
+      CategoriesScreen(user: widget.user),
+      FavoritesScreen(user: widget.user),
+      ProfileScreen(user: widget.user, customer: widget.customer),
+    ];
+
+    _navService.initializeScreens(screens);
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _navService.changeScreen(index);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -70,221 +90,33 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
             onPressed: () {
-              _showGuestMessage(context, 'Shopping Cart');
+              // Cart functionality
             },
           ),
-          // User profile menu
-          if (currentUser != null)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.person, color: primaryGreen),
-              onSelected: (value) {
-                _handleMenuSelection(value, authService, context);
-              },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, color: primaryGreen),
-                      const SizedBox(width: 8),
-                      const Text('Profile'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red),
-                      const SizedBox(width: 8),
-                      const Text('Logout'),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          else
-            IconButton(
-              icon: Icon(Icons.login, color: primaryGreen),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-            ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeroBanner(),
-            _buildCategorySection(),
-            const SizedBox(height: 20),
-            _buildFeaturedProductsSection(),
-            const SizedBox(height: 20),
-            _buildProductsSection(),
-          ],
-        ),
-      ),
+      body: _navService.currentScreen,
       bottomNavigationBar: AnimatedBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        currentIndex: _navService.currentIndex,
+        onTap: _onTabTapped,
       ),
     );
   }
 
-  void _showGuestMessage(BuildContext context, String feature) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-
-    if (authService.currentUser == null) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login Required'),
-            content: Text('Please login to access $feature'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
-                  );
-                },
-                child: const Text('Login'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
-  void _handleMenuSelection(
-      String value, AuthService authService, BuildContext context) {
-    switch (value) {
-      case 'profile':
-        _showUserProfile(context, authService);
-        break;
-      case 'logout':
-        _showLogoutConfirmation(context, authService);
-        break;
-    }
-  }
-
-  void _showUserProfile(BuildContext context, AuthService authService) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // Use the existing user data instead of fetching again
-        final currentUser = authService.currentUser;
-
-        if (currentUser == null) {
-          return AlertDialog(
-            title: const Text("Error"),
-            content: const Text("No user is currently logged in."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
-              ),
-            ],
-          );
-        }
-
-        // Build profile using the current user data we already have
-        final userModel = currentUser as UserModel?;
-        return _buildProfileDialog(userModel, userModel?.email ?? 'User');
-      },
-    );
-  }
-
-  Widget _buildProfileDialog(UserModel? user, String displayName) {
-    return AlertDialog(
-      title: const Text('User Profile'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+  // Your existing home content methods (hero banner, categories, products, etc.)
+  Widget _buildHomeContent() {
+    return SingleChildScrollView(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Name'),
-            subtitle: Text(displayName),
-          ),
-          ListTile(
-            leading: const Icon(Icons.email),
-            title: const Text('Email'),
-            subtitle: Text(user?.email ?? 'Not provided'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.verified_user),
-            title: const Text('Role'),
-            subtitle: Text(
-              user?.role.toUpperCase() ?? 'USER',
-              style: TextStyle(
-                color: user?.role == 'admin' ? Colors.orange : Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          _buildHeroBanner(),
+          _buildCategorySection(),
+          const SizedBox(height: 20),
+          _buildFeaturedProductsSection(),
+          const SizedBox(height: 20),
+          _buildProductsSection(),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
-        )
-      ],
-    );
-  }
-
-  void _showLogoutConfirmation(BuildContext context, AuthService authService) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context); // Close dialog
-                await authService.signOut(); // Sign out
-
-                // Navigate to login screen and remove all previous routes
-                if (mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -482,19 +314,11 @@ class _HomeScreenState extends State<HomeScreen> {
         StreamBuilder<List<ProductModel>>(
           stream: FirestoreService.getProductsByCategory(_selectedCategory),
           builder: (context, snapshot) {
-            print('=== STREAMBUILDER STATE ===');
-            print('Connection state: ${snapshot.connectionState}');
-            print('Has data: ${snapshot.hasData}');
-            print('Has error: ${snapshot.hasError}');
-            print('Error: ${snapshot.error}');
-
             if (snapshot.connectionState == ConnectionState.waiting) {
-              print('StreamBuilder: Waiting for data...');
               return _buildProductsShimmer();
             }
 
             if (snapshot.hasError) {
-              print('StreamBuilder: Error occurred - ${snapshot.error}');
               return Center(
                 child: Column(
                   children: [
@@ -504,33 +328,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Error loading products',
                       style: TextStyle(color: Colors.red, fontSize: 16),
                     ),
-                    Text(
-                      '${snapshot.error}',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
                   ],
                 ),
               );
             }
 
-            if (!snapshot.hasData) {
-              print('StreamBuilder: No data available');
-              return const Center(
-                child: Text('No products data available'),
-              );
-            }
-
-            final products = snapshot.data!;
-            print('StreamBuilder: Received ${products.length} products');
-
-            for (var product in products) {
-              print('Product: ${product.name}');
-              print('  - Image URL: ${product.image}');
-              print('  - Price: ${product.sale_price}');
-              print('  - In Stock: ${product.stock_quantity}');
-            }
-
+            final products = snapshot.data ?? [];
             if (products.isEmpty) {
               return const Center(
                 child: Text('No products found in this category'),
@@ -622,7 +425,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
                       const SizedBox(width: 4),
                     ],
                   ),
