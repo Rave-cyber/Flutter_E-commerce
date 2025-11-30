@@ -1,13 +1,184 @@
 // product_detail_screen.dart
 import 'package:firebase/models/product.dart';
+import 'package:firebase/views/favorites/favorites_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase/services/auth_service.dart';
+import 'package:firebase/firestore_service.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
   const ProductDetailScreen({
     Key? key,
     required this.product,
   }) : super(key: key);
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  bool _isFavorite = false;
+  bool _addingToCart = false;
+  bool _loadingFavorites = false;
+  final Color primaryGreen = const Color(0xFF2C8610);
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  void _checkIfFavorite() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    if (user != null && widget.product.id != null) {
+      final isFav = await FirestoreService.isProductInFavorites(
+          user.uid, widget.product.id!);
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFav;
+        });
+      }
+    }
+  }
+
+  void _toggleFavorite() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+
+    if (user == null) {
+      _showSnackBar('Please login to add favorites', Colors.orange);
+      return;
+    }
+
+    if (widget.product.id == null) {
+      _showSnackBar('Product error', Colors.red);
+      return;
+    }
+
+    try {
+      await FirestoreService.toggleFavorite(user.uid, widget.product.id!);
+      if (mounted) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+        });
+      }
+      _showSnackBar(
+        _isFavorite ? 'Added to favorites!' : 'Removed from favorites',
+        primaryGreen,
+      );
+    } catch (e) {
+      _showSnackBar('Error updating favorites', Colors.red);
+    }
+  }
+
+  void _addToCart() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+
+    if (user == null) {
+      _showSnackBar('Please login to add to cart', Colors.orange);
+      return;
+    }
+
+    if (widget.product.id == null) {
+      _showSnackBar('Product error', Colors.red);
+      return;
+    }
+
+    if (widget.product.stock_quantity! <= 0) {
+      _showSnackBar('Product is out of stock', Colors.red);
+      return;
+    }
+
+    setState(() {
+      _addingToCart = true;
+    });
+
+    try {
+      await FirestoreService.addToCart(
+        userId: user.uid,
+        productId: widget.product.id!,
+        productName: widget.product.name,
+        productImage: widget.product.image,
+        price: widget.product.sale_price,
+        quantity: 1,
+      );
+
+      if (mounted) {
+        _showSnackBar('Added to cart!', primaryGreen);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error adding to cart', Colors.red);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addingToCart = false;
+        });
+      }
+    }
+  }
+
+  void _navigateToFavorites() async {
+    final authUser =
+        Provider.of<AuthService>(context, listen: false).currentUser;
+    if (authUser != null) {
+      setState(() {
+        _loadingFavorites = true;
+      });
+
+      try {
+        // Get user data from Firestore
+        final userModel = await FirestoreService.getUserData(authUser.uid);
+
+        if (userModel != null && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FavoritesScreen(
+                user: userModel,
+              ),
+            ),
+          );
+        } else {
+          _showSnackBar('User data not found', Colors.red);
+        }
+      } catch (e) {
+        _showSnackBar('Error loading favorites', Colors.red);
+      } finally {
+        if (mounted) {
+          setState(() {
+            _loadingFavorites = false;
+          });
+        }
+      }
+    } else {
+      _showSnackBar('Please login to view favorites', Colors.orange);
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _shareProduct() {
+    final shareText =
+        'Check out ${widget.product.name} for \$${widget.product.sale_price.toStringAsFixed(2)}';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Share: $shareText'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +189,10 @@ class ProductDetailScreen extends StatelessWidget {
             expandedHeight: 300,
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
-                tag: 'product-${product.id}',
-                child: product.image.isNotEmpty
+                tag: 'product-${widget.product.id}',
+                child: widget.product.image.isNotEmpty
                     ? Image.network(
-                        product.image,
+                        widget.product.image,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -47,12 +218,15 @@ class ProductDetailScreen extends StatelessWidget {
             pinned: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.favorite_border),
-                onPressed: () {},
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.white,
+                ),
+                onPressed: _toggleFavorite,
               ),
               IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {},
+                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: _shareProduct,
               ),
             ],
           ),
@@ -63,7 +237,7 @@ class ProductDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.name,
+                    widget.product.name,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -73,7 +247,7 @@ class ProductDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${product.sale_price.toStringAsFixed(2)}',
+                        '\$${widget.product.sale_price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -81,20 +255,43 @@ class ProductDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (product.sale_price < product.base_price)
+                      if (widget.product.sale_price < widget.product.base_price)
                         Text(
-                          '\$${product.base_price.toStringAsFixed(2)}',
+                          '\$${widget.product.base_price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: widget.product.stock_quantity! > 0
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          widget.product.stock_quantity! > 0
+                              ? 'In Stock'
+                              : 'Out of Stock',
+                          style: TextStyle(
+                            color: widget.product.stock_quantity! > 0
+                                ? Colors.green
+                                : Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    product.description,
+                    widget.product.description,
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                   const SizedBox(height: 16),
@@ -102,17 +299,19 @@ class ProductDetailScreen extends StatelessWidget {
                     children: [
                       _buildInfoChip(
                         icon: Icons.inventory_2,
-                        text: '${product.stock_quantity} in stock',
-                        color: product.stock_quantity! > 0
+                        text: '${widget.product.stock_quantity} available',
+                        color: widget.product.stock_quantity! > 0
                             ? Colors.green
                             : Colors.red,
                       ),
                       const SizedBox(width: 8),
-                      _buildInfoChip(
-                        icon: Icons.category,
-                        text: product.category_id ?? 'Uncategorized',
-                        color: Colors.blue,
-                      ),
+                      if (widget.product.category_id != null &&
+                          widget.product.category_id!.isNotEmpty)
+                        _buildInfoChip(
+                          icon: Icons.category,
+                          text: widget.product.category_id!,
+                          color: Colors.blue,
+                        ),
                     ],
                   ),
                 ],
@@ -157,26 +356,50 @@ class ProductDetailScreen extends StatelessWidget {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: product.stock_quantity! > 0
-                  ? () {
-                      // Add to cart functionality
-                    }
+              onPressed: widget.product.stock_quantity! > 0 && !_addingToCart
+                  ? _addToCart
                   : null,
-              icon: const Icon(Icons.shopping_cart),
+              icon: _addingToCart
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_cart),
               label: Text(
-                product.stock_quantity! > 0 ? 'Add to Cart' : 'Out of Stock',
+                _addingToCart
+                    ? 'Adding...'
+                    : (widget.product.stock_quantity! > 0
+                        ? 'Add to Cart'
+                        : 'Out of Stock'),
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF2C8610),
+                backgroundColor: primaryGreen,
                 disabledBackgroundColor: Colors.grey,
+                foregroundColor: Colors.white,
               ),
             ),
           ),
           const SizedBox(width: 12),
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border),
+            onPressed: _loadingFavorites ? null : _navigateToFavorites,
+            icon: _loadingFavorites
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                    ),
+                  )
+                : Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorite ? Colors.red : Colors.grey,
+                  ),
             style: IconButton.styleFrom(
               backgroundColor: Colors.grey[200],
               padding: const EdgeInsets.all(16),

@@ -1,12 +1,12 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
+import 'package:firebase/views/cart/cart_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
-import '../../services/auth_service.dart';
 import '../../services/navigation_service.dart';
 import '../product/product_detail_screen.dart';
 import '../categories/categories_screen.dart';
@@ -105,29 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _initializeScreens();
-  }
-
-  void _initializeScreens() {
-    final screens = [
-      _buildHomeContent(), // Home content
-      CategoriesScreen(user: widget.user),
-      FavoritesScreen(user: widget.user),
-      ProfileScreen(user: widget.user, customer: widget.customer),
-    ];
-
-    _navService.initializeScreens(screens);
-  }
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _navService.changeScreen(index);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -150,7 +127,10 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
             onPressed: () {
-              // Cart functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
             },
           ),
         ],
@@ -163,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Your existing home content methods (hero banner, categories, products, etc.)
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       child: Column(
