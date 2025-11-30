@@ -6,7 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
-import '../../models/product_model.dart';
+import '../../models/product.dart';
 import '../../firestore_service.dart';
 import '../../services/auth_service.dart';
 import '../product/product_detail_screen.dart';
@@ -188,49 +188,25 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return FutureBuilder<UserModel?>(
-          future: authService.getCurrentUserData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const AlertDialog(
-                title: Text("Profile"),
-                content: CircularProgressIndicator(),
-              );
-            }
+        // Use the existing user data instead of fetching again
+        final currentUser = authService.currentUser;
 
-            if (snapshot.hasError || !snapshot.hasData) {
-              return AlertDialog(
-                title: const Text("Error"),
-                content: Text(
-                    "Failed to load profile: ${snapshot.error ?? 'User not found'}"),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Close"),
-                  ),
-                ],
-              );
-            }
+        if (currentUser == null) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: const Text("No user is currently logged in."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close"),
+              ),
+            ],
+          );
+        }
 
-            final user = snapshot.data!;
-            if (user.role != "customer") {
-              return const AlertDialog(
-                title: Text("Access Denied"),
-                content: Text("This page is only for customers."),
-              );
-            }
-
-            final customer = widget.customer;
-
-            final displayName = customer != null
-                ? [customer.firstname, customer.middlename, customer.lastname]
-                    .where((e) => e.isNotEmpty)
-                    .join(" ")
-                : user.display_name ?? "Unknown User";
-
-            return _buildProfileDialog(user, displayName);
-          },
-        );
+        // Build profile using the current user data we already have
+        final userModel = currentUser as UserModel?;
+        return _buildProfileDialog(userModel, userModel?.email ?? 'User');
       },
     );
   }
@@ -451,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        StreamBuilder<List<Product>>(
+        StreamBuilder<List<ProductModel>>(
           stream: FirestoreService.getFeaturedProducts(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -503,22 +479,62 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        StreamBuilder<List<Product>>(
+        StreamBuilder<List<ProductModel>>(
           stream: FirestoreService.getProductsByCategory(_selectedCategory),
           builder: (context, snapshot) {
+            print('=== STREAMBUILDER STATE ===');
+            print('Connection state: ${snapshot.connectionState}');
+            print('Has data: ${snapshot.hasData}');
+            print('Has error: ${snapshot.hasError}');
+            print('Error: ${snapshot.error}');
+
             if (snapshot.connectionState == ConnectionState.waiting) {
+              print('StreamBuilder: Waiting for data...');
               return _buildProductsShimmer();
             }
+
             if (snapshot.hasError) {
+              print('StreamBuilder: Error occurred - ${snapshot.error}');
               return Center(
-                child: Text('Error loading products',
-                    style: TextStyle(color: Colors.red)),
+                child: Column(
+                  children: [
+                    Icon(Icons.error, color: Colors.red, size: 50),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Error loading products',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                    Text(
+                      '${snapshot.error}',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               );
             }
 
-            final products = snapshot.data ?? [];
+            if (!snapshot.hasData) {
+              print('StreamBuilder: No data available');
+              return const Center(
+                child: Text('No products data available'),
+              );
+            }
+
+            final products = snapshot.data!;
+            print('StreamBuilder: Received ${products.length} products');
+
+            for (var product in products) {
+              print('Product: ${product.name}');
+              print('  - Image URL: ${product.image}');
+              print('  - Price: ${product.sale_price}');
+              print('  - In Stock: ${product.stock_quantity}');
+            }
+
             if (products.isEmpty) {
-              return const Center(child: Text('No products found'));
+              return const Center(
+                child: Text('No products found in this category'),
+              );
             }
 
             return GridView.builder(
@@ -542,7 +558,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductCard(Product product) {
+  Widget _buildProductCard(ProductModel product) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -564,10 +580,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       topLeft: Radius.circular(12),
                       topRight: Radius.circular(12)),
                   image: DecorationImage(
-                    image: NetworkImage(product.imageUrl),
+                    image: product.image.isNotEmpty
+                        ? NetworkImage(product.image)
+                        : const AssetImage('assets/placeholder.png')
+                            as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
+                child: product.image.isEmpty
+                    ? Center(
+                        child: Icon(Icons.image,
+                            color: Colors.grey[400], size: 40),
+                      )
+                    : null,
               ),
             ),
             Padding(
@@ -586,7 +611,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${product.price.toStringAsFixed(2)}',
+                    '\$${product.sale_price.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -598,9 +623,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      Text('${product.rating}'),
                       const SizedBox(width: 4),
-                      Text('(${product.reviewCount})'),
                     ],
                   ),
                 ],
