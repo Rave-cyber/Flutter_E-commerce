@@ -35,6 +35,9 @@ class ProductService {
   final CollectionReference _attributeValueCollection =
       FirebaseFirestore.instance.collection('attribute_values');
 
+  final CollectionReference _variantAttributeCollection =
+      FirebaseFirestore.instance.collection('variant_attributes');
+
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
     'drwoht0pd',
     'presets',
@@ -225,6 +228,60 @@ class ProductService {
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch attribute values: $e');
+    }
+  }
+
+  /// FETCH all attribute-value pairs for a specific variant
+  Future<List<Map<String, dynamic>>> fetchVariantAttributes(
+      String variantId) async {
+    try {
+      final snapshot = await _variantAttributeCollection
+          .where('variant_id', isEqualTo: variantId)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => {
+                "id": doc.id,
+                ...doc.data() as Map<String, dynamic>,
+              })
+          .toList();
+    } catch (e) {
+      throw Exception("Failed to fetch variant attributes: $e");
+    }
+  }
+
+  /// DELETE all attribute-value pairs for a variant
+  Future<void> deleteVariantAttributesForVariant(String variantId) async {
+    try {
+      final snapshot = await _variantAttributeCollection
+          .where('variant_id', isEqualTo: variantId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await _variantAttributeCollection.doc(doc.id).delete();
+      }
+
+      print("Variant attributes cleared for variant $variantId");
+    } catch (e) {
+      throw Exception("Failed to delete variant attributes: $e");
+    }
+  }
+
+  /// CREATE a new attribute-value mapping for a variant
+  Future<void> createVariantAttribute({
+    required String variantId,
+    required String attributeId,
+    required String attributeValueId,
+  }) async {
+    try {
+      await _variantAttributeCollection.add({
+        'variant_id': variantId,
+        'attribute_id': attributeId,
+        'attribute_value_id': attributeValueId,
+        'created_at': DateTime.now(),
+      });
+    } catch (e) {
+      throw Exception("Failed to create variant attribute: $e");
     }
   }
 }

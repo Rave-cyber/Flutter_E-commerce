@@ -7,6 +7,7 @@ import '/models/brand_model.dart';
 import '/models/attribute_model.dart';
 import '/models/attribute_value_model.dart';
 import '/models/product_variant_model.dart';
+import '/models/product_variant_attribute_model.dart';
 import 'form.dart';
 
 class AdminProductForm extends StatefulWidget {
@@ -15,6 +16,19 @@ class AdminProductForm extends StatefulWidget {
 
   @override
   State<AdminProductForm> createState() => _AdminProductFormState();
+}
+
+/// Helper: holds a variant + its list of attribute-value pairs in-memory for UI
+class _VariantEntry {
+  ProductVariantModel variant;
+
+  /// Each map: { 'attribute_id': '..', 'attribute_value_id': '..' }
+  List<Map<String, String>> attributes;
+
+  _VariantEntry({
+    required this.variant,
+    List<Map<String, String>>? attributes,
+  }) : attributes = attributes ?? [];
 }
 
 class _AdminProductFormState extends State<AdminProductForm> {
@@ -40,8 +54,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
   List<AttributeModel> _attributes = [];
   Map<String, List<AttributeValueModel>> _attributeValues = {};
 
-  // Product variants
-  List<ProductVariantModel> _variants = [];
+  // Product variants (wrappers)
+  List<_VariantEntry> _variants = [];
+
+  bool _loading = true;
 
   @override
   void initState() {
@@ -58,8 +74,17 @@ class _AdminProductFormState extends State<AdminProductForm> {
     _imageUrl = product?.image ?? '';
     _isArchived = product?.is_archived ?? false;
 
-    _loadDropdowns();
-    _loadAttributes();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    await _loadDropdowns();
+    await _loadAttributes();
+    // If editing an existing product, optionally load its variants + variant attributes:
+    if (widget.product != null) {
+      await _loadExistingVariants(widget.product!.id);
+    }
+    setState(() => _loading = false);
   }
 
   Future<void> _loadDropdowns() async {
@@ -102,6 +127,35 @@ class _AdminProductFormState extends State<AdminProductForm> {
     });
   }
 
+  /// Load existing variants and their attribute pairs for editing
+  Future<void> _loadExistingVariants(String productId) async {
+    try {
+      final variants = await _productService.fetchVariants(productId);
+      final List<_VariantEntry> entries = [];
+
+      for (var v in variants) {
+        // fetch variant attributes (junction rows)
+        final pairs = await _productService.fetchVariantAttributes(v.id);
+        // convert to map list for UI
+        final uiPairs = pairs
+            .map((pa) => {
+                  'id': pa['id'].toString(),
+                  'attribute_id': pa['attribute_id'].toString(),
+                  'attribute_value_id': pa['attribute_value_id'].toString(),
+                })
+            .toList();
+        entries.add(_VariantEntry(variant: v, attributes: uiPairs));
+      }
+
+      setState(() {
+        _variants = entries;
+      });
+    } catch (e) {
+      // ignore or show error
+      debugPrint('Failed loading existing variants: $e');
+    }
+  }
+
   Future<void> _pickImage() async {
     final picked = await _productService.pickImage();
     if (picked != null) {
@@ -113,15 +167,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   void _addVariant() {
     setState(() {
-      _variants.add(ProductVariantModel(
+      final variant = ProductVariantModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         product_id: widget.product?.id ?? '',
         name: '',
-        attribute_id: _attributes.isNotEmpty ? _attributes[0].id : '',
-        attribute_value_id: _attributes.isNotEmpty &&
-                _attributeValues[_attributes[0].id]!.isNotEmpty
-            ? _attributeValues[_attributes[0].id]![0].id
-            : '',
         image: '',
         base_price: 0,
         sale_price: 0,
@@ -129,13 +178,34 @@ class _AdminProductFormState extends State<AdminProductForm> {
         is_archived: false,
         created_at: DateTime.now(),
         updated_at: DateTime.now(),
-      ));
+      );
+      _variants.add(_VariantEntry(variant: variant, attributes: []));
     });
   }
 
   void _removeVariant(int index) {
     setState(() {
       _variants.removeAt(index);
+    });
+  }
+
+  /// Add an empty attribute pair to the variant UI entry
+  void _addAttributePairToVariant(int variantIndex) {
+    final attrId = _attributes.isNotEmpty ? _attributes[0].id : '';
+    final valId =
+        (attrId.isNotEmpty && (_attributeValues[attrId]?.isNotEmpty ?? false))
+            ? _attributeValues[attrId]![0].id
+            : '';
+    setState(() {
+      _variants[variantIndex]
+          .attributes
+          .add({'attribute_id': attrId, 'attribute_value_id': valId});
+    });
+  }
+
+  void _removeAttributePairFromVariant(int variantIndex, int pairIndex) {
+    setState(() {
+      _variants[variantIndex].attributes.removeAt(pairIndex);
     });
   }
 
@@ -162,26 +232,141 @@ class _AdminProductFormState extends State<AdminProductForm> {
       brand_id: _selectedBrand!.id,
     );
 
-    if (widget.product == null) {
-      await _productService.createProduct(product);
-    } else {
-      await _productService.updateProduct(product);
-    }
-
-    // Save variants
-    for (var variant in _variants) {
-      variant.product_id = id; // Ensure correct product ID
-      if (variant.id.isEmpty) {
-        variant.id = DateTime.now().millisecondsSinceEpoch.toString();
+    try {
+      if (widget.product == null) {
+        await _productService.createProduct(product);
+      } else {
+        await _productService.updateProduct(product);
       }
-      await _productService.createOrUpdateVariant(variant);
-    }
 
-    if (context.mounted) Navigator.pop(context);
+      // Save variants and their junction attributes
+      for (var entry in _variants) {
+        final variant = entry.variant;
+        variant.product_id = id;
+        if (variant.id.isEmpty) {
+          variant.id = DateTime.now().millisecondsSinceEpoch.toString();
+        }
+
+        // create/update variant
+        await _productService.createOrUpdateVariant(variant);
+
+        // remove existing attributes for this variant (if editing) then re-create
+        // (Assumes ProductService exposes deleteVariantAttributesForVariant)
+        try {
+          await _productService.deleteVariantAttributesForVariant(variant.id);
+        } catch (e) {
+          // ignore if method doesn't exist or nothing to delete
+        }
+
+        // create junction rows for each attribute pair
+        for (var pair in entry.attributes) {
+          // skip invalid pairs
+          final attrId = pair['attribute_id'] ?? '';
+          final valId = pair['attribute_value_id'] ?? '';
+          if (attrId.isEmpty || valId.isEmpty) continue;
+
+          final pvAttr = ProductVariantAttributeModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            product_variant_id: variant.id,
+            attribute_id: attrId,
+            attribute_value_id: valId,
+            created_at: DateTime.now(),
+            updated_at: DateTime.now(),
+          );
+
+          // Assumes ProductService exposes createVariantAttribute
+          await _productService.createVariantAttribute(
+            variantId: pvAttr.product_variant_id,
+            attributeId: pvAttr.attribute_id,
+            attributeValueId: pvAttr.attribute_value_id,
+          );
+        }
+      }
+
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint('Save error: $e');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to save')));
+    }
+  }
+
+  Widget _buildAttributePairUi(
+      int variantIndex, int pairIndex, Map<String, String> pair) {
+    final currentAttrId = pair['attribute_id'] ?? '';
+    final currentValId = pair['attribute_value_id'] ?? '';
+
+    return Row(
+      children: [
+        // Attribute dropdown
+        Expanded(
+          flex: 5,
+          child: DropdownButtonFormField<String>(
+            value: currentAttrId.isNotEmpty ? currentAttrId : null,
+            decoration: const InputDecoration(labelText: 'Attribute'),
+            items: _attributes
+                .map((a) => DropdownMenuItem(
+                      value: a.id,
+                      child: Text(a.name),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              final newAttrId = val ?? '';
+              final newValId = (newAttrId.isNotEmpty &&
+                      (_attributeValues[newAttrId]?.isNotEmpty ?? false))
+                  ? _attributeValues[newAttrId]![0].id
+                  : '';
+              setState(() {
+                _variants[variantIndex].attributes[pairIndex]['attribute_id'] =
+                    newAttrId;
+                _variants[variantIndex].attributes[pairIndex]
+                    ['attribute_value_id'] = newValId;
+              });
+            },
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Select attribute' : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Value dropdown
+        Expanded(
+          flex: 5,
+          child: DropdownButtonFormField<String>(
+            value: currentValId.isNotEmpty ? currentValId : null,
+            decoration: const InputDecoration(labelText: 'Value'),
+            items: (_attributeValues[currentAttrId] ?? [])
+                .map((av) => DropdownMenuItem(
+                      value: av.id,
+                      child: Text(av.name),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _variants[variantIndex].attributes[pairIndex]
+                    ['attribute_value_id'] = val ?? '';
+              });
+            },
+            validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Remove button
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () =>
+              _removeAttributePairFromVariant(variantIndex, pairIndex),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return AdminLayout(
+          child: const Center(child: CircularProgressIndicator()));
+    }
+
     return AdminLayout(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -190,7 +375,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back button row
+              // Back + Title
               Row(
                 children: [
                   BackButton(onPressed: () => Navigator.pop(context)),
@@ -293,7 +478,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
               ),
               const SizedBox(height: 16),
 
-              // Product Variants Section
+              // Product Variants Section header + add
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -308,11 +493,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
+
+              // Variant cards
               ..._variants.asMap().entries.map((entry) {
-                int index = entry.key;
-                ProductVariantModel variant = entry.value;
+                final int index = entry.key;
+                final _VariantEntry entryData = entry.value;
+                final ProductVariantModel variant = entryData.variant;
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
@@ -320,7 +507,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                     padding: const EdgeInsets.all(8),
                     child: Column(
                       children: [
-                        // Remove variant button
+                        // Remove variant
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -330,6 +517,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                             ),
                           ],
                         ),
+
                         // Variant name
                         TextFormField(
                           initialValue: variant.name,
@@ -340,58 +528,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
                               val == null || val.isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 8),
-                        // Attribute Dropdown
-                        DropdownButtonFormField<String>(
-                          value: variant.attribute_id.isNotEmpty
-                              ? variant.attribute_id
-                              : (_attributes.isNotEmpty
-                                  ? _attributes[0].id
-                                  : null),
-                          decoration:
-                              const InputDecoration(labelText: 'Attribute'),
-                          items: _attributes
-                              .map((attr) => DropdownMenuItem(
-                                    value: attr.id,
-                                    child: Text(attr.name),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              variant.attribute_id = val ?? '';
-                              // Reset attribute value
-                              if (_attributeValues[val]?.isNotEmpty ?? false) {
-                                variant.attribute_value_id =
-                                    _attributeValues[val]![0].id;
-                              } else {
-                                variant.attribute_value_id = '';
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        // Attribute Value Dropdown
-                        DropdownButtonFormField<String>(
-                          value: variant.attribute_value_id.isNotEmpty
-                              ? variant.attribute_value_id
-                              : (_attributeValues[variant.attribute_id]
-                                          ?.isNotEmpty ??
-                                      false
-                                  ? _attributeValues[variant.attribute_id]![0]
-                                      .id
-                                  : null),
-                          decoration: const InputDecoration(
-                              labelText: 'Attribute Value'),
-                          items: (_attributeValues[variant.attribute_id] ?? [])
-                              .map((val) => DropdownMenuItem(
-                                    value: val.id,
-                                    child: Text(val.name),
-                                  ))
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => variant.attribute_value_id = val!),
-                        ),
-                        const SizedBox(height: 8),
-                        // Variant Image Picker
+
+                        // Variant Image picker
                         GestureDetector(
                           onTap: () async {
                             final picked = await _productService.pickImage();
@@ -413,6 +551,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                 ),
                         ),
                         const SizedBox(height: 8),
+
                         // Prices and Stock
                         TextFormField(
                           initialValue: variant.base_price.toString(),
@@ -446,6 +585,39 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           value: variant.is_archived,
                           onChanged: (val) =>
                               setState(() => variant.is_archived = val),
+                        ),
+
+                        const Divider(),
+
+                        // Attributes list for this variant
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Attributes',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Attribute pairs UI
+                        ...entryData.attributes
+                            .asMap()
+                            .entries
+                            .map((pairEntry) {
+                          final pairIndex = pairEntry.key;
+                          final pair = pairEntry.value;
+                          return _buildAttributePairUi(index, pairIndex, pair);
+                        }).toList(),
+
+                        // Add attribute button
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Attribute'),
+                            onPressed: () => _addAttributePairToVariant(index),
+                          ),
                         ),
                       ],
                     ),

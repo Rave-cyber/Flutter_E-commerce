@@ -4,8 +4,6 @@ class ProductVariantModel {
   String id;
   String product_id;
   String name;
-  String attribute_id;
-  String attribute_value_id;
   String image;
   double base_price;
   double sale_price;
@@ -18,8 +16,6 @@ class ProductVariantModel {
     required this.id,
     required this.product_id,
     required this.name,
-    required this.attribute_id,
-    required this.attribute_value_id,
     required this.image,
     required this.base_price,
     required this.sale_price,
@@ -34,8 +30,6 @@ class ProductVariantModel {
       'id': id,
       'product_id': product_id,
       'name': name,
-      'attribute_id': attribute_id,
-      'attribute_value_id': attribute_value_id,
       'image': image,
       'base_price': base_price,
       'sale_price': sale_price,
@@ -51,19 +45,13 @@ class ProductVariantModel {
       id: map['id'],
       product_id: map['product_id'],
       name: map['name'],
-      attribute_id: map['attribute_id'],
-      attribute_value_id: map['attribute_value_id'],
       image: map['image'],
       base_price: (map['base_price'] ?? 0).toDouble(),
       sale_price: (map['sale_price'] ?? 0).toDouble(),
-      stock: (map['stock'] ?? 0),
+      stock: map['stock'] ?? 0,
       is_archived: map['is_archived'] ?? false,
-      created_at: map['created_at'] != null
-          ? (map['created_at'] as Timestamp).toDate()
-          : DateTime.now(),
-      updated_at: map['updated_at'] != null
-          ? (map['updated_at'] as Timestamp).toDate()
-          : DateTime.now(),
+      created_at: (map['created_at'] as Timestamp).toDate(),
+      updated_at: (map['updated_at'] as Timestamp).toDate(),
     );
   }
 }
