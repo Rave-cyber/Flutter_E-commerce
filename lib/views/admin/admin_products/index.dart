@@ -1,3 +1,5 @@
+import 'package:firebase/models/brand_model.dart';
+import 'package:firebase/models/category_model.dart';
 import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
@@ -17,6 +19,51 @@ class AdminProductsIndex extends StatefulWidget {
 
 class _AdminProductsIndexState extends State<AdminProductsIndex> {
   final ProductService _productService = ProductService();
+
+  List<CategoryModel> _categories = [];
+  List<BrandModel> _brands = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDropdowns();
+  }
+
+  Future<void> _loadDropdowns() async {
+    final categories = await _productService.fetchCategories();
+    final brands = await _productService.fetchBrands();
+
+    setState(() {
+      _categories = categories;
+      _brands = brands;
+    });
+  }
+
+  String _getCategoryName(String categoryId) {
+    return _categories
+        .firstWhere(
+          (c) => c.id == categoryId,
+          orElse: () => CategoryModel(
+            id: '',
+            name: 'Unknown',
+            is_archived: false, // <-- required field
+          ),
+        )
+        .name;
+  }
+
+  String _getBrandName(String brandId) {
+    return _brands
+        .firstWhere(
+          (b) => b.id == brandId,
+          orElse: () => BrandModel(
+            id: '',
+            name: 'Unknown',
+            is_archived: false, // <-- required field
+          ),
+        )
+        .name;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +102,11 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                           : const Icon(Icons.image),
                       title: Text(product.name),
                       subtitle: Text(
-                          'Stock: ${product.stock_quantity} | Price: \$${product.sale_price}'),
+                        'Category: ${_getCategoryName(product.category_id)}\n'
+                        'Brand: ${_getBrandName(product.brand_id)}\n'
+                        'Stock: ${product.stock_quantity} | Price: \$${product.sale_price}',
+                      ),
+                      isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -108,8 +159,6 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
               );
             },
           ),
-
-          // Floating button for creating new product
           Positioned(
             bottom: 16,
             right: 16,

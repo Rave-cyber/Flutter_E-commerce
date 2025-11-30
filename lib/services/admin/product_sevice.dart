@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:image_picker/image_picker.dart';
 import '/models/product.dart';
+import '/models/category_model.dart';
+import '/models/brand_model.dart';
 
 class PickedImage {
   final File file;
@@ -14,6 +16,12 @@ class PickedImage {
 class ProductService {
   final CollectionReference _productCollection =
       FirebaseFirestore.instance.collection('products');
+
+  final CollectionReference _categoryCollection =
+      FirebaseFirestore.instance.collection('categories');
+
+  final CollectionReference _brandCollection =
+      FirebaseFirestore.instance.collection('brands');
 
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
     'drwoht0pd',
@@ -83,6 +91,34 @@ class ProductService {
       print('Product deleted successfully!');
     } catch (e) {
       throw Exception('Failed to delete product: $e');
+    }
+  }
+
+  /// FETCH categories
+  Future<List<CategoryModel>> fetchCategories() async {
+    try {
+      final snapshot = await _categoryCollection
+          .where('is_archived', isEqualTo: false)
+          .get();
+      return snapshot.docs
+          .map((doc) =>
+              CategoryModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch categories: $e');
+    }
+  }
+
+  /// FETCH brands
+  Future<List<BrandModel>> fetchBrands() async {
+    try {
+      final snapshot =
+          await _brandCollection.where('is_archived', isEqualTo: false).get();
+      return snapshot.docs
+          .map((doc) => BrandModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch brands: $e');
     }
   }
 }
