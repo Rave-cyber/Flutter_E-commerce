@@ -1,18 +1,17 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
-import 'package:firebase/views/cart/cart_screen.dart';
+import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
 import '../../services/navigation_service.dart';
-import '../product/product_detail_screen.dart';
-import '../categories/categories_screen.dart';
-import '../favorites/favorites_screen.dart';
-import '../profile/profile_screen.dart';
+import '../customer/product/product_detail_screen.dart';
+import '../customer/categories/categories_screen.dart';
+import '../customer/favorites/favorites_screen.dart';
+import '../customer/profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -517,12 +516,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Product Image
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12)),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
                   image: DecorationImage(
                     image: product.image.isNotEmpty
                         ? NetworkImage(product.image)
@@ -531,44 +532,116 @@ class _HomeScreenState extends State<HomeScreen> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                child: product.image.isEmpty
-                    ? Center(
-                        child: Icon(Icons.image,
-                            color: Colors.grey[400], size: 40),
-                      )
-                    : null,
+                child: Stack(
+                  children: [
+                    if (product.image.isEmpty)
+                      Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.grey[400],
+                          size: 40,
+                        ),
+                      ),
+                    // Optional: Add a favorite button or discount badge
+                  ],
+                ),
               ),
             ),
+
+            // Product Details
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Product Name
                   Text(
                     product.name,
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${product.sale_price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: primaryGreen,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+
+                  // Price
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
+                      Text(
+                        '\$${product.sale_price.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: primaryGreen,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (product.base_price > product.sale_price)
+                        Text(
+                          '\$${product.base_price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
                     ],
                   ),
+
+                  // Rating
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Row(
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 14,
+                          );
+                        }),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '5.0',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '(0)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Stock indicator
+                  const SizedBox(height: 4),
+                  if (product.stock_quantity! > 0)
+                    Text(
+                      'In Stock',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  else
+                    Text(
+                      'Out of Stock',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.red[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                 ],
               ),
             ),

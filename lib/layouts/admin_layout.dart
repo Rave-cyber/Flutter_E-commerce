@@ -168,7 +168,8 @@ class AdminLayout extends StatelessWidget {
           ),
 
           ListTile(
-            leading: const Icon(Icons.add_shopping_cart, color: Colors.green),
+            leading:
+                const Icon(Icons.add_shopping_cart, color: Colors.blueGrey),
             title: const Text("Stock-In"),
             onTap: () {
               Navigator.pop(context);
