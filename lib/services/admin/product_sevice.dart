@@ -121,4 +121,18 @@ class ProductService {
       throw Exception('Failed to fetch brands: $e');
     }
   }
+
+  /// TOGGLE archive / unarchive product
+  Future<void> toggleArchive(ProductModel product) async {
+    try {
+      await _productCollection.doc(product.id).update({
+        'is_archived': !product.is_archived,
+        'updated_at': DateTime.now(),
+      });
+      print(
+          'Product "${product.name}" is now ${!product.is_archived ? 'active' : 'archived'}');
+    } catch (e) {
+      throw Exception('Failed to toggle archive status: $e');
+    }
+  }
 }
