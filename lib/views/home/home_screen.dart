@@ -1,17 +1,17 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
-import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/navigation_service.dart';
-import '../customer/product/product_detail_screen.dart';
-import '../customer/categories/categories_screen.dart';
-import '../customer/favorites/favorites_screen.dart';
-import '../customer/profile/profile_screen.dart';
+import '../product/product_detail_screen.dart';
+import '../categories/categories_screen.dart';
+import '../favorites/favorites_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -105,6 +105,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initializeScreens();
+  }
+
+  void _initializeScreens() {
+    final screens = [
+      _buildHomeContent(), // Home content
+      CategoriesScreen(user: widget.user),
+      FavoritesScreen(user: widget.user),
+      ProfileScreen(user: widget.user, customer: widget.customer),
+    ];
+
+    _navService.initializeScreens(screens);
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _navService.changeScreen(index);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -127,10 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
-              );
+              // Cart functionality
             },
           ),
         ],
@@ -143,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Your existing home content methods (hero banner, categories, products, etc.)
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       child: Column(
@@ -569,24 +590,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Text(
-                        '\$${product.sale_price.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: primaryGreen,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (product.base_price > product.sale_price)
-                        Text(
-                          '\$${product.base_price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
+                      Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
                     ],
                   ),
 
