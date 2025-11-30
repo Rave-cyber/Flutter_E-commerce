@@ -1,3 +1,4 @@
+import 'package:firebase/views/admin/admin_categories/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -81,6 +82,18 @@ class AdminLayout extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminProductsIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.category, color: Colors.blueGrey),
+            title: const Text("Categories"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminCategoriesIndex()),
               );
             },
           ),
