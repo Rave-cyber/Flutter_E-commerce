@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/layouts/admin_layout.dart';
+import '../../../layouts/admin_layout.dart';
 import '/models/category_model.dart';
 import '/services/admin/category_service.dart';
 
@@ -21,29 +21,26 @@ class _AdminCategoryFormState extends State<AdminCategoryForm> {
   @override
   void initState() {
     super.initState();
-    final cat = widget.category;
-
-    _nameController = TextEditingController(text: cat?.name ?? '');
-    _isArchived = cat?.is_archived ?? false;
+    final category = widget.category;
+    _nameController = TextEditingController(text: category?.name ?? '');
+    _isArchived = category?.is_archived ?? false;
   }
 
   Future<void> _saveCategory() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final now = DateTime.now();
-    final bool isNew = widget.category == null;
+    final id =
+        widget.category?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
     final category = CategoryModel(
-      id: isNew
-          ? DateTime.now().millisecondsSinceEpoch.toString()
-          : widget.category!.id,
+      id: id,
       name: _nameController.text.trim(),
       is_archived: _isArchived,
-      created_at: isNew ? now : widget.category!.created_at,
-      updated_at: now, // always update
+      created_at: widget.category?.created_at ?? DateTime.now(),
+      updated_at: DateTime.now(),
     );
 
-    if (isNew) {
+    if (widget.category == null) {
       await _categoryService.createCategory(category);
     } else {
       await _categoryService.updateCategory(category);
@@ -63,19 +60,21 @@ class _AdminCategoryFormState extends State<AdminCategoryForm> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Category Name',
-                ),
-                validator: (value) =>
-                    value == null || value.trim().isEmpty ? 'Required' : null,
+                decoration: const InputDecoration(labelText: 'Category Name'),
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
+
+              /// ARCHIVED SWITCH
               SwitchListTile(
                 title: const Text('Archived'),
                 value: _isArchived,
-                onChanged: (v) => setState(() => _isArchived = v),
+                onChanged: (val) => setState(() => _isArchived = val),
               ),
+
               const SizedBox(height: 20),
+
               ElevatedButton(
                 onPressed: _saveCategory,
                 child: Text(widget.category == null ? 'Create' : 'Update'),

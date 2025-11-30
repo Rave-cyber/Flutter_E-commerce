@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '/layouts/admin_layout.dart';
+import '../../../layouts/admin_layout.dart';
 import '/models/category_model.dart';
 import '/services/admin/category_service.dart';
-import 'form.dart';
+import '/views/admin/admin_categories/form.dart';
 
 class AdminCategoriesIndex extends StatefulWidget {
   const AdminCategoriesIndex({Key? key}) : super(key: key);
@@ -41,17 +41,34 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: const Icon(Icons.category),
-                      title: Text(category.name),
+                      title: Text(
+                        category.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              category.is_archived ? Colors.grey : Colors.black,
+                        ),
+                      ),
                       subtitle: Text(
-                        category.is_archived
-                            ? "Status: Archived"
-                            : "Status: Active",
+                        category.is_archived ? 'Archived' : 'Active',
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          /// EDIT
+                          // Archive / Unarchive Button
+                          IconButton(
+                            icon: Icon(
+                              category.is_archived
+                                  ? Icons.unarchive
+                                  : Icons.archive,
+                              color: Colors.orange,
+                            ),
+                            onPressed: () async {
+                              await _categoryService.toggleArchive(category);
+                            },
+                          ),
+
+                          // Edit Button
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () {
@@ -65,7 +82,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                             },
                           ),
 
-                          /// DELETE
+                          // Delete Button
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () async {
@@ -74,7 +91,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                 builder: (_) => AlertDialog(
                                   title: const Text('Confirm Delete'),
                                   content: Text(
-                                    'Delete category "${category.name}"?',
+                                    'Are you sure you want to delete "${category.name}"?',
                                   ),
                                   actions: [
                                     TextButton(
@@ -106,7 +123,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
             },
           ),
 
-          /// Floating Add Button
+          // Floating Button for creating a new category
           Positioned(
             bottom: 16,
             right: 16,

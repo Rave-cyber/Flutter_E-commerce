@@ -7,12 +7,7 @@ class CategoryService {
 
   /// CREATE category
   Future<void> createCategory(CategoryModel category) async {
-    try {
-      await _categoryCollection.doc(category.id).set(category.toMap());
-      print('Category created successfully!');
-    } catch (e) {
-      throw Exception('Failed to create category: $e');
-    }
+    await _categoryCollection.doc(category.id).set(category.toMap());
   }
 
   /// READ categories (stream for UI)
@@ -28,21 +23,24 @@ class CategoryService {
 
   /// UPDATE category
   Future<void> updateCategory(CategoryModel category) async {
-    try {
-      await _categoryCollection.doc(category.id).update(category.toMap());
-      print('Category updated successfully!');
-    } catch (e) {
-      throw Exception('Failed to update category: $e');
-    }
+    await _categoryCollection.doc(category.id).update(category.toMap());
   }
 
   /// DELETE category
   Future<void> deleteCategory(String id) async {
-    try {
-      await _categoryCollection.doc(id).delete();
-      print('Category deleted successfully!');
-    } catch (e) {
-      throw Exception('Failed to delete category: $e');
-    }
+    await _categoryCollection.doc(id).delete();
+  }
+
+  /// 🔥 ARCHIVE / UNARCHIVE
+  Future<void> toggleArchive(CategoryModel category) async {
+    final updated = CategoryModel(
+      id: category.id,
+      name: category.name,
+      is_archived: !category.is_archived,
+      created_at: category.created_at,
+      updated_at: DateTime.now(),
+    );
+
+    await updateCategory(updated);
   }
 }
