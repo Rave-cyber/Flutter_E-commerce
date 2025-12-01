@@ -298,4 +298,19 @@ class ProductService {
       throw Exception('Failed to fetch products: $e');
     }
   }
+
+  /// FETCH all variants (non-archived)
+  Future<List<ProductVariantModel>> fetchAllVariants() async {
+    try {
+      final snapshot =
+          await _variantCollection.where('is_archived', isEqualTo: false).get();
+
+      return snapshot.docs
+          .map((doc) =>
+              ProductVariantModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch all variants: $e');
+    }
+  }
 }
