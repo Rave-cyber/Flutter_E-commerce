@@ -46,4 +46,13 @@ class SupplierService {
 
     await updateSupplier(updated);
   }
+
+  Future<List<SupplierModel>> fetchSuppliersOnce() async {
+    final snapshot =
+        await _supplierCollection.orderBy('created_at', descending: true).get();
+
+    return snapshot.docs
+        .map((doc) => SupplierModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
 }

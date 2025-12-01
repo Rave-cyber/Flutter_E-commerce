@@ -47,4 +47,15 @@ class StockCheckerService {
 
     await updateStockChecker(updated);
   }
+
+  Future<List<StockCheckerModel>> fetchStockCheckersOnce() async {
+    final snapshot = await _stockCheckerCollection
+        .orderBy('created_at', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) =>
+            StockCheckerModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
 }

@@ -43,4 +43,15 @@ class WarehouseService {
 
     await updateWarehouse(updated);
   }
+
+  Future<List<WarehouseModel>> fetchWarehousesOnce() async {
+    final snapshot = await _warehouseCollection
+        .orderBy('created_at', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map(
+            (doc) => WarehouseModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
 }
