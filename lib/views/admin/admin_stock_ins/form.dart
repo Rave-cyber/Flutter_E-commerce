@@ -62,8 +62,7 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
     _stockCheckers = await StockCheckerService().fetchStockCheckersOnce();
 
     _products = await ProductService().fetchProductsOnce();
-    _variants =
-        await ProductService().fetchAllVariants(); // <— LOAD ALL VARIANTS
+    _variants = await ProductService().fetchAllVariants();
 
     if (widget.stockIn != null) {
       _selectedProduct =

@@ -85,7 +85,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    if (widget.product.stock_quantity <= 0) {
+    if (widget.product.stock_quantity! <= 0) {
       _showSnackBar('Product is out of stock', Colors.red);
       return;
     }
@@ -270,17 +270,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: widget.product.stock_quantity > 0
+                          color: widget.product.stock_quantity! > 0
                               ? Colors.green.withOpacity(0.1)
                               : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          widget.product.stock_quantity > 0
+                          widget.product.stock_quantity! > 0
                               ? 'In Stock'
                               : 'Out of Stock',
                           style: TextStyle(
-                            color: widget.product.stock_quantity > 0
+                            color: widget.product.stock_quantity! > 0
                                 ? Colors.green
                                 : Colors.red,
                             fontWeight: FontWeight.bold,
@@ -301,7 +301,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       _buildInfoChip(
                         icon: Icons.inventory_2,
                         text: '${widget.product.stock_quantity} available',
-                        color: widget.product.stock_quantity > 0
+                        color: widget.product.stock_quantity! > 0
                             ? Colors.green
                             : Colors.red,
                       ),
@@ -357,7 +357,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: widget.product.stock_quantity > 0 && !_addingToCart
+              onPressed: widget.product.stock_quantity! > 0 && !_addingToCart
                   ? _addToCart
                   : null,
               icon: _addingToCart
@@ -373,7 +373,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               label: Text(
                 _addingToCart
                     ? 'Adding...'
-                    : (widget.product.stock_quantity > 0
+                    : (widget.product.stock_quantity! > 0
                         ? 'Add to Cart'
                         : 'Out of Stock'),
               ),

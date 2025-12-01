@@ -39,7 +39,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
   late TextEditingController _descController;
   late TextEditingController _basePriceController;
   late TextEditingController _salePriceController;
-  late TextEditingController _stockController;
 
   String _imageUrl = '';
   bool _isArchived = false;
@@ -69,8 +68,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
         TextEditingController(text: product?.base_price.toString() ?? '');
     _salePriceController =
         TextEditingController(text: product?.sale_price.toString() ?? '');
-    _stockController =
-        TextEditingController(text: product?.stock_quantity.toString() ?? '');
     _imageUrl = product?.image ?? '';
     _isArchived = product?.is_archived ?? false;
 
@@ -174,7 +171,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
         image: '',
         base_price: 0,
         sale_price: 0,
-        stock: 0,
         is_archived: false,
         created_at: DateTime.now(),
         updated_at: DateTime.now(),
@@ -226,7 +222,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
       image: _imageUrl,
       base_price: double.tryParse(_basePriceController.text) ?? 0,
       sale_price: double.tryParse(_salePriceController.text) ?? 0,
-      stock_quantity: int.tryParse(_stockController.text) ?? 0,
       is_archived: _isArchived,
       category_id: _selectedCategory!.id,
       brand_id: _selectedBrand!.id,
@@ -465,12 +460,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8),
-              TextFormField(
-                controller: _stockController,
-                decoration: const InputDecoration(labelText: 'Stock Quantity'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
               SwitchListTile(
                 title: const Text('Archived'),
                 value: _isArchived,
@@ -569,15 +558,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           keyboardType: TextInputType.number,
                           onChanged: (val) =>
                               variant.sale_price = double.tryParse(val) ?? 0,
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: variant.stock.toString(),
-                          decoration: const InputDecoration(
-                              labelText: 'Stock Quantity'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (val) =>
-                              variant.stock = int.tryParse(val) ?? 0,
                         ),
                         const SizedBox(height: 8),
                         SwitchListTile(

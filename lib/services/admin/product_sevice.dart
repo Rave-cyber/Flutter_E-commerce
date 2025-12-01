@@ -71,8 +71,12 @@ class ProductService {
   /// CREATE product
   Future<void> createProduct(ProductModel product) async {
     try {
-      await _productCollection.doc(product.id).set(product.toMap());
-      print('Product created successfully!');
+      // Ensure stock fields start at zero
+      final productData = product.toMap()..['stock_quantity'] = 0;
+      // ..['stock'] = 0;
+
+      await _productCollection.doc(product.id).set(productData);
+      print('Product created successfully with stock = 0!');
     } catch (e) {
       throw Exception('Failed to create product: $e');
     }
@@ -157,15 +161,22 @@ class ProductService {
       final docRef = _variantCollection.doc(variant.id);
       final doc = await docRef.get();
 
+      // Ensure variant has a stock value
+      final variantData = variant.toMap();
+      if (!variantData.containsKey('stock')) variantData['stock'] = 0;
+
       if (doc.exists) {
-        // UPDATE
-        await docRef.update(variant.toMap());
+        // UPDATE variant
+        await docRef.update(variantData);
         print('Variant updated successfully!');
       } else {
-        // CREATE
-        await docRef.set(variant.toMap());
+        // CREATE new variant
+        await docRef.set(variantData);
         print('Variant created successfully!');
       }
+
+      // Always update the main product stock after variant changes
+      await _updateProductStock(variant.product_id);
     } catch (e) {
       throw Exception('Failed to create/update variant: $e');
     }
@@ -189,12 +200,44 @@ class ProductService {
   }
 
   /// DELETE a variant
-  Future<void> deleteVariant(String id) async {
+  Future<void> deleteVariant(String variantId, String productId) async {
     try {
-      await _variantCollection.doc(id).delete();
+      await _variantCollection.doc(variantId).delete();
       print('Variant deleted successfully!');
+
+      // Update main product stock after deletion
+      await _updateProductStock(productId);
     } catch (e) {
       throw Exception('Failed to delete variant: $e');
+    }
+  }
+
+  /// PRIVATE: Recalculate total stock for a product from its variants
+  Future<void> _updateProductStock(String productId) async {
+    try {
+      final snapshot = await _variantCollection
+          .where('product_id', isEqualTo: productId)
+          .get();
+
+      // Sum all variant stocks safely
+      int totalStock = snapshot.docs.fold<int>(
+        0,
+        (sum, doc) {
+          final stock = doc['stock'];
+          if (stock is num) return sum + stock.toInt();
+          return sum;
+        },
+      );
+
+      // Update main product
+      await _productCollection.doc(productId).update({
+        'stock_quantity': totalStock,
+        'updated_at': DateTime.now(),
+      });
+
+      print('Product $productId stock updated to $totalStock');
+    } catch (e) {
+      throw Exception('Failed to update product stock: $e');
     }
   }
 

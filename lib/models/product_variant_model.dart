@@ -7,7 +7,7 @@ class ProductVariantModel {
   String image;
   double base_price;
   double sale_price;
-  int stock;
+  int? stock; // now optional
   bool is_archived;
   DateTime created_at;
   DateTime updated_at;
@@ -19,7 +19,7 @@ class ProductVariantModel {
     required this.image,
     required this.base_price,
     required this.sale_price,
-    required this.stock,
+    this.stock, // optional
     required this.is_archived,
     required this.created_at,
     required this.updated_at,
@@ -33,7 +33,7 @@ class ProductVariantModel {
       'image': image,
       'base_price': base_price,
       'sale_price': sale_price,
-      'stock': stock,
+      'stock': stock ?? 0, // default to 0
       'is_archived': is_archived,
       'created_at': created_at,
       'updated_at': updated_at,
@@ -42,13 +42,13 @@ class ProductVariantModel {
 
   factory ProductVariantModel.fromMap(Map<String, dynamic> map) {
     return ProductVariantModel(
-      id: map['id'],
-      product_id: map['product_id'],
-      name: map['name'],
-      image: map['image'],
+      id: map['id'] ?? '',
+      product_id: map['product_id'] ?? '',
+      name: map['name'] ?? '',
+      image: map['image'] ?? '',
       base_price: (map['base_price'] ?? 0).toDouble(),
       sale_price: (map['sale_price'] ?? 0).toDouble(),
-      stock: map['stock'] ?? 0,
+      stock: map['stock'] ?? 0, // default to 0
       is_archived: map['is_archived'] ?? false,
       created_at: (map['created_at'] as Timestamp).toDate(),
       updated_at: (map['updated_at'] as Timestamp).toDate(),
