@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/user_model.dart';
-import '../../models/customer_model.dart';
-import '../../services/auth_service.dart';
-import '../auth/login_screen.dart';
+import '../../../models/user_model.dart';
+import '../../../models/customer_model.dart';
+import '../../../services/auth_service.dart';
+import '../../auth/login_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   final UserModel user;

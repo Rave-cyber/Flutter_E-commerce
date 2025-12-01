@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'models/product.dart'; // Import the correct model
 
@@ -24,17 +25,20 @@ class FirestoreService {
   }
 
   // Get products by category
+  // Replace the getProductsByCategory method in FirestoreService:
   static Stream<List<ProductModel>> getProductsByCategory(String category) {
     print('Fetching products for category: $category');
 
     if (category == 'All') {
-      return _firestore.collection('products').snapshots().map((snapshot) {
+      return _firestore
+          .collection('products')
+          .where('is_archived', isEqualTo: false) // Add this filter
+          .snapshots()
+          .map((snapshot) {
         print('All products snapshot: ${snapshot.docs.length} documents');
-        snapshot.docs.forEach((doc) {
-          print('Product data: ${doc.data()}');
-        });
         return snapshot.docs
-            .map((doc) => ProductModel.fromMap(doc.data()))
+            .map((doc) =>
+                ProductModel.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
       }).handleError((error) {
         print('Error fetching all products: $error');
@@ -42,9 +46,11 @@ class FirestoreService {
       });
     }
 
+    // CHANGED: Use category_id instead of category
     return _firestore
         .collection('products')
-        .where('category', isEqualTo: category)
+        .where('category_id', isEqualTo: category) // CHANGED THIS LINE
+        .where('is_archived', isEqualTo: false) // Add this filter
         .snapshots()
         .map((snapshot) {
       print('Category products snapshot: ${snapshot.docs.length} documents');
@@ -52,21 +58,13 @@ class FirestoreService {
         print('Category product data: ${doc.data()}');
       });
       return snapshot.docs
-          .map((doc) => ProductModel.fromMap(doc.data()))
+          .map(
+              (doc) => ProductModel.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
     }).handleError((error) {
       print('Error fetching category products: $error');
       throw error;
     });
-  }
-
-  // Get product by ID
-  static Future<ProductModel?> getProductById(String id) async {
-    final doc = await _firestore.collection('products').doc(id).get();
-    if (doc.exists) {
-      return ProductModel.fromMap(doc.data()!);
-    }
-    return null;
   }
 
   // Add new product (for admin)
@@ -168,5 +166,115 @@ class FirestoreService {
       print('Error getting user data: $e');
       return null;
     }
+  }
+  // Add these methods to your existing FirestoreService class:
+
+// Get product variants
+  // Update the getProductVariants method in FirestoreService
+  static Stream<List<ProductVariantModel>> getProductVariants(
+      String productId) {
+    return _firestore
+        .collection('product_variants') // Changed from 'products/{id}/variants'
+        .where('product_id', isEqualTo: productId)
+        .where('is_archived', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ProductVariantModel.fromMap({
+          'id': doc.id,
+          ...doc.data()!,
+        });
+      }).toList();
+    }).handleError((error) {
+      print('Error fetching variants: $error');
+      throw error;
+    });
+  }
+
+// Also update the getVariantById method:
+  static Future<ProductVariantModel?> getVariantById(
+      String productId, String variantId) async {
+    try {
+      final doc = await _firestore
+          .collection('product_variants') // Changed here too
+          .doc(variantId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        // Verify this variant belongs to the product
+        if (data['product_id'] == productId) {
+          return ProductVariantModel.fromMap({
+            'id': doc.id,
+            ...data,
+          });
+        }
+        return null;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting variant: $e');
+      return null;
+    }
+  }
+
+// Get brand by ID
+  static Future<Map<String, dynamic>?> getBrandById(String brandId) async {
+    try {
+      final doc = await _firestore.collection('brands').doc(brandId).get();
+      if (doc.exists) {
+        return {
+          'id': doc.id,
+          ...doc.data()!,
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting brand: $e');
+      return null;
+    }
+  }
+
+// Get category by ID
+  static Future<Map<String, dynamic>?> getCategoryById(
+      String categoryId) async {
+    try {
+      final doc =
+          await _firestore.collection('categories').doc(categoryId).get();
+      if (doc.exists) {
+        return {
+          'id': doc.id,
+          ...doc.data()!,
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting category: $e');
+      return null;
+    }
+  }
+
+// Get all brands
+  static Stream<List<Map<String, dynamic>>> getAllBrands() {
+    return _firestore.collection('brands').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+    });
+  }
+
+// Get all categories
+  static Stream<List<Map<String, dynamic>>> getAllCategories() {
+    return _firestore.collection('categories').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+    });
   }
 }

@@ -1,6 +1,6 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
-import 'package:firebase/views/cart/cart_screen.dart';
+import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -8,10 +8,10 @@ import 'package:shimmer/shimmer.dart';
 import '../../models/product.dart';
 import '../../firestore_service.dart';
 import '../../services/navigation_service.dart';
-import '../product/product_detail_screen.dart';
-import '../categories/categories_screen.dart';
-import '../favorites/favorites_screen.dart';
-import '../profile/profile_screen.dart';
+import '../customer/product/product_detail_screen.dart';
+import '../customer/categories/categories_screen.dart';
+import '../customer/favorites/favorites_screen.dart';
+import '../customer/profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -569,8 +569,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
+                      Text(
+                        '\$${product.sale_price.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: primaryGreen,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (product.base_price > product.sale_price)
+                        Text(
+                          '\$${product.base_price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
                     ],
                   ),
 
@@ -608,7 +624,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Stock indicator
                   const SizedBox(height: 4),
+<<<<<<< HEAD
                   if (product.stock_quantity! > 0)
+=======
+                  if (product.stock_quantity > 0)
+>>>>>>> 3b22329 (customer 55% done)
                     Text(
                       'In Stock',
                       style: TextStyle(

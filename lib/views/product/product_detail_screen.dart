@@ -1,6 +1,6 @@
 // product_detail_screen.dart
 import 'package:firebase/models/product.dart';
-import 'package:firebase/views/favorites/favorites_screen.dart';
+import 'package:firebase/views/customer/favorites/favorites_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
