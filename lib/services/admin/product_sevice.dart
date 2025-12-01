@@ -284,4 +284,18 @@ class ProductService {
       throw Exception("Failed to create variant attribute: $e");
     }
   }
+
+  /// FETCH all products once (non-archived)
+  Future<List<ProductModel>> fetchProductsOnce() async {
+    try {
+      final snapshot =
+          await _productCollection.where('is_archived', isEqualTo: false).get();
+      return snapshot.docs
+          .map(
+              (doc) => ProductModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch products: $e');
+    }
+  }
 }
