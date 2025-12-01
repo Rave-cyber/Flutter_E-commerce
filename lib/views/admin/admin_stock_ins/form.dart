@@ -57,27 +57,27 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   }
 
   Future<void> _loadData() async {
-    // Load static dropdown data
     _suppliers = await SupplierService().fetchSuppliersOnce();
     _warehouses = await WarehouseService().fetchWarehousesOnce();
     _stockCheckers = await StockCheckerService().fetchStockCheckersOnce();
 
-    // Load products from Firestore
     _products = await ProductService().fetchProductsOnce();
+    _variants =
+        await ProductService().fetchAllVariants(); // <— LOAD ALL VARIANTS
 
-    // If editing, preselect values
     if (widget.stockIn != null) {
       _selectedProduct =
           _products.firstWhereOrNull((p) => p.id == widget.stockIn!.product_id);
-      if (_selectedProduct != null) {
-        _variants = await ProductService().fetchVariants(_selectedProduct!.id);
-      }
+
       _selectedVariant = _variants
           .firstWhereOrNull((v) => v.id == widget.stockIn!.product_variant_id);
+
       _selectedSupplier = _suppliers
           .firstWhereOrNull((s) => s.id == widget.stockIn!.supplier_id);
+
       _selectedWarehouse = _warehouses
           .firstWhereOrNull((w) => w.id == widget.stockIn!.warehouse_id);
+
       _selectedStockChecker = _stockCheckers
           .firstWhereOrNull((sc) => sc.id == widget.stockIn!.stock_checker_id);
     }
@@ -135,27 +135,20 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
                 children: [
                   /// PRODUCT DROPDOWN
                   DropdownButtonFormField<ProductModel>(
-                    value: _selectedProduct,
-                    decoration: const InputDecoration(labelText: 'Product'),
-                    items: _products
-                        .map((p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(p.name),
-                            ))
-                        .toList(),
-                    onChanged: (val) async {
-                      setState(() {
-                        _selectedProduct = val;
-                        _selectedVariant = null;
-                        _variants = [];
-                      });
-                      if (val != null) {
-                        _variants =
-                            await ProductService().fetchVariants(val.id);
-                        setState(() {});
-                      }
-                    },
-                  ),
+                      value: _selectedProduct,
+                      decoration: const InputDecoration(labelText: 'Product'),
+                      items: _products
+                          .map((p) => DropdownMenuItem(
+                                value: p,
+                                child: Text(p.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedProduct = val;
+                          // keep variants unchanged
+                        });
+                      }),
                   const SizedBox(height: 12),
 
                   /// PRODUCT VARIANT DROPDOWN
