@@ -3,6 +3,7 @@ import 'package:firebase/views/admin/admin_brands/index.dart';
 import 'package:firebase/views/admin/admin_categories/index.dart';
 import 'package:firebase/views/admin/admin_stock_checker/index.dart';
 import 'package:firebase/views/admin/admin_stock_ins/form.dart';
+import 'package:firebase/views/admin/admin_stock_ins/index.dart';
 import 'package:firebase/views/admin/admin_suppliers/index.dart';
 import 'package:firebase/views/admin/admin_warehouses/index.dart';
 import 'package:flutter/material.dart';
@@ -201,7 +202,7 @@ class AdminLayout extends StatelessWidget {
               Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const AdminStockInForm()),
+                MaterialPageRoute(builder: (_) => const AdminStockInIndex()),
               );
             },
           ),
