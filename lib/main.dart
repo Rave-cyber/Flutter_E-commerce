@@ -1,4 +1,3 @@
-import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:firebase/views/auth/login_screen.dart';
