@@ -1,6 +1,9 @@
 import 'package:firebase/views/admin/admin_attributes/index.dart';
 import 'package:firebase/views/admin/admin_brands/index.dart';
 import 'package:firebase/views/admin/admin_categories/index.dart';
+import 'package:firebase/views/admin/admin_stock_checker/index.dart';
+import 'package:firebase/views/admin/admin_suppliers/index.dart';
+import 'package:firebase/views/admin/admin_warehouses/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -149,6 +152,43 @@ class AdminLayout extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminAttributesIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.warehouse, color: Colors.blueGrey),
+            title: const Text("Warehouses"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminWarehousesIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.local_shipping, color: Colors.blueGrey),
+            title: const Text("Suppliers"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminSuppliersIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.inventory_2, color: Colors.blueGrey),
+            title: const Text("Stock Checkers"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const AdminStockCheckersIndex()),
               );
             },
           ),
