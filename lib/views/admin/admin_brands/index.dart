@@ -1,34 +1,23 @@
-import 'package:firebase/models/brand_model.dart';
-import 'package:firebase/models/category_model.dart';
-import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '/models/product.dart';
-import 'form.dart';
+import '/models/brand_model.dart';
+import '/services/admin/brand_service.dart';
+import '/views/admin/admin_brands/form.dart';
 
-class AdminProductsIndex extends StatefulWidget {
-  const AdminProductsIndex({Key? key}) : super(key: key);
+class AdminBrandsIndex extends StatefulWidget {
+  const AdminBrandsIndex({Key? key}) : super(key: key);
 
   @override
-  State<AdminProductsIndex> createState() => _AdminProductsIndexState();
+  State<AdminBrandsIndex> createState() => _AdminBrandsIndexState();
 }
 
-class _AdminProductsIndexState extends State<AdminProductsIndex> {
-  final ProductService _productService = ProductService();
-
+class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
+  final BrandService _brandService = BrandService();
   final TextEditingController _searchController = TextEditingController();
+
   String _filterStatus = 'active';
   int _itemsPerPage = 10;
   int _currentPage = 1;
-
-  List<CategoryModel> _categories = [];
-  List<BrandModel> _brands = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDropdowns();
-  }
 
   @override
   void dispose() {
@@ -36,47 +25,18 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
     super.dispose();
   }
 
-  Future<void> _loadDropdowns() async {
-    final categories = await _productService.fetchCategories();
-    final brands = await _productService.fetchBrands();
-
-    setState(() {
-      _categories = categories;
-      _brands = brands;
-    });
-  }
-
-  String _getCategoryName(String categoryId) {
-    return _categories
-        .firstWhere(
-          (c) => c.id == categoryId,
-          orElse: () =>
-              CategoryModel(id: '', name: 'Unknown', is_archived: false),
-        )
-        .name;
-  }
-
-  String _getBrandName(String brandId) {
-    return _brands
-        .firstWhere(
-          (b) => b.id == brandId,
-          orElse: () => BrandModel(id: '', name: 'Unknown', is_archived: false),
-        )
-        .name;
-  }
-
-  List<ProductModel> _applyFilterSearchPagination(List<ProductModel> products) {
+  List<BrandModel> _applyFilterSearchPagination(List<BrandModel> brands) {
     // FILTER
-    List<ProductModel> filtered = products.where((product) {
-      if (_filterStatus == 'active') return !product.is_archived;
-      if (_filterStatus == 'archived') return product.is_archived;
+    List<BrandModel> filtered = brands.where((brand) {
+      if (_filterStatus == 'active') return !brand.is_archived;
+      if (_filterStatus == 'archived') return brand.is_archived;
       return true;
     }).toList();
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
       filtered = filtered
-          .where((product) => product.name
+          .where((brand) => brand.name
               .toLowerCase()
               .contains(_searchController.text.toLowerCase()))
           .toList();
@@ -113,7 +73,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                labelText: 'Search Products',
+                labelText: 'Search Brands',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -149,71 +109,56 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
             ),
             const SizedBox(height: 12),
 
-            // PRODUCT LIST
+            // BRAND LIST
             Expanded(
-              child: StreamBuilder<List<ProductModel>>(
-                stream: _productService.getProducts(),
+              child: StreamBuilder<List<BrandModel>>(
+                stream: _brandService.getBrands(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No products found.'));
+                    return const Center(child: Text('No brands found.'));
                   }
 
-                  final products = snapshot.data!;
-                  final paginatedProducts =
-                      _applyFilterSearchPagination(products);
+                  final brands = snapshot.data!;
+                  final paginatedBrands = _applyFilterSearchPagination(brands);
 
                   return Column(
                     children: [
                       Expanded(
                         child: ListView.builder(
-                          itemCount: paginatedProducts.length,
+                          itemCount: paginatedBrands.length,
                           itemBuilder: (context, index) {
-                            final product = paginatedProducts[index];
-
+                            final brand = paginatedBrands[index];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
                               child: ListTile(
-                                leading: product.image.isNotEmpty
-                                    ? Image.network(
-                                        product.image,
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const Icon(Icons.image),
                                 title: Text(
-                                  product.name,
+                                  brand.name,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: product.is_archived
+                                    color: brand.is_archived
                                         ? Colors.grey
                                         : Colors.black,
                                   ),
                                 ),
                                 subtitle: Text(
-                                  'Category: ${_getCategoryName(product.category_id)}\n'
-                                  'Brand: ${_getBrandName(product.brand_id)}\n'
-                                  'Stock: ${product.stock_quantity} | Price: \$${product.sale_price}\n'
-                                  '${product.is_archived ? "Archived" : "Active"}',
-                                ),
-                                isThreeLine: true,
+                                    brand.is_archived ? 'Archived' : 'Active'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Archive / Unarchive
                                     IconButton(
                                       icon: Icon(
-                                        product.is_archived
+                                        brand.is_archived
                                             ? Icons.unarchive
                                             : Icons.archive,
                                         color: Colors.orange,
                                       ),
                                       onPressed: () async {
-                                        final action = product.is_archived
+                                        final action = brand.is_archived
                                             ? 'unarchive'
                                             : 'archive';
                                         final confirm = await showDialog<bool>(
@@ -221,7 +166,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                                           builder: (_) => AlertDialog(
                                             title: Text('Confirm $action'),
                                             content: Text(
-                                              'Are you sure you want to $action "${product.name}"?',
+                                              'Are you sure you want to $action "${brand.name}"?',
                                             ),
                                             actions: [
                                               TextButton(
@@ -233,17 +178,15 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                                                 onPressed: () => Navigator.pop(
                                                     context, true),
                                                 child: Text(
-                                                  action[0].toUpperCase() +
-                                                      action.substring(1),
-                                                ),
+                                                    '${action[0].toUpperCase()}${action.substring(1)}'),
                                               ),
                                             ],
                                           ),
                                         );
 
                                         if (confirm == true) {
-                                          await _productService
-                                              .toggleArchive(product);
+                                          await _brandService
+                                              .toggleArchive(brand);
                                         }
                                       },
                                     ),
@@ -255,8 +198,9 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => AdminProductForm(
-                                                product: product),
+                                            builder: (_) => AdminBrandForm(
+                                              brand: brand,
+                                            ),
                                           ),
                                         );
                                       },
@@ -271,7 +215,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                                           builder: (_) => AlertDialog(
                                             title: const Text('Confirm Delete'),
                                             content: Text(
-                                                'Are you sure you want to delete "${product.name}"?'),
+                                                'Are you sure you want to delete "${brand.name}"?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.pop(
@@ -288,8 +232,8 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                                         );
 
                                         if (confirm == true) {
-                                          await _productService
-                                              .deleteProduct(product.id);
+                                          await _brandService
+                                              .deleteBrand(brand.id);
                                         }
                                       },
                                     ),
@@ -312,7 +256,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                           Text('Page $_currentPage'),
                           IconButton(
                             icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(products.length),
+                            onPressed: () => _nextPage(brands.length),
                           ),
                         ],
                       ),
@@ -329,11 +273,13 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const AdminProductForm()),
+                    MaterialPageRoute(
+                      builder: (_) => const AdminBrandForm(),
+                    ),
                   );
                 },
                 child: const Icon(Icons.add),
-                tooltip: 'Add Product',
+                tooltip: 'Add Brand',
               ),
             ),
           ],

@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductModel {
   final String id;
-  final String? brand_id;
-  final String? category_id;
+  final String brand_id; // made required
+  final String category_id; // made required
   final String name;
   final String description;
   final String image;
@@ -16,8 +16,8 @@ class ProductModel {
 
   ProductModel({
     required this.id,
-    this.brand_id,
-    this.category_id,
+    required this.brand_id,
+    required this.category_id,
     required this.name,
     required this.description,
     required this.image,
@@ -29,7 +29,6 @@ class ProductModel {
     this.updated_at,
   });
 
-  // Convert ProductModel → Map for Firestore
   Map<String, Object?> toMap() {
     return {
       'id': id,
@@ -51,12 +50,11 @@ class ProductModel {
     };
   }
 
-  // Convert Firestore Map → ProductModel
   factory ProductModel.fromMap(Map<String, dynamic> map) {
     return ProductModel(
       id: map['id'] ?? '',
-      brand_id: map['brand_id'],
-      category_id: map['category_id'],
+      brand_id: map['brand_id'] ?? '', // now required
+      category_id: map['category_id'] ?? '', // now required
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       image: map['image'] ?? '',

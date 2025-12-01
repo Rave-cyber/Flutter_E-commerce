@@ -1,3 +1,6 @@
+import 'package:firebase/views/admin/admin_attributes/index.dart';
+import 'package:firebase/views/admin/admin_brands/index.dart';
+import 'package:firebase/views/admin/admin_categories/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -81,6 +84,43 @@ class AdminLayout extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminProductsIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.category, color: Colors.blueGrey),
+            title: const Text("Categories"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminCategoriesIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading:
+                const Icon(Icons.branding_watermark, color: Colors.blueGrey),
+            title: const Text("Brands"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminBrandsIndex()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.label, color: Colors.blueGrey),
+            title: const Text("Attributes"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminAttributesIndex()),
               );
             },
           ),
