@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/models/stock_in_model.dart';
+import '/models/product_model.dart';
+import '/models/product_variant_model.dart';
 
 class StockInService {
   final CollectionReference _stockInCollection =
@@ -8,8 +10,45 @@ class StockInService {
   /// CREATE stock-in
   Future<void> createStockIn(StockInModel stockIn) async {
     try {
+      // 1. Create the stock-in record
       await _stockInCollection.doc(stockIn.id).set(stockIn.toMap());
       print('Stock-in record created successfully!');
+
+      // 2. Update the corresponding stock
+      final productsCollection =
+          FirebaseFirestore.instance.collection('products');
+      final variantsCollection =
+          FirebaseFirestore.instance.collection('product_variants');
+
+      if (stockIn.product_variant_id != null) {
+        // If this stock-in is for a variant
+        final variantDoc = variantsCollection.doc(stockIn.product_variant_id);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final snapshot = await transaction.get(variantDoc);
+          final currentStock = (snapshot.get('stock') ?? 0) as int;
+          transaction
+              .update(variantDoc, {'stock': currentStock + stockIn.quantity});
+
+          // Now also update main product stock as sum of all variants
+          final productId = snapshot.get('product_id');
+          final variantsSnapshot = await variantsCollection
+              .where('product_id', isEqualTo: productId)
+              .get();
+          final totalVariantStock = variantsSnapshot.docs
+              .fold<int>(0, (sum, doc) => sum + (doc['stock'] ?? 0) as int);
+          final productDoc = productsCollection.doc(productId);
+          transaction.update(productDoc, {'stock_quantity': totalVariantStock});
+        });
+      } else if (stockIn.product_id != null) {
+        // If stock-in is for main product (no variants)
+        final productDoc = productsCollection.doc(stockIn.product_id);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final snapshot = await transaction.get(productDoc);
+          final currentStock = (snapshot.get('stock_quantity') ?? 0) as int;
+          transaction.update(
+              productDoc, {'stock_quantity': currentStock + stockIn.quantity});
+        });
+      }
     } catch (e) {
       throw Exception('Failed to create stock-in: $e');
     }
