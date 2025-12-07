@@ -10,17 +10,24 @@ class FirestoreService {
   static Stream<List<ProductModel>> getFeaturedProducts() {
     return _firestore
         .collection('products')
-        .where('is_featured', isEqualTo: true) // Note: changed to is_featured
+        .where('is_featured', isEqualTo: true)
+        .where('is_archived', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
       print('Featured products snapshot: ${snapshot.docs.length} documents');
       return snapshot.docs.map((doc) {
-        print('Featured product data: ${doc.data()}');
-        return ProductModel.fromMap(doc.data());
+        final data = doc.data() as Map<String, dynamic>;
+        print('Featured product data: $data');
+        // ProductModel.fromMap expects the id in the map
+        return ProductModel.fromMap({
+          'id': doc.id,
+          ...data,
+        });
       }).toList();
     }).handleError((error) {
       print('Error fetching featured products: $error');
-      throw error;
+      // Return empty list if query fails
+      return Stream.value(<ProductModel>[]);
     });
   }
 
@@ -37,8 +44,10 @@ class FirestoreService {
           .map((snapshot) {
         print('All products snapshot: ${snapshot.docs.length} documents');
         return snapshot.docs
-            .map((doc) =>
-                ProductModel.fromMap(doc.data() as Map<String, dynamic>))
+            .map((doc) => ProductModel.fromMap({
+                  'id': doc.id,
+                  ...doc.data() as Map<String, dynamic>,
+                }))
             .toList();
       }).handleError((error) {
         print('Error fetching all products: $error');
@@ -58,8 +67,10 @@ class FirestoreService {
         print('Category product data: ${doc.data()}');
       });
       return snapshot.docs
-          .map(
-              (doc) => ProductModel.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) => ProductModel.fromMap({
+                'id': doc.id,
+                ...doc.data() as Map<String, dynamic>,
+              }))
           .toList();
     }).handleError((error) {
       print('Error fetching category products: $error');
@@ -276,5 +287,249 @@ class FirestoreService {
         };
       }).toList();
     });
+  }
+
+  // Create order
+  static Future<String> createOrder({
+    required String userId,
+    required String customerId,
+    required List<Map<String, dynamic>> items,
+    required double subtotal,
+    required double shipping,
+    required double total,
+    required String paymentMethod,
+    String? shippingAddress,
+    String? contactNumber,
+  }) async {
+    try {
+      final orderRef = _firestore.collection('orders').doc();
+      final orderId = orderRef.id;
+
+      await orderRef.set({
+        'id': orderId,
+        'userId': userId,
+        'customerId': customerId,
+        'items': items,
+        'subtotal': subtotal,
+        'shipping': shipping,
+        'total': total,
+        'paymentMethod': paymentMethod,
+        'status': 'pending',
+        'shippingAddress': shippingAddress,
+        'contactNumber': contactNumber,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      return orderId;
+    } catch (e) {
+      print('Error creating order: $e');
+      throw e;
+    }
+  }
+
+  // Remove items from cart after order creation
+  static Future<void> removeCartItems(
+      String userId, List<String> productIds) async {
+    try {
+      final batch = _firestore.batch();
+      for (final productId in productIds) {
+        final cartRef = _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('cart')
+            .doc(productId);
+        batch.delete(cartRef);
+      }
+      await batch.commit();
+    } catch (e) {
+      print('Error removing cart items: $e');
+      throw e;
+    }
+  }
+
+  // Get order by ID
+  static Future<Map<String, dynamic>?> getOrderById(String orderId) async {
+    try {
+      final doc = await _firestore.collection('orders').doc(orderId).get();
+      if (doc.exists) {
+        return {
+          'id': doc.id,
+          ...doc.data()!,
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting order: $e');
+      return null;
+    }
+  }
+
+  // Get orders by user ID
+  static Stream<List<Map<String, dynamic>>> getUserOrders(String userId) {
+    return _firestore
+        .collection('orders')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+
+      // Sort by createdAt in memory to avoid composite index requirement
+      orders.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime); // Descending order
+      });
+
+      return orders;
+    }).handleError((error) {
+      print('Error fetching user orders: $error');
+      // Return empty list on error instead of throwing
+      return Stream.value(<Map<String, dynamic>>[]);
+    });
+  }
+
+  // Get all orders (for admin)
+  static Stream<List<Map<String, dynamic>>> getAllOrders() {
+    return _firestore.collection('orders').snapshots().map((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+
+      // Sort by createdAt in memory (descending - newest first)
+      orders.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return orders;
+    }).handleError((error) {
+      print('Error fetching all orders: $error');
+      return Stream.value(<Map<String, dynamic>>[]);
+    });
+  }
+
+  // Get product ratings stream (only activated ratings by default)
+  static Stream<List<Map<String, dynamic>>> getProductRatingsStream(
+      String productId,
+      {bool onlyActivated = true}) {
+    return _firestore
+        .collection('product_ratings')
+        .where('productId', isEqualTo: productId)
+        .snapshots()
+        .map((snapshot) {
+      final ratings = snapshot.docs
+          .map((doc) {
+            return {
+              'id': doc.id,
+              ...doc.data()!,
+            };
+          })
+          .where((r) => !onlyActivated || (r['activated'] == true))
+          .toList();
+
+      // sort newest first
+      ratings.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return ratings;
+    }).handleError((error) {
+      print('Error fetching product ratings: $error');
+      return Stream.value(<Map<String, dynamic>>[]);
+    });
+  }
+
+  // Add a product rating. If the user has a delivered order for this product,
+  // the rating will be activated immediately. Otherwise it will be saved but
+  // marked as not activated.
+  static Future<void> addProductRating({
+    required String productId,
+    required String userId,
+    required int stars,
+    String? comment,
+  }) async {
+    try {
+      // Check if user has a delivered order containing this product
+      final delivered =
+          await hasUserDeliveredOrderForProduct(userId, productId);
+
+      final ratingsRef = _firestore.collection('product_ratings').doc();
+      await ratingsRef.set({
+        'productId': productId,
+        'userId': userId,
+        'stars': stars,
+        'comment': comment ?? '',
+        'activated': delivered,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error adding product rating: $e');
+      throw e;
+    }
+  }
+
+  // Returns true if the given user has at least one order with status
+  // 'delivered' that contains the given productId in its items.
+  static Future<bool> hasUserDeliveredOrderForProduct(
+      String userId, String productId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 'delivered')
+          .get();
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final items = (data['items'] as List<dynamic>?) ?? [];
+        for (final item in items) {
+          if (item is Map<String, dynamic>) {
+            if ((item['productId'] ?? '') == productId) return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print('Error checking delivered orders: $e');
+      return false;
+    }
+  }
+
+  // Update order status (for admin)
+  static Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating order status: $e');
+      throw e;
+    }
   }
 }

@@ -16,6 +16,7 @@ import '../views/auth/login_screen.dart';
 import '../views/admin/admin_dashboard/index.dart';
 import '../views/admin/admin_customers/index.dart';
 import '../views/admin/admin_products/index.dart';
+import '../views/admin/admin_orders/index.dart';
 
 class AdminLayout extends StatelessWidget {
   final Widget child;
@@ -76,6 +77,19 @@ class AdminLayout extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminCustomersIndex()),
+              );
+            },
+          ),
+
+          // Orders
+          ListTile(
+            leading: const Icon(Icons.shopping_cart, color: Colors.blueGrey),
+            title: const Text("Orders"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminOrdersIndex()),
               );
             },
           ),
