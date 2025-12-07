@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
+import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -39,6 +40,7 @@ class _CartScreenState extends State<CartScreen> {
         title: const Text('My Cart'),
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: primaryGreen),
         foregroundColor: primaryGreen,
         actions: [
           // Select All button
@@ -590,46 +592,61 @@ class _CartScreenState extends State<CartScreen> {
       List<QueryDocumentSnapshot> selectedItems) async {
     if (selectedItems.isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Navigate to checkout with selected items
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    if (user == null) return;
 
-    // Simulate checkout process for selected items
-    await Future.delayed(const Duration(seconds: 2));
+    final List<Map<String, dynamic>> items = selectedItems.map((item) {
+      final data = item.data() as Map<String, dynamic>;
+      return {
+        'productId': data['productId'] ?? item.id,
+        'productName': data['productName'] ?? '',
+        'productImage': data['productImage'] ?? '',
+        'price': (data['price'] ?? 0.0).toDouble(),
+        'quantity': data['quantity'] ?? 1,
+      };
+    }).toList();
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    _showSnackBar(
-        'Order placed for ${selectedItems.length} item${selectedItems.length > 1 ? 's' : ''}!');
-
-    // You can add actual checkout logic here for selected items
-    // - Create order document with only selected items
-    // - Remove selected items from cart
-    // - Process payment, etc.
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(
+          cartItems: items,
+          isSelectedItems: true,
+          selectedItemIds: selectedItems.map((item) => item.id).toList(),
+        ),
+      ),
+    );
   }
 
   Future<void> _checkoutAll(List<QueryDocumentSnapshot> cartItems) async {
     if (cartItems.isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Navigate to checkout with all items
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+    if (user == null) return;
 
-    // Simulate checkout process for all items
-    await Future.delayed(const Duration(seconds: 2));
+    final List<Map<String, dynamic>> items = cartItems.map((item) {
+      final data = item.data() as Map<String, dynamic>;
+      return {
+        'productId': data['productId'] ?? item.id,
+        'productName': data['productName'] ?? '',
+        'productImage': data['productImage'] ?? '',
+        'price': (data['price'] ?? 0.0).toDouble(),
+        'quantity': data['quantity'] ?? 1,
+      };
+    }).toList();
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    _showSnackBar('Order placed for all ${cartItems.length} items!');
-
-    // You can add actual checkout logic here for all items
-    // - Create order document with all cart items
-    // - Clear entire cart
-    // - Process payment, etc.
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(
+          cartItems: items,
+          isSelectedItems: false,
+          selectedItemIds: cartItems.map((item) => item.id).toList(),
+        ),
+      ),
+    );
   }
 
   void _showSnackBar(String message) {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../services/auth_service.dart';
+import '../orders/orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -135,7 +136,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.shopping_bag_outlined,
             title: 'Orders',
             onTap: () {
-              _showGuestMessage(context, 'Order History');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrdersScreen(),
+                ),
+              );
             },
           ),
           _buildMenuItem(

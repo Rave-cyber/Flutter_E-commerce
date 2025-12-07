@@ -592,34 +592,64 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Rating
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 14,
-                          );
-                        }),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '5.0',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '(0)',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream:
+                        FirestoreService.getProductRatingsStream(product.id),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Row(
+                          children: [
+                            Row(
+                              children: List.generate(
+                                  5,
+                                  (i) => Icon(Icons.star,
+                                      color: Colors.grey[300], size: 14)),
+                            ),
+                            const SizedBox(width: 4),
+                            Text('0.0',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w600)),
+                            const SizedBox(width: 2),
+                            Text('(0)',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600])),
+                          ],
+                        );
+                      }
+
+                      final ratings = snapshot.data!;
+                      final count = ratings.length;
+                      final avg = count > 0
+                          ? (ratings
+                                  .map((r) => (r['stars'] as num).toDouble())
+                                  .reduce((a, b) => a + b) /
+                              count)
+                          : 0.0;
+
+                      return Row(
+                        children: [
+                          Row(
+                            children: List.generate(5, (i) {
+                              return Icon(
+                                Icons.star,
+                                color: i < avg.round()
+                                    ? Colors.amber
+                                    : Colors.grey[300],
+                                size: 14,
+                              );
+                            }),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(avg.toStringAsFixed(1),
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(width: 2),
+                          Text('(${count.toString()})',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600])),
+                        ],
+                      );
+                    },
                   ),
 
                   // Stock indicator

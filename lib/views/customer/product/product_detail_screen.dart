@@ -2,6 +2,7 @@
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
+import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
@@ -29,6 +30,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _loadingBrandCategory = true;
   final Color primaryGreen = const Color(0xFF2C8610);
 
+  // Rating state
+  int _selectedStars = 5;
+  final TextEditingController _ratingController = TextEditingController();
+  bool _submittingRating = false;
+
   List<ProductVariantModel> _variants = [];
   // Two possible selections: main product or variant
   dynamic _selectedOption; // Can be ProductModel or ProductVariantModel
@@ -42,6 +48,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.initState();
     _checkIfFavorite();
     _loadProductDetails();
+  }
+
+  @override
+  void dispose() {
+    _ratingController.dispose();
+    super.dispose();
   }
 
   void _checkIfFavorite() async {
@@ -179,6 +191,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    // Check if we're adding (not removing) before toggling
+    final wasFavorite = _isFavorite;
+    final willBeFavorite = !_isFavorite;
+
     try {
       await FirestoreService.toggleFavorite(user.uid, widget.product.id!);
       if (mounted) {
@@ -186,12 +202,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _isFavorite = !_isFavorite;
         });
       }
-      _showSnackBar(
-        _isFavorite ? 'Added to favorites!' : 'Removed from favorites',
-        primaryGreen,
-      );
+
+      if (mounted) {
+        _showSnackBar(
+          willBeFavorite ? 'Added to favorites!' : 'Removed from favorites',
+          primaryGreen,
+        );
+
+        // Navigate to wishlist only when ADDING to favorites (not removing)
+        if (willBeFavorite && !wasFavorite) {
+          // Wait a bit to ensure the favorite is saved, then navigate
+          await Future.delayed(const Duration(milliseconds: 300));
+          if (mounted) {
+            _navigateToFavorites();
+          }
+        }
+      }
     } catch (e) {
-      _showSnackBar('Error updating favorites', Colors.red);
+      if (mounted) {
+        _showSnackBar('Error updating favorites', Colors.red);
+      }
     }
   }
 
@@ -259,6 +289,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } catch (e) {
       if (mounted) {
         _showSnackBar('Error adding to cart: $e', Colors.red);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addingToCart = false;
+        });
+      }
+    }
+  }
+
+  void _buyNow() async {
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
+
+    if (user == null) {
+      _showSnackBar('Please login to buy', Colors.orange);
+      return;
+    }
+
+    if (widget.product.id == null) {
+      _showSnackBar('Product error', Colors.red);
+      return;
+    }
+
+    // Determine stock based on selected option
+    final stock = _isSelectingMainProduct
+        ? widget.product.stock_quantity
+        : (_selectedOption as ProductVariantModel).stock;
+
+    if (stock <= 0) {
+      _showSnackBar('Selected option is out of stock', Colors.red);
+      return;
+    }
+
+    setState(() {
+      _addingToCart = true;
+    });
+
+    try {
+      String productName;
+      String productImage;
+      double price;
+      String productId;
+
+      if (_isSelectingMainProduct) {
+        // Buying main product
+        productName = widget.product.name;
+        productImage = widget.product.image;
+        price = widget.product.sale_price;
+        productId = widget.product.id!;
+      } else {
+        // Buying variant
+        final variant = _selectedOption as ProductVariantModel;
+        productName = '${widget.product.name} - ${variant.name}';
+        productImage =
+            variant.image.isNotEmpty ? variant.image : widget.product.image;
+        price = variant.sale_price;
+        productId = variant.id; // Use variant ID for cart
+      }
+
+      // Add to cart first
+      await FirestoreService.addToCart(
+        userId: user.uid,
+        productId: productId,
+        productName: productName,
+        productImage: productImage,
+        price: price,
+        quantity: 1,
+      );
+
+      // Navigate directly to checkout
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CheckoutScreen(
+              cartItems: [
+                {
+                  'productId': productId,
+                  'productName': productName,
+                  'productImage': productImage,
+                  'price': price,
+                  'quantity': 1,
+                }
+              ],
+              isSelectedItems: false,
+              selectedItemIds: [productId],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error: $e', Colors.red);
       }
     } finally {
       if (mounted) {
@@ -667,6 +790,231 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Future<void> _submitRating() async {
+    final authUser =
+        Provider.of<AuthService>(context, listen: false).currentUser;
+    if (authUser == null) {
+      _showSnackBar('Please login to submit a rating', Colors.orange);
+      return;
+    }
+
+    if (widget.product.id == null || widget.product.id!.isEmpty) {
+      _showSnackBar('Product error', Colors.red);
+      return;
+    }
+
+    setState(() {
+      _submittingRating = true;
+    });
+
+    try {
+      await FirestoreService.addProductRating(
+        productId: widget.product.id!,
+        userId: authUser.uid,
+        stars: _selectedStars,
+        comment: _ratingController.text.trim(),
+      );
+
+      final activated = await FirestoreService.hasUserDeliveredOrderForProduct(
+          authUser.uid, widget.product.id!);
+
+      if (mounted) {
+        _ratingController.clear();
+        setState(() {
+          _selectedStars = 5;
+        });
+
+        _showSnackBar(
+          activated
+              ? 'Thanks! Your rating is now active.'
+              : 'Thanks! Your rating will be activated after delivery.',
+          primaryGreen,
+        );
+      }
+    } catch (e) {
+      if (mounted) _showSnackBar('Error submitting rating', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submittingRating = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildRatingsSection() {
+    final productId = widget.product.id ?? '';
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ratings',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryGreen,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Average + count (activated ratings only)
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: FirestoreService.getProductRatingsStream(productId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const SizedBox.shrink();
+              }
+
+              final ratings = snapshot.data!;
+              final count = ratings.length;
+              final avg = count > 0
+                  ? (ratings
+                          .map((r) => (r['stars'] as num).toDouble())
+                          .reduce((a, b) => a + b) /
+                      count)
+                  : 0.0;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Row(
+                        children: List.generate(5, (i) {
+                          return Icon(
+                            Icons.star,
+                            color: i < avg.round()
+                                ? Colors.amber
+                                : Colors.grey[300],
+                            size: 18,
+                          );
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        count > 0 ? avg.toStringAsFixed(1) : '0.0',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('(${count.toString()})',
+                          style: TextStyle(color: Colors.grey[600])),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Ratings list (show activated ratings)
+                  SizedBox(
+                    height: 140,
+                    child: ratings.isEmpty
+                        ? Center(
+                            child: Text('No ratings yet',
+                                style: TextStyle(color: Colors.grey[600])))
+                        : ListView.separated(
+                            itemCount: ratings.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final r = ratings[index];
+                              final stars = (r['stars'] ?? 0) as int;
+                              final comment = (r['comment'] ?? '') as String;
+                              final ts = r['createdAt'] as Timestamp?;
+                              final date = ts != null ? ts.toDate() : null;
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Row(
+                                  children: List.generate(5, (i) {
+                                    return Icon(Icons.star,
+                                        size: 16,
+                                        color: i < stars
+                                            ? Colors.amber
+                                            : Colors.grey[300]);
+                                  }),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (comment.isNotEmpty) Text(comment),
+                                    if (date != null)
+                                      Text(
+                                        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+                                        style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 12),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Submission UI
+          Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            children: List.generate(5, (i) {
+              return IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _selectedStars = i + 1;
+                  });
+                },
+                icon: Icon(
+                  Icons.star,
+                  color: i < _selectedStars ? Colors.amber : Colors.grey[300],
+                ),
+              );
+            }),
+          ),
+          TextField(
+            controller: _ratingController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Write a comment (optional)',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _submittingRating ? null : _submitRating,
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: primaryGreen),
+                  child: _submittingRating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white)))
+                      : const Text('Submit Rating'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text('Note: Ratings become active after your order is delivered.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get stock based on selected option
@@ -686,6 +1034,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             floating: true,
             elevation: 0,
             backgroundColor: Colors.transparent,
+            iconTheme: IconThemeData(color: Colors.white),
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.black.withOpacity(0.3),
+                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ),
           SliverToBoxAdapter(
             child: Container(
@@ -782,6 +1142,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
 
+                    // Ratings Section
+                    _buildRatingsSection(),
+
                     const SizedBox(height: 80), // Space for bottom bar
                   ],
                 ),
@@ -848,29 +1211,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: IconButton(
-              onPressed: _loadingFavorites ? null : _navigateToFavorites,
-              icon: _loadingFavorites
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: _isFavorite ? Colors.red : primaryGreen,
-                      size: 24,
+          Expanded(
+            child: ElevatedButton(
+              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                backgroundColor: Colors.orange,
+                disabledBackgroundColor: Colors.grey,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.flash_on),
+                  SizedBox(width: 8),
+                  Text(
+                    'Buy Now',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                  ),
+                ],
               ),
             ),
           ),
