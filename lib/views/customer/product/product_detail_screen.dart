@@ -956,62 +956,293 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
           const SizedBox(height: 12),
 
-          // Submission UI
-          Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Row(
-            children: List.generate(5, (i) {
-              return IconButton(
-                padding: EdgeInsets.zero,
-                onPressed: () {
-                  setState(() {
-                    _selectedStars = i + 1;
-                  });
-                },
-                icon: Icon(
-                  Icons.star,
-                  color: i < _selectedStars ? Colors.amber : Colors.grey[300],
-                ),
-              );
-            }),
+          // Check if user can rate
+          FutureBuilder<bool>(
+            future: _checkIfUserCanRate(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final user = Provider.of<AuthService>(context).currentUser;
+              final canRate = snapshot.data ?? false;
+              final isLoggedIn = user != null;
+
+              // If user is not logged in, show login prompt
+              if (!isLoggedIn) {
+                return _buildLoginToRateSection();
+              }
+
+              // If user is logged in but hasn't ordered/delivered
+              if (!canRate) {
+                return _buildCannotRateSection();
+              }
+
+              // User can rate - show rating form
+              return _buildRatingForm();
+            },
           ),
-          TextField(
-            controller: _ratingController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Write a comment (optional)',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _checkIfUserCanRate() async {
+    final authUser =
+        Provider.of<AuthService>(context, listen: false).currentUser;
+
+    if (authUser == null) {
+      return false;
+    }
+
+    if (widget.product.id == null || widget.product.id!.isEmpty) {
+      return false;
+    }
+
+    try {
+      // Check if user has delivered order for this product
+      return await FirestoreService.hasUserDeliveredOrderForProduct(
+        authUser.uid,
+        widget.product.id!,
+      );
+    } catch (e) {
+      print('Error checking if user can rate: $e');
+      return false;
+    }
+  }
+
+  Widget _buildLoginToRateSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
           ),
-          const SizedBox(height: 8),
-          Row(
+          child: Row(
             children: [
+              Icon(Icons.info, color: Colors.orange[800]),
+              const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _submittingRating ? null : _submitRating,
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-                  child: _submittingRating
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white)))
-                      : const Text('Submit Rating'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Login to Rate',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange[800],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Please login to submit your rating for this product',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text('Note: Ratings become active after your order is delivered.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () {
+            // You'll need to implement navigation to login screen
+            _showSnackBar('Please login to continue', Colors.orange);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryGreen,
+            minimumSize: const Size(double.infinity, 50),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.login, size: 20),
+              SizedBox(width: 8),
+              Text('Login to Rate'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCannotRateSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue[300]!),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.shopping_bag, color: Colors.blue[800]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Purchase Required',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'You can rate this product only after your order has been delivered',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Opacity(
+          opacity: 0.6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Leave a rating',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, color: Colors.grey[600])),
+              const SizedBox(height: 8),
+              Row(
+                children: List.generate(5, (i) {
+                  return Icon(
+                    Icons.star,
+                    color: Colors.grey[300],
+                    size: 30,
+                  );
+                }),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                enabled: false,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Write a comment (optional)',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: null, // Disabled
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: Text(
+                        'Submit Rating',
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRatingForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(5, (i) {
+            return IconButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() {
+                  _selectedStars = i + 1;
+                });
+              },
+              icon: Icon(
+                Icons.star,
+                color: i < _selectedStars ? Colors.amber : Colors.grey[300],
+                size: 30,
+              ),
+            );
+          }),
+        ),
+        TextField(
+          controller: _ratingController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Write a comment (optional)',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _submittingRating ? null : _submitRating,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: _submittingRating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white)))
+                    : const Text('Submit Rating'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(Icons.check_circle, color: primaryGreen, size: 16),
+            const SizedBox(width: 4),
+            Text('You can rate this product as your order has been delivered.',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+          ],
+        ),
+      ],
     );
   }
 
