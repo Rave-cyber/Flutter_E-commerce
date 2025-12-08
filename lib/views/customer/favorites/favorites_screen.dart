@@ -6,12 +6,12 @@ import '../../../services/auth_service.dart';
 import '../../auth/login_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
-  final UserModel user;
+  final UserModel? user;
   final CustomerModel? customer;
 
   const FavoritesScreen({
     Key? key,
-    required this.user,
+    this.user,
     this.customer,
   }) : super(key: key);
 

@@ -12,6 +12,7 @@ import '../views/admin/admin_dashboard/index.dart';
 import '../views/admin/admin_customers/index.dart';
 import '../views/admin/admin_products/index.dart';
 import '../views/admin/admin_orders/index.dart';
+import '../views/admin/admin_orders/sales_report_screen.dart';
 
 class AdminLayout extends StatelessWidget {
   final Widget child;
@@ -85,6 +86,19 @@ class AdminLayout extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminOrdersIndex()),
+              );
+            },
+          ),
+
+          // Sales Report
+          ListTile(
+            leading: const Icon(Icons.assessment, color: Colors.blueGrey),
+            title: const Text("Sales Report"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const SalesReportScreen()),
               );
             },
           ),
