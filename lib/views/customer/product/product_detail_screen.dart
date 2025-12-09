@@ -3,6 +3,7 @@ import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
+import 'package:firebase/views/customer/orders/orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
@@ -1279,6 +1280,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.receipt_long),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OrdersScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Container(
@@ -1405,67 +1419,59 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Row(
         children: [
+          // Cart Icon Button (small, outlined)
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: primaryGreen,
+                width: 2,
+              ),
+            ),
+            child: IconButton(
+              onPressed: stock > 0 && !_addingToCart ? _addToCart : null,
+              icon: _addingToCart
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_cart_outlined),
+              color: primaryGreen,
+              disabledColor: Colors.grey,
+              splashRadius: 20,
+              padding: const EdgeInsets.all(12),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Buy Now Button (big, green, full width)
           Expanded(
             child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _addToCart : null,
+              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 backgroundColor: primaryGreen,
                 disabledBackgroundColor: Colors.grey,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 0,
-              ),
-              child: _addingToCart
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined),
-                        SizedBox(width: 8),
-                        Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                backgroundColor: Colors.orange,
-                disabledBackgroundColor: Colors.grey,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
+                elevation: 3,
+                shadowColor: primaryGreen.withOpacity(0.3),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flash_on),
-                  SizedBox(width: 8),
+                  Icon(Icons.flash_on, size: 22),
+                  SizedBox(width: 10),
                   Text(
                     'Buy Now',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

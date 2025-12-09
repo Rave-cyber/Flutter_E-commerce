@@ -12,6 +12,7 @@ import '../customer/product/product_detail_screen.dart';
 import '../customer/categories/categories_screen.dart';
 import '../customer/favorites/favorites_screen.dart';
 import '../customer/profile/profile_screen.dart';
+import '../customer/search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -122,7 +123,14 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.search, color: primaryGreen),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
