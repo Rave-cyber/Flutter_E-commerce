@@ -42,12 +42,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? _brandName;
   String? _categoryName;
   int _currentImageIndex = 0;
+  late Future<bool> _canRateFuture;
 
   @override
   void initState() {
     super.initState();
     _checkIfFavorite();
     _loadProductDetails();
+    _canRateFuture = _checkIfUserCanRate();
   }
 
   @override
@@ -500,7 +502,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             initialPage: 0,
             enableInfiniteScroll: true,
             reverse: false,
-            autoPlay: true,
+            autoPlay: false,
             autoPlayInterval: const Duration(seconds: 5),
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             autoPlayCurve: Curves.fastOutSlowIn,
@@ -958,7 +960,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
           // Check if user can rate
           FutureBuilder<bool>(
-            future: _checkIfUserCanRate(),
+            future: _canRateFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
