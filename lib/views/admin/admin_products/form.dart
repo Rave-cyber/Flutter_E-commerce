@@ -1,16 +1,14 @@
 import 'package:firebase/services/admin/product_sevice.dart';
-import 'package:firebase/services/admin/category_service.dart';
-import 'package:firebase/services/admin/brand_service.dart';
-import 'package:firebase/services/admin/attribute_service.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '../../../models/product.dart';
-import '../../../models/category_model.dart';
-import '../../../models/brand_model.dart';
-import '../../../models/attribute_model.dart';
-import '../../../models/attribute_value_model.dart';
-import '../../../models/product_variant_model.dart';
-import '../../../models/product_variant_attribute_model.dart';
+import '/models/product.dart';
+import '/models/category_model.dart';
+import '/models/brand_model.dart';
+import '/models/attribute_model.dart';
+import '/models/attribute_value_model.dart';
+import '/models/product_variant_model.dart';
+import '/models/product_variant_attribute_model.dart';
+import 'form.dart';
 
 class AdminProductForm extends StatefulWidget {
   final ProductModel? product;
@@ -36,9 +34,6 @@ class _VariantEntry {
 class _AdminProductFormState extends State<AdminProductForm> {
   final _formKey = GlobalKey<FormState>();
   final ProductService _productService = ProductService();
-  final CategoryService _categoryService = CategoryService();
-  final BrandService _brandService = BrandService();
-  final AttributeService _attributeService = AttributeService();
 
   late TextEditingController _nameController;
   late TextEditingController _descController;
@@ -93,8 +88,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
   }
 
   Future<void> _loadDropdowns() async {
-    final categories = await _categoryService.getCategories().first;
-    final brands = await _brandService.getBrands().first;
+    final categories = await _productService.fetchCategories();
+    final brands = await _productService.fetchBrands();
 
     setState(() {
       _categories = categories;
@@ -119,11 +114,11 @@ class _AdminProductFormState extends State<AdminProductForm> {
   }
 
   Future<void> _loadAttributes() async {
-    final attributes = await _attributeService.getAttributes();
+    final attributes = await _productService.fetchAttributes();
     Map<String, List<AttributeValueModel>> valuesMap = {};
 
     for (var attr in attributes) {
-      valuesMap[attr.id] = await _attributeService.getAttributeValues(attr.id);
+      valuesMap[attr.id] = await _productService.fetchAttributeValues(attr.id);
     }
 
     setState(() {
@@ -301,117 +296,119 @@ class _AdminProductFormState extends State<AdminProductForm> {
     final currentAttrId = pair['attribute_id'] ?? '';
     final currentValId = pair['attribute_value_id'] ?? '';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Attribute dropdown
-          Material(
-            elevation: 2,
-            borderRadius: BorderRadius.circular(8),
-            child: DropdownButtonFormField<String>(
-              value: currentAttrId.isNotEmpty ? currentAttrId : null,
-              decoration: InputDecoration(
-                labelText: 'Attribute',
-                prefixIcon: const Icon(Icons.label, color: Colors.green),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+    return Material(
+      elevation: 2,
+      shadowColor: Colors.green.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade200, width: 1),
+        ),
+        child: Row(
+          children: [
+            // Attribute dropdown
+            Expanded(
+              flex: 5,
+              child: DropdownButtonFormField<String>(
+                value: currentAttrId.isNotEmpty ? currentAttrId : null,
+                decoration: InputDecoration(
+                  labelText: 'Attribute',
+                  labelStyle: TextStyle(color: Colors.grey[600]),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.grey[50],
+                items: _attributes
+                    .map((a) => DropdownMenuItem(
+                          value: a.id,
+                          child: Text(a.name),
+                        ))
+                    .toList(),
+                onChanged: (val) {
+                  final newAttrId = val ?? '';
+                  final newValId = (newAttrId.isNotEmpty &&
+                          (_attributeValues[newAttrId]?.isNotEmpty ?? false))
+                      ? _attributeValues[newAttrId]![0].id
+                      : '';
+                  setState(() {
+                    _variants[variantIndex].attributes[pairIndex]
+                        ['attribute_id'] = newAttrId;
+                    _variants[variantIndex].attributes[pairIndex]
+                        ['attribute_value_id'] = newValId;
+                  });
+                },
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Select attribute' : null,
               ),
-              items: _attributes
-                  .map((a) => DropdownMenuItem(
-                        value: a.id,
-                        child: Text(a.name),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                final newAttrId = val ?? '';
-                final newValId = (newAttrId.isNotEmpty &&
-                        (_attributeValues[newAttrId]?.isNotEmpty ?? false))
-                    ? _attributeValues[newAttrId]![0].id
-                    : '';
-                setState(() {
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_id'] = newAttrId;
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_value_id'] = newValId;
-                });
-              },
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Select attribute' : null,
             ),
-          ),
-          const SizedBox(height: 12),
-          // Attribute value dropdown
-          Material(
-            elevation: 2,
-            borderRadius: BorderRadius.circular(8),
-            child: DropdownButtonFormField<String>(
-              value: currentValId.isNotEmpty ? currentValId : null,
-              decoration: InputDecoration(
-                labelText: 'Value',
-                prefixIcon:
-                    const Icon(Icons.format_list_bulleted, color: Colors.green),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+            const SizedBox(width: 8),
+            // Value dropdown
+            Expanded(
+              flex: 5,
+              child: DropdownButtonFormField<String>(
+                value: currentValId.isNotEmpty ? currentValId : null,
+                decoration: InputDecoration(
+                  labelText: 'Value',
+                  labelStyle: TextStyle(color: Colors.grey[600]),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.grey[50],
+                items: (_attributeValues[currentAttrId] ?? [])
+                    .map((av) => DropdownMenuItem(
+                          value: av.id,
+                          child: Text(av.name),
+                        ))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _variants[variantIndex].attributes[pairIndex]
+                        ['attribute_value_id'] = val ?? '';
+                  });
+                },
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Select value' : null,
               ),
-              items: (_attributeValues[currentAttrId] ?? [])
-                  .map((av) => DropdownMenuItem(
-                        value: av.id,
-                        child: Text(av.name),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_value_id'] = val ?? '';
-                });
-              },
-              validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
             ),
-          ),
-          const SizedBox(height: 12),
-          // Remove button
-          Align(
-            alignment: Alignment.centerRight,
-            child: Material(
+            const SizedBox(width: 8),
+            // Remove button
+            Material(
               elevation: 2,
+              shadowColor: Colors.red.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
               child: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () =>
                     _removeAttributePairFromVariant(variantIndex, pairIndex),
-                icon: const Icon(Icons.delete, color: Colors.red),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red[50],
-                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -424,799 +421,732 @@ class _AdminProductFormState extends State<AdminProductForm> {
     }
 
     return AdminLayout(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.green.shade50,
-              Colors.white,
-              Colors.grey.shade50,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Section - Elevated
-                Material(
-                  elevation: 4,
-                  shadowColor: Colors.green.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Back + Title - Elevated
+              Material(
+                elevation: 4,
+                shadowColor: Colors.green.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Material(
+                        elevation: 2,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[50],
+                        child: BackButton(
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        widget.product == null
+                            ? 'Create Product'
+                            : 'Edit Product',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Image picker - Elevated
+              Material(
+                elevation: 4,
+                shadowColor: Colors.green.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                child: GestureDetector(
+                  onTap: _pickImage,
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    height: 150,
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.green.shade500,
-                          Colors.green.shade600,
-                          Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[50],
+                    ),
+                    child: _imageUrl.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _imageUrl,
+                              height: 150,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                  color: Colors.grey,
+                                );
+                              },
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.camera_alt,
+                                size: 50,
+                                color: Colors.green[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap to add image',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Product fields - Elevated
+              Material(
+                elevation: 3,
+                shadowColor: Colors.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Product Name
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Product Name',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        validator: (val) =>
+                            val == null || val.isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description
+                      TextFormField(
+                        controller: _descController,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Category Dropdown
+                      DropdownButtonFormField<CategoryModel>(
+                        value: _selectedCategory,
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        items: _categories
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(c.name),
+                                ))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedCategory = val),
+                        validator: (val) =>
+                            val == null ? 'Please select a category' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Brand Dropdown
+                      DropdownButtonFormField<BrandModel>(
+                        value: _selectedBrand,
+                        decoration: InputDecoration(
+                          labelText: 'Brand',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        items: _brands
+                            .map((b) => DropdownMenuItem(
+                                  value: b,
+                                  child: Text(b.name),
+                                ))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedBrand = val),
+                        validator: (val) =>
+                            val == null ? 'Please select a brand' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Base Price
+                      TextFormField(
+                        controller: _basePriceController,
+                        decoration: InputDecoration(
+                          labelText: 'Base Price',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Sale Price
+                      TextFormField(
+                        controller: _salePriceController,
+                        decoration: InputDecoration(
+                          labelText: 'Sale Price',
+                          labelStyle: TextStyle(color: Colors.grey[600]),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: Colors.green, width: 2),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Archived Switch
+                      Material(
+                        elevation: 2,
+                        shadowColor: _isArchived
+                            ? Colors.red.withOpacity(0.2)
+                            : Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white,
+                        child: SwitchListTile(
+                          title: Text(
+                            'Archived',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _isArchived
+                                  ? Colors.red[700]
+                                  : Colors.green[700],
+                            ),
+                          ),
+                          value: _isArchived,
+                          onChanged: (val) => setState(() => _isArchived = val),
+                          activeColor: Colors.green,
+                          inactiveThumbColor: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Product Variants Section - Elevated
+              Material(
+                elevation: 3,
+                shadowColor: Colors.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Product Variants',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                          Material(
+                            elevation: 2,
+                            shadowColor: Colors.green.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.green,
+                            child: TextButton.icon(
+                              onPressed: _addVariant,
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text(
+                                'Add Variant',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back,
-                                color: Colors.white),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.black.withOpacity(0.2),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: Text(
-                            widget.product == null
-                                ? 'Create Product'
-                                : 'Edit Product',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
-                // Image Section - Elevated
-                Material(
-                  elevation: 3,
-                  shadowColor: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.image,
-                                color: Colors.green[600], size: 20),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Product Image',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[700],
+                      // Variant cards
+                      ..._variants.asMap().entries.map((entry) {
+                        final int index = entry.key;
+                        final _VariantEntry entryData = entry.value;
+                        final ProductVariantModel variant = entryData.variant;
+
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                                spreadRadius: 0,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        GestureDetector(
-                          onTap: _pickImage,
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
                           child: Material(
-                            elevation: 2,
-                            borderRadius: BorderRadius.circular(12),
+                            elevation: 0,
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white,
                             child: Container(
-                              height: 200,
-                              width: double.infinity,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.grey[100],
-                              ),
-                              child: _imageUrl.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.network(
-                                        _imageUrl,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return _buildImagePlaceholder();
-                                        },
-                                      ),
-                                    )
-                                  : _buildImagePlaceholder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Basic Information Section - Elevated
-                Material(
-                  elevation: 3,
-                  shadowColor: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info_outline,
-                                color: Colors.green[600], size: 20),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Basic Information',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Product Name
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: TextFormField(
-                            controller: _nameController,
-                            decoration: InputDecoration(
-                              labelText: 'Product Name',
-                              prefixIcon: const Icon(Icons.shopping_bag,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            validator: (val) => val == null || val.isEmpty
-                                ? 'Product name is required'
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Description
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: TextFormField(
-                            controller: _descController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              labelText: 'Description',
-                              prefixIcon: const Icon(Icons.description,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Category
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: DropdownButtonFormField<CategoryModel>(
-                            value: _selectedCategory,
-                            decoration: InputDecoration(
-                              labelText: 'Category',
-                              prefixIcon: const Icon(Icons.category,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            items: _categories
-                                .map((c) => DropdownMenuItem(
-                                      value: c,
-                                      child: Text(c.name),
-                                    ))
-                                .toList(),
-                            onChanged: (val) =>
-                                setState(() => _selectedCategory = val),
-                            validator: (val) =>
-                                val == null ? 'Please select a category' : null,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Brand
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: DropdownButtonFormField<BrandModel>(
-                            value: _selectedBrand,
-                            decoration: InputDecoration(
-                              labelText: 'Brand',
-                              prefixIcon: const Icon(Icons.storefront,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            items: _brands
-                                .map((b) => DropdownMenuItem(
-                                      value: b,
-                                      child: Text(b.name),
-                                    ))
-                                .toList(),
-                            onChanged: (val) =>
-                                setState(() => _selectedBrand = val),
-                            validator: (val) =>
-                                val == null ? 'Please select a brand' : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Pricing Section - Elevated
-                Material(
-                  elevation: 3,
-                  shadowColor: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.attach_money,
-                                color: Colors.green[600], size: 20),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Pricing',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Base Price
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: TextFormField(
-                            controller: _basePriceController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Base Price',
-                              prefixIcon: const Icon(Icons.monetization_on,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Sale Price
-                        Material(
-                          elevation: 2,
-                          borderRadius: BorderRadius.circular(8),
-                          child: TextFormField(
-                            controller: _salePriceController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Sale Price',
-                              prefixIcon: const Icon(Icons.local_offer,
-                                  color: Colors.green),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Variants Section - Elevated
-                Material(
-                  elevation: 3,
-                  shadowColor: Colors.green.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.layers,
-                                    color: Colors.green[600], size: 20),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Product Variants',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green[700],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Material(
-                              elevation: 3,
-                              shadowColor: Colors.green.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                              child: ElevatedButton.icon(
-                                onPressed: _addVariant,
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('ADD VARIANT'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.green.shade200,
+                                  width: 1,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Variant cards
-                        ..._variants.asMap().entries.map((entry) {
-                          final int index = entry.key;
-                          final _VariantEntry entryData = entry.value;
-                          final ProductVariantModel variant = entryData.variant;
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.green.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                // Variant header
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green[100],
-                                        borderRadius: BorderRadius.circular(8),
+                                    // Remove variant
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Material(
+                                          elevation: 2,
+                                          shadowColor:
+                                              Colors.red.withOpacity(0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.grey[50],
+                                          child: IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () =>
+                                                _removeVariant(index),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    // Variant name
+                                    TextFormField(
+                                      initialValue: variant.name,
+                                      decoration: InputDecoration(
+                                        labelText: 'Variant Name',
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey[600]),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          borderSide: const BorderSide(
+                                              color: Colors.green, width: 2),
+                                        ),
                                       ),
+                                      onChanged: (val) => variant.name = val,
+                                      validator: (val) =>
+                                          val == null || val.isEmpty
+                                              ? 'Required'
+                                              : null,
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Variant Image picker
+                                    GestureDetector(
+                                      onTap: () async {
+                                        final picked =
+                                            await _productService.pickImage();
+                                        if (picked != null) {
+                                          setState(() {
+                                            variant.image = picked.url;
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          color: Colors.grey[50],
+                                        ),
+                                        child: variant.image.isNotEmpty
+                                            ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                child: Image.network(
+                                                    variant.image,
+                                                    height: 120,
+                                                    fit: BoxFit.cover),
+                                              )
+                                            : Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.camera_alt,
+                                                    size: 40,
+                                                    color: Colors.green[400],
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    'Tap to add variant image',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Prices
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextFormField(
+                                            initialValue:
+                                                variant.base_price.toString(),
+                                            decoration: InputDecoration(
+                                              labelText: 'Base Price',
+                                              labelStyle: TextStyle(
+                                                  color: Colors.grey[600]),
+                                              filled: true,
+                                              fillColor: Colors.grey[50],
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: const BorderSide(
+                                                    color: Colors.green,
+                                                    width: 2),
+                                              ),
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            onChanged: (val) =>
+                                                variant.base_price =
+                                                    double.tryParse(val) ?? 0,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: TextFormField(
+                                            initialValue:
+                                                variant.sale_price.toString(),
+                                            decoration: InputDecoration(
+                                              labelText: 'Sale Price',
+                                              labelStyle: TextStyle(
+                                                  color: Colors.grey[600]),
+                                              filled: true,
+                                              fillColor: Colors.grey[50],
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: const BorderSide(
+                                                    color: Colors.green,
+                                                    width: 2),
+                                              ),
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                            onChanged: (val) =>
+                                                variant.sale_price =
+                                                    double.tryParse(val) ?? 0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Archived Switch
+                                    Material(
+                                      elevation: 2,
+                                      shadowColor: variant.is_archived
+                                          ? Colors.red.withOpacity(0.2)
+                                          : Colors.green.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white,
+                                      child: SwitchListTile(
+                                        title: Text(
+                                          'Archived',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: variant.is_archived
+                                                ? Colors.red[700]
+                                                : Colors.green[700],
+                                          ),
+                                        ),
+                                        value: variant.is_archived,
+                                        onChanged: (val) => setState(
+                                            () => variant.is_archived = val),
+                                        activeColor: Colors.green,
+                                        inactiveThumbColor: Colors.grey,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 16),
+
+                                    // Divider
+                                    Container(
+                                      height: 1,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.green.shade200,
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 16),
+
+                                    // Attributes section
+                                    Align(
+                                      alignment: Alignment.centerLeft,
                                       child: Text(
-                                        'Variant ${index + 1}',
+                                        'Attributes',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.green[700],
                                         ),
                                       ),
                                     ),
-                                    Material(
-                                      elevation: 2,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: IconButton(
-                                        onPressed: () => _removeVariant(index),
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        style: IconButton.styleFrom(
-                                          backgroundColor: Colors.red[50],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Variant name
-                                Material(
-                                  elevation: 2,
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: TextFormField(
-                                    controller: TextEditingController(
-                                        text: variant.name)
-                                      ..addListener(() {
-                                        variant.name = _nameController.text;
-                                      }),
-                                    decoration: InputDecoration(
-                                      labelText: 'Variant Name',
-                                      prefixIcon: const Icon(Icons.title,
-                                          color: Colors.green),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.grey[50],
-                                    ),
-                                    validator: (val) =>
-                                        val == null || val.isEmpty
-                                            ? 'Variant name is required'
-                                            : null,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Variant Image
-                                GestureDetector(
-                                  onTap: () async {
-                                    final picked =
-                                        await _productService.pickImage();
-                                    if (picked != null) {
-                                      setState(() {
-                                        variant.image = picked.url;
-                                      });
-                                    }
-                                  },
-                                  child: Material(
-                                    elevation: 2,
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Container(
-                                      height: 120,
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.grey[100],
-                                      ),
-                                      child: variant.image.isNotEmpty
-                                          ? ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: Image.network(
-                                                variant.image,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error,
-                                                    stackTrace) {
-                                                  return _buildImagePlaceholder();
-                                                },
-                                              ),
-                                            )
-                                          : _buildImagePlaceholder(),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Prices
-                                Column(
-                                  children: [
-                                    Material(
-                                      elevation: 2,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: TextFormField(
-                                        controller: TextEditingController(
-                                          text: variant.base_price.toString(),
-                                        )..addListener(() {
-                                            variant.base_price =
-                                                double.tryParse(
-                                                      TextEditingController(
-                                                        text: variant.base_price
-                                                            .toString(),
-                                                      ).text,
-                                                    ) ??
-                                                    0;
-                                          }),
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                          labelText: 'Base Price',
-                                          prefixIcon: const Icon(
-                                              Icons.monetization_on,
-                                              color: Colors.green),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          filled: true,
-                                          fillColor: Colors.grey[50],
-                                        ),
-                                      ),
-                                    ),
                                     const SizedBox(height: 12),
-                                    Material(
-                                      elevation: 2,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: TextFormField(
-                                        controller: TextEditingController(
-                                          text: variant.sale_price.toString(),
-                                        )..addListener(() {
-                                            variant.sale_price =
-                                                double.tryParse(
-                                                      TextEditingController(
-                                                        text: variant.sale_price
-                                                            .toString(),
-                                                      ).text,
-                                                    ) ??
-                                                    0;
-                                          }),
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                          labelText: 'Sale Price',
-                                          prefixIcon: const Icon(
-                                              Icons.local_offer,
-                                              color: Colors.green),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
+
+                                    // Attribute pairs UI
+                                    ...entryData.attributes
+                                        .asMap()
+                                        .entries
+                                        .map((pairEntry) {
+                                      final pairIndex = pairEntry.key;
+                                      final pair = pairEntry.value;
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8),
+                                        child: _buildAttributePairUi(
+                                            index, pairIndex, pair),
+                                      );
+                                    }).toList(),
+
+                                    // Add attribute button
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Material(
+                                        elevation: 2,
+                                        shadowColor:
+                                            Colors.green.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: Colors.green[50],
+                                        child: TextButton.icon(
+                                          icon: Icon(Icons.add,
+                                              color: Colors.green[700]),
+                                          label: Text(
+                                            'Add Attribute',
+                                            style: TextStyle(
+                                                color: Colors.green[700],
+                                                fontWeight: FontWeight.w600),
                                           ),
-                                          filled: true,
-                                          fillColor: Colors.grey[50],
+                                          onPressed: () =>
+                                              _addAttributePairToVariant(index),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-
-                                // Attributes section
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[50],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Header
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.settings,
-                                            color: Colors.green[600],
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Attributes',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.green[700],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-
-                                      // Attribute pairs UI
-                                      ...entryData.attributes
-                                          .asMap()
-                                          .entries
-                                          .map((pairEntry) {
-                                        final pairIndex = pairEntry.key;
-                                        final pair = pairEntry.value;
-
-                                        return _buildAttributePairUi(
-                                            index, pairIndex, pair);
-                                      }).toList(),
-
-                                      const SizedBox(height: 12),
-
-                                      // Add attribute button
-                                      Center(
-                                        child: Material(
-                                          elevation: 2,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: ElevatedButton.icon(
-                                            onPressed: () =>
-                                                _addAttributePairToVariant(
-                                                    index),
-                                            icon:
-                                                const Icon(Icons.add, size: 16),
-                                            label: const Text('Add Attribute'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-
-                        if (_variants.isEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(Icons.layers_outlined,
-                                    size: 48, color: Colors.grey[400]),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No variants added yet',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Add product variants to create different versions of your product',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                      ],
-                    ),
+                        );
+                      }).toList(),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 32),
+              ),
 
-                // Save Button - Elevated
-                Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+              const SizedBox(height: 24),
+
+              // Save Button - Elevated
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _saveProduct,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      elevation: 8,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: SizedBox(
-                      width: 250,
-                      child: ElevatedButton.icon(
-                        onPressed: _saveProduct,
-                        icon: const Icon(Icons.save, size: 20),
-                        label: Text(
-                          widget.product == null
-                              ? 'CREATE PRODUCT'
-                              : 'UPDATE PRODUCT',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
+                    child: Text(
+                      widget.product == null
+                          ? 'Create Product'
+                          : 'Update Product',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[200],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 8),
-          Text(
-            'Tap to add image',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 14,
-            ),
-          ),
-        ],
       ),
     );
   }
