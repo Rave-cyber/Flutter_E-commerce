@@ -14,6 +14,7 @@ import '../views/admin/admin_suppliers/index.dart';
 import '../views/admin/admin_stock_checker/index.dart';
 import '../views/admin/admin_stock_ins/index.dart';
 import '../views/admin/admin_stock_outs/index.dart';
+import '../views/admin/admin_inventory_reports/index.dart';
 import '../services/auth_service.dart';
 import '../views/auth/login_screen.dart';
 
@@ -113,6 +114,13 @@ class AdminSidebarWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildSectionHeader('Inventory Management'),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.analytics,
+                    title: 'Inventory Reports',
+                    route: '/admin/inventory-reports',
+                    isSelected: selectedRoute == '/admin/inventory-reports',
+                  ),
                   _buildMenuItem(
                     context,
                     icon: Icons.warehouse,
@@ -468,6 +476,9 @@ class AdminSidebarWidget extends StatelessWidget {
         break;
       case '/admin/stock-outs':
         targetWidget = const AdminStockOutIndex();
+        break;
+      case '/admin/inventory-reports':
+        targetWidget = const AdminInventoryReports();
         break;
       default:
         return;
