@@ -43,12 +43,16 @@ class FirestoreService {
           .snapshots()
           .map((snapshot) {
         print('All products snapshot: ${snapshot.docs.length} documents');
-        return snapshot.docs
-            .map((doc) => ProductModel.fromMap({
-                  'id': doc.id,
-                  ...doc.data() as Map<String, dynamic>,
-                }))
-            .toList();
+        return snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          print(
+              'DEBUG: Product ${doc.id} category field: "${data['category']}"');
+          print('DEBUG: Product ${doc.id} full data: $data');
+          return ProductModel.fromMap({
+            'id': doc.id,
+            ...data,
+          });
+        }).toList();
       }).handleError((error) {
         print('Error fetching all products: $error');
         throw error;
@@ -58,14 +62,12 @@ class FirestoreService {
     // CHANGED: Use category_id instead of category
     return _firestore
         .collection('products')
-        .where('category_id', isEqualTo: category) // CHANGED THIS LINE
+        .where('category_id',
+            isEqualTo: category) // CHANGED: Revert to 'category' field
         .where('is_archived', isEqualTo: false) // Add this filter
         .snapshots()
         .map((snapshot) {
       print('Category products snapshot: ${snapshot.docs.length} documents');
-      snapshot.docs.forEach((doc) {
-        print('Category product data: ${doc.data()}');
-      });
       return snapshot.docs
           .map((doc) => ProductModel.fromMap({
                 'id': doc.id,
@@ -163,6 +165,15 @@ class FirestoreService {
       print('Error adding to cart: $e');
       throw e;
     }
+  }
+
+  // Get cart stream
+  static Stream<QuerySnapshot> getCartStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('cart')
+        .snapshots();
   }
 
   // Add this method to your existing FirestoreService class

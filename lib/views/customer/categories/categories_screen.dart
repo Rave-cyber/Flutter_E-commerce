@@ -1,5 +1,6 @@
 import 'package:firebase/models/category_model.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../../../models/user_model.dart';
 import '../../../models/product.dart';
 import '../../../firestore_service.dart';
@@ -23,6 +24,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final Color primaryGreen = const Color(0xFF2C8610);
   late CustomerCategoryService _categoryService;
   List<CategoryModel> _categories = [];
+  List<ProductModel> _currentProducts = [];
 
   @override
   void initState() {
@@ -172,8 +174,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inventory_2_outlined,
-                    color: Colors.grey[400], size: 60),
+                Lottie.asset(
+                  'assets/animations/Empty Cart.json',
+                  height: 200,
+                  width: 200,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(Icons.inventory_2_outlined,
+                        color: Colors.grey[400], size: 60);
+                  },
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'No products found',
@@ -183,7 +193,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   ),
                 ),
                 Text(
-                  _selectedCategory == 'all'
+                  _selectedCategory == 'All'
                       ? 'in any category'
                       : 'in this category',
                   style: TextStyle(
@@ -195,7 +205,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
-                      _selectedCategory = 'all';
+                      _selectedCategory = 'All';
                     });
                   },
                   child: Text('Show All Products'),

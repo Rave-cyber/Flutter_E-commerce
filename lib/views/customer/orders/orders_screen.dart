@@ -11,110 +11,228 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryGreen = const Color(0xFF2C8610);
+    final theme = _AppTheme();
     final user = Provider.of<AuthService>(context).currentUser;
 
     if (user == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('My Orders'),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          foregroundColor: primaryGreen,
-        ),
-        body: const Center(
-          child: Text('Please login to view your orders'),
-        ),
-      );
+      return _buildAuthRequiredScreen(context, theme);
     }
 
+    return _buildOrdersScreen(context, theme, user);
+  }
+
+  Scaffold _buildAuthRequiredScreen(BuildContext context, _AppTheme theme) {
     return Scaffold(
+      backgroundColor: theme.backgroundColor,
       appBar: AppBar(
         title: const Text('My Orders'),
         backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: primaryGreen,
+        elevation: 1,
+        foregroundColor: theme.primaryGreen,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.primaryGreen),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.login,
+                size: 80,
+                color: theme.primaryGreen.withOpacity(0.7),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Sign In Required',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: theme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please sign in to view your order history',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Scaffold _buildOrdersScreen(BuildContext context, _AppTheme theme, user) {
+    return Scaffold(
+      backgroundColor: theme.backgroundColor,
+      appBar: AppBar(
+        title: const Text('Order History'),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        foregroundColor: theme.primaryGreen,
+        centerTitle: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.primaryGreen),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.filter_list, color: theme.primaryGreen),
+          ),
+        ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: FirestoreService.getUserOrders(user.uid),
+        stream: FirestoreService.getUserOrders(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+                child: CircularProgressIndicator(color: theme.primaryGreen));
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading orders',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    snapshot.error.toString(),
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
+            return _buildErrorState(snapshot.error, theme, context);
           }
 
           final orders = snapshot.data ?? [];
 
           if (orders.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No orders yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your orders will appear here',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _buildEmptyState(theme, context);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return _buildOrderCard(context, order, primaryGreen);
-            },
-          );
+          return _buildOrdersList(orders, theme, context);
         },
       ),
     );
   }
 
+  Widget _buildErrorState(
+      dynamic error, _AppTheme theme, BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Unable to Load Orders',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: theme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Please check your connection',
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(_AppTheme theme, BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_bag_outlined,
+              size: 80,
+              color: theme.primaryGreen.withOpacity(0.7),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Orders Yet',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: theme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your orders will appear here',
+              style: TextStyle(
+                fontSize: 16,
+                color: theme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.primaryGreen,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Start Shopping',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrdersList(List<Map<String, dynamic>> orders, _AppTheme theme,
+      BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${orders.length} Order${orders.length > 1 ? 's' : ''}',
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.separated(
+              itemCount: orders.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, index) =>
+                  _buildOrderCard(orders[index], theme, context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderCard(
-    BuildContext context,
-    Map<String, dynamic> order,
-    Color primaryGreen,
-  ) {
+      Map<String, dynamic> order, _AppTheme theme, BuildContext context) {
     final orderId = order['id'] ?? '';
     final status = order['status'] ?? 'pending';
     final total = (order['total'] ?? 0.0).toDouble();
@@ -122,34 +240,28 @@ class OrdersScreen extends StatelessWidget {
     final paymentMethod = order['paymentMethod'] ?? 'gcash';
     final createdAt = order['createdAt'] as Timestamp?;
 
-    // Format date
-    String dateText = 'Date not available';
-    if (createdAt != null) {
-      dateText = DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt.toDate());
-    }
+    final dateText = createdAt != null
+        ? DateFormat('MMM dd, yyyy').format(createdAt.toDate())
+        : 'Date not available';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      elevation: 2,
       child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderDetailScreen(orderId: orderId),
-            ),
-          );
-        },
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => OrderDetailScreen(orderId: orderId)),
+        ),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row with order ID and status
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -168,8 +280,8 @@ class OrdersScreen extends StatelessWidget {
                         Text(
                           dateText,
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                            fontSize: 13,
+                            color: theme.textSecondary,
                           ),
                         ),
                       ],
@@ -179,39 +291,36 @@ class OrdersScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
-              // Order items preview
+
+              // Items preview
               if (items.isNotEmpty) ...[
                 Text(
                   '${items.length} item${items.length > 1 ? 's' : ''}',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[700],
+                    color: theme.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Show first item preview
-                if (items.isNotEmpty)
-                  _buildItemPreview(items[0] as Map<String, dynamic>),
+                _buildItemPreview(items.first),
                 if (items.length > 1)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       '+ ${items.length - 1} more item${items.length - 1 > 1 ? 's' : ''}',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: primaryGreen,
+                        fontSize: 13,
+                        color: theme.primaryGreen,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 const SizedBox(height: 16),
               ],
-              
-              const Divider(),
+
+              // Footer
+              const Divider(height: 1),
               const SizedBox(height: 12),
-              
-              // Footer with total and payment method
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -222,16 +331,15 @@ class OrdersScreen extends StatelessWidget {
                         'Total',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: theme.textSecondary,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         '\$${total.toStringAsFixed(2)}',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: primaryGreen,
+                          color: theme.primaryGreen,
                         ),
                       ),
                     ],
@@ -241,14 +349,14 @@ class OrdersScreen extends StatelessWidget {
                       Icon(
                         _getPaymentIcon(paymentMethod),
                         size: 16,
-                        color: Colors.grey[600],
+                        color: theme.textSecondary,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
                         _formatPaymentMethod(paymentMethod),
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                          fontSize: 13,
+                          color: theme.textSecondary,
                         ),
                       ),
                     ],
@@ -262,66 +370,8 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color backgroundColor;
-    Color textColor;
-    String statusText;
-
-    switch (status.toLowerCase()) {
-      case 'pending':
-        backgroundColor = Colors.orange.withOpacity(0.1);
-        textColor = Colors.orange[700]!;
-        statusText = 'Pending';
-        break;
-      case 'confirmed':
-        backgroundColor = Colors.blue.withOpacity(0.1);
-        textColor = Colors.blue[700]!;
-        statusText = 'Confirmed';
-        break;
-      case 'processing':
-        backgroundColor = Colors.purple.withOpacity(0.1);
-        textColor = Colors.purple[700]!;
-        statusText = 'Processing';
-        break;
-      case 'shipped':
-        backgroundColor = Colors.indigo.withOpacity(0.1);
-        textColor = Colors.indigo[700]!;
-        statusText = 'Shipped';
-        break;
-      case 'delivered':
-        backgroundColor = Colors.green.withOpacity(0.1);
-        textColor = Colors.green[700]!;
-        statusText = 'Delivered';
-        break;
-      case 'cancelled':
-        backgroundColor = Colors.red.withOpacity(0.1);
-        textColor = Colors.red[700]!;
-        statusText = 'Cancelled';
-        break;
-      default:
-        backgroundColor = Colors.grey.withOpacity(0.1);
-        textColor = Colors.grey[700]!;
-        statusText = status;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemPreview(Map<String, dynamic> item) {
+  Widget _buildItemPreview(dynamic item) {
+    final itemMap = item as Map<String, dynamic>;
     return Row(
       children: [
         Container(
@@ -329,18 +379,16 @@ class OrdersScreen extends StatelessWidget {
           height: 50,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            image: item['productImage'] != null &&
-                    item['productImage'].toString().isNotEmpty
+            image: itemMap['productImage']?.toString().isNotEmpty == true
                 ? DecorationImage(
-                    image: NetworkImage(item['productImage']),
+                    image: NetworkImage(itemMap['productImage']),
                     fit: BoxFit.cover,
                   )
                 : null,
             color: Colors.grey[200],
           ),
-          child: item['productImage'] == null ||
-                  item['productImage'].toString().isEmpty
-              ? const Icon(Icons.image, color: Colors.grey, size: 20)
+          child: itemMap['productImage'] == null
+              ? Icon(Icons.image, color: Colors.grey[400], size: 20)
               : null,
         ),
         const SizedBox(width: 12),
@@ -349,7 +397,7 @@ class OrdersScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item['productName'] ?? 'Unknown Product',
+                itemMap['productName'] ?? 'Unknown Product',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -359,7 +407,7 @@ class OrdersScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Qty: ${item['quantity'] ?? 1} × \$${(item['price'] ?? 0.0).toStringAsFixed(2)}',
+                'Qty: ${itemMap['quantity'] ?? 1} × \$${(itemMap['price'] ?? 0.0).toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],
@@ -370,6 +418,72 @@ class OrdersScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildStatusChip(String status) {
+    final config = _getStatusConfig(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: config['backgroundColor'],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        config['text'],
+        style: TextStyle(
+          color: config['color'],
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getStatusConfig(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return {
+          'backgroundColor': Colors.orange.withOpacity(0.1),
+          'color': Colors.orange[700]!,
+          'text': 'Pending',
+        };
+      case 'confirmed':
+        return {
+          'backgroundColor': Colors.blue.withOpacity(0.1),
+          'color': Colors.blue[700]!,
+          'text': 'Confirmed',
+        };
+      case 'processing':
+        return {
+          'backgroundColor': Colors.purple.withOpacity(0.1),
+          'color': Colors.purple[700]!,
+          'text': 'Processing',
+        };
+      case 'shipped':
+        return {
+          'backgroundColor': Colors.indigo.withOpacity(0.1),
+          'color': Colors.indigo[700]!,
+          'text': 'Shipped',
+        };
+      case 'delivered':
+        return {
+          'backgroundColor': Colors.green.withOpacity(0.1),
+          'color': Colors.green[700]!,
+          'text': 'Delivered',
+        };
+      case 'cancelled':
+        return {
+          'backgroundColor': Colors.red.withOpacity(0.1),
+          'color': Colors.red[700]!,
+          'text': 'Cancelled',
+        };
+      default:
+        return {
+          'backgroundColor': Colors.grey.withOpacity(0.1),
+          'color': Colors.grey[700]!,
+          'text': status,
+        };
+    }
   }
 
   IconData _getPaymentIcon(String paymentMethod) {
@@ -399,3 +513,9 @@ class OrdersScreen extends StatelessWidget {
   }
 }
 
+class _AppTheme {
+  final primaryGreen = const Color(0xFF2C8610);
+  final backgroundColor = const Color(0xFFF8FAFC);
+  final textPrimary = const Color(0xFF1A1A1A);
+  final textSecondary = const Color(0xFF64748B);
+}
