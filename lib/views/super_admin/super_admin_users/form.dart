@@ -156,96 +156,130 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildRoleDropdown(),
-              const SizedBox(height: 20),
-
-              // Login Credentials
-              const Text('Login Credentials',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              _buildTextField(_emailController, 'Email',
-                  icon: Icons.email, keyboardType: TextInputType.emailAddress),
-              const SizedBox(height: 10),
-              _buildTextField(_passwordController, 'Password',
-                  icon: Icons.lock, obscureText: true),
-              const SizedBox(height: 10),
-              // Confirm Password
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your password';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
+              _buildSectionCard(
+                title: 'Account Role',
+                child: _buildRoleDropdown(),
               ),
-              const SizedBox(height: 20),
-
-              // Personal Info
+              const SizedBox(height: 16),
+              _buildSectionCard(
+                title: 'Login Credentials',
+                child: Column(
+                  children: [
+                    _buildTextField(_emailController, 'Email',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress),
+                    const SizedBox(height: 16),
+                    _buildTextField(_passwordController, 'Password',
+                        icon: Icons.lock, obscureText: true),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.green),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               if (_selectedRole != 'admin') ...[
-                const Text('Personal Information',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                _buildTextField(_firstNameController, 'First Name',
-                    icon: Icons.person),
-                const SizedBox(height: 10),
-                _buildTextField(_middleNameController, 'Middle Name',
-                    icon: Icons.person_outline),
-                const SizedBox(height: 10),
-                _buildTextField(_lastNameController, 'Last Name',
-                    icon: Icons.person),
-                const SizedBox(height: 10),
-                _buildTextField(_contactController, 'Contact Number',
-                    icon: Icons.phone, keyboardType: TextInputType.phone),
-                const SizedBox(height: 10),
-                _buildTextField(_addressController, 'Address',
-                    icon: Icons.location_on, maxLines: 2),
-                const SizedBox(height: 20),
+                _buildSectionCard(
+                  title: 'Personal Information',
+                  child: Column(
+                    children: [
+                      _buildTextField(_firstNameController, 'First Name',
+                          icon: Icons.person),
+                      const SizedBox(height: 16),
+                      _buildTextField(_middleNameController, 'Middle Name',
+                          icon: Icons.person_outline),
+                      const SizedBox(height: 16),
+                      _buildTextField(_lastNameController, 'Last Name',
+                          icon: Icons.person),
+                      const SizedBox(height: 16),
+                      _buildTextField(_contactController, 'Contact Number',
+                          icon: Icons.phone, keyboardType: TextInputType.phone),
+                      const SizedBox(height: 16),
+                      _buildTextField(_addressController, 'Address',
+                          icon: Icons.location_on, maxLines: 2),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
-
-              // Delivery Staff Specific
               if (_selectedRole == 'delivery_staff') ...[
-                const Text('Delivery Staff Details',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                _buildTextField(_vehicleTypeController, 'Vehicle Type',
-                    icon: Icons.directions_car),
-                const SizedBox(height: 10),
-                _buildTextField(_vehicleNumberController, 'Vehicle Number',
-                    icon: Icons.confirmation_number),
-                const SizedBox(height: 10),
-                _buildTextField(_licenseNumberController, 'License Number',
-                    icon: Icons.card_membership),
-                const SizedBox(height: 20),
+                _buildSectionCard(
+                  title: 'Delivery Staff Details',
+                  child: Column(
+                    children: [
+                      _buildTextField(_vehicleTypeController, 'Vehicle Type',
+                          icon: Icons.directions_car),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                          _vehicleNumberController, 'Vehicle Number',
+                          icon: Icons.confirmation_number),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                          _licenseNumberController, 'License Number',
+                          icon: Icons.card_membership),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
-
               SizedBox(
-                width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Create User',
-                          style: TextStyle(fontSize: 16, color: Colors.white)),
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Create User',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
                 ),
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -253,13 +287,62 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     );
   }
 
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRoleDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedRole,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Role',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.security),
+        prefixIcon: const Icon(Icons.security),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
       ),
       items: const [
         DropdownMenuItem(value: 'customer', child: Text('Customer')),
@@ -291,7 +374,19 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: icon != null ? Icon(icon) : null,
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
