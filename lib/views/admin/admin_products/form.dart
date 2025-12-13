@@ -668,7 +668,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
               children: [
                 // 3D Header Section
                 Container(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -709,7 +709,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                               ? 'Create Product'
                               : 'Edit Product',
                           style: const TextStyle(
-                            fontSize: 28,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             shadows: [
@@ -1386,7 +1386,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
