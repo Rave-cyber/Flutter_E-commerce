@@ -40,13 +40,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isSelectingMainProduct = true; // Track if main product is selected
   String? _brandName;
   String? _categoryName;
-<<<<<<< HEAD
-  int _currentImageIndex = 0;
-
-  Future<bool>? get _canRateFuture => null;
-=======
   late Future<bool> _canRateFuture;
->>>>>>> e719608 (90% customer fix)
 
   @override
   void initState() {
