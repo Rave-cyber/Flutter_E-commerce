@@ -114,8 +114,10 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
               controller: _searchController,
               decoration: const InputDecoration(
                 labelText: 'Search Products',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search, color: Colors.green),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.green),
+                ),
               ),
               onChanged: (_) => setState(() {
                 _currentPage = 1;
@@ -175,123 +177,367 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                             final product = paginatedProducts[index];
 
                             return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: product.image.isNotEmpty
-                                    ? Image.network(
-                                        product.image,
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const Icon(Icons.image),
-                                title: Text(
-                                  product.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: product.is_archived
-                                        ? Colors.grey
-                                        : Colors.black,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  'Category: ${_getCategoryName(product.category_id)}\n'
-                                  'Brand: ${_getBrandName(product.brand_id)}\n'
-                                  'Stock: ${product.stock_quantity} | Price: \$${product.sale_price}\n'
-                                  '${product.is_archived ? "Archived" : "Active"}',
-                                ),
-                                isThreeLine: true,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 4),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                    color: Colors.green.shade300, width: 1),
+                              ),
+                              color: Colors.white,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Archive / Unarchive
-                                    IconButton(
-                                      icon: Icon(
-                                        product.is_archived
-                                            ? Icons.unarchive
-                                            : Icons.archive,
-                                        color: Colors.orange,
-                                      ),
-                                      onPressed: () async {
-                                        final action = product.is_archived
-                                            ? 'unarchive'
-                                            : 'archive';
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: Text('Confirm $action'),
-                                            content: Text(
-                                              'Are you sure you want to $action "${product.name}"?',
+                                    // Header Row with Image, Title, and Menu
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Product Image
+                                        Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            color: Colors.grey[100],
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: product.image.isNotEmpty
+                                                ? Image.network(
+                                                    product.image,
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context,
+                                                        error, stackTrace) {
+                                                      return const Icon(
+                                                        Icons
+                                                            .image_not_supported,
+                                                        size: 40,
+                                                        color: Colors.grey,
+                                                      );
+                                                    },
+                                                  )
+                                                : const Icon(
+                                                    Icons.image_not_supported,
+                                                    size: 40,
+                                                    color: Colors.grey,
+                                                  ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+
+                                        // Product Info
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Product Name and Status
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      product.name,
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: product
+                                                                .is_archived
+                                                            ? Colors.grey
+                                                            : Colors.black87,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  // Status Badge
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: product.is_archived
+                                                          ? Colors.red[100]
+                                                          : Colors.green[100],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                    child: Text(
+                                                      product.is_archived
+                                                          ? 'Archived'
+                                                          : 'Active',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: product
+                                                                .is_archived
+                                                            ? Colors.red[700]
+                                                            : Colors.green[700],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+
+                                              // Category and Brand
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.category,
+                                                    size: 16,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    _getCategoryName(
+                                                        product.category_id),
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Icon(
+                                                    Icons.storefront,
+                                                    size: 16,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    _getBrandName(
+                                                        product.brand_id),
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.grey[600],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // 3-Dots Menu
+                                        PopupMenuButton<String>(
+                                          icon: Icon(
+                                            Icons.more_vert,
+                                            color: Colors.grey[600],
+                                          ),
+                                          onSelected: (value) async {
+                                            switch (value) {
+                                              case 'edit':
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        AdminProductForm(
+                                                            product: product),
+                                                  ),
+                                                );
+                                                break;
+                                              case 'archive':
+                                              case 'unarchive':
+                                                final action =
+                                                    product.is_archived
+                                                        ? 'unarchive'
+                                                        : 'archive';
+                                                final confirm =
+                                                    await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (_) => AlertDialog(
+                                                    title:
+                                                        Text('Confirm $action'),
+                                                    content: Text(
+                                                      'Are you sure you want to $action "${product.name}"?',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context, false),
+                                                        child: const Text(
+                                                            'Cancel'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context, true),
+                                                        child: Text(
+                                                          action[0]
+                                                                  .toUpperCase() +
+                                                              action
+                                                                  .substring(1),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+
+                                                if (confirm == true) {
+                                                  await _productService
+                                                      .toggleArchive(product);
+                                                }
+                                                break;
+                                              case 'delete':
+                                                final confirm =
+                                                    await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (_) => AlertDialog(
+                                                    title: const Text(
+                                                        'Confirm Delete'),
+                                                    content: Text(
+                                                        'Are you sure you want to delete "${product.name}"?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context, false),
+                                                        child: const Text(
+                                                            'Cancel'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context, true),
+                                                        child: const Text(
+                                                            'Delete'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+
+                                                if (confirm == true) {
+                                                  await _productService
+                                                      .deleteProduct(
+                                                          product.id);
+                                                }
+                                                break;
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            const PopupMenuItem(
+                                              value: 'edit',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit, size: 20),
+                                                  SizedBox(width: 8),
+                                                  Text('Edit'),
+                                                ],
+                                              ),
                                             ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
+                                            PopupMenuItem(
+                                              value: product.is_archived
+                                                  ? 'unarchive'
+                                                  : 'archive',
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    product.is_archived
+                                                        ? Icons.unarchive
+                                                        : Icons.archive,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(product.is_archived
+                                                      ? 'Unarchive'
+                                                      : 'Archive'),
+                                                ],
                                               ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: Text(
-                                                  action[0].toUpperCase() +
-                                                      action.substring(1),
-                                                ),
+                                            ),
+                                            const PopupMenuItem(
+                                              value: 'delete',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete,
+                                                      size: 20,
+                                                      color: Colors.red),
+                                                  SizedBox(width: 8),
+                                                  Text('Delete',
+                                                      style: TextStyle(
+                                                          color: Colors.red)),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        );
-
-                                        if (confirm == true) {
-                                          await _productService
-                                              .toggleArchive(product);
-                                        }
-                                      },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    // Edit
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AdminProductForm(
-                                                product: product),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    // Delete
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Confirm Delete'),
-                                            content: Text(
-                                                'Are you sure you want to delete "${product.name}"?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
 
-                                        if (confirm == true) {
-                                          await _productService
-                                              .deleteProduct(product.id);
-                                        }
-                                      },
+                                    const SizedBox(height: 16),
+
+                                    // Bottom Row with Stock and Price
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // Stock Info
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.inventory_2,
+                                              size: 16,
+                                              color: (product.stock_quantity ??
+                                                          0) >
+                                                      10
+                                                  ? Colors.green[600]
+                                                  : (product.stock_quantity ??
+                                                              0) >
+                                                          0
+                                                      ? Colors.orange[600]
+                                                      : Colors.red[600],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Stock: ${product.stock_quantity ?? 0}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: (product.stock_quantity ??
+                                                            0) >
+                                                        10
+                                                    ? Colors.green[600]
+                                                    : (product.stock_quantity ??
+                                                                0) >
+                                                            0
+                                                        ? Colors.orange[600]
+                                                        : Colors.red[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        // Price
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green[50],
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                          child: Text(
+                                            '\$${product.sale_price.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green[700],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -332,7 +578,8 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                     MaterialPageRoute(builder: (_) => const AdminProductForm()),
                   );
                 },
-                child: const Icon(Icons.add),
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.add, color: Colors.white),
                 tooltip: 'Add Product',
               ),
             ),
