@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/firestore_service.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -42,7 +41,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isSelectingMainProduct = true; // Track if main product is selected
   String? _brandName;
   String? _categoryName;
-  int _currentImageIndex = 0;
   late Future<bool> _canRateFuture;
 
   @override
@@ -160,25 +158,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         });
       }
     }
-  }
-
-  List<String> _getAllImages() {
-    final images = <String>[];
-
-    // Add main product image
-    if (widget.product.image.isNotEmpty) {
-      images.add(widget.product.image);
-    }
-
-    // Add variant images
-    for (final variant in _variants) {
-      if (variant.image.isNotEmpty && !images.contains(variant.image)) {
-        images.add(variant.image);
-      }
-    }
-
-    // If no images, return empty
-    return images;
   }
 
   void _toggleFavorite() async {
@@ -457,9 +436,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildImageCarousel() {
-    final images = _getAllImages();
+    String imageUrl = '';
 
-    if (images.isEmpty) {
+    if (_isSelectingMainProduct) {
+      imageUrl = widget.product.image;
+    } else if (_selectedOption is ProductVariantModel) {
+      final variant = _selectedOption as ProductVariantModel;
+      imageUrl =
+          variant.image.isNotEmpty ? variant.image : widget.product.image;
+    }
+
+    if (imageUrl.isEmpty) {
       return Container(
         height: 420,
         decoration: BoxDecoration(
@@ -481,78 +468,53 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     return Stack(
       children: [
-        // Image carousel
-        CarouselSlider(
-          items: images.map((image) {
-            return Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.black,
-              ),
-              child: Image.network(
-                image,
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: 420,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.grey[300]!, Colors.grey[200]!],
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.broken_image_rounded,
-                        size: 80,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          }).toList(),
-          options: CarouselOptions(
-            height: 420,
-            viewportFraction: 1.0,
-            initialPage: 0,
-            enableInfiniteScroll: images.length > 1,
-            reverse: false,
-            autoPlay: false,
-            onPageChanged: (index, reason) {
-              setState(() {
-                _currentImageIndex = index;
-              });
+        Container(
+          width: double.infinity,
+          height: 420,
+          color: Colors.black,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.grey[300]!, Colors.grey[200]!],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.broken_image_rounded,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              );
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: primaryGreen,
+                ),
+              );
             },
           ),
         ),
+        _buildOverlayButtons(),
+      ],
+    );
+  }
 
-        // Modern image counter badge
-        if (images.length > 1)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.3)),
-              ),
-              child: Text(
-                '${_currentImageIndex + 1}/${images.length}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-
+  Widget _buildOverlayButtons() {
+    return Stack(
+      children: [
         // Modern favorite button with animation
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
@@ -787,9 +749,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               final name = isMainProduct
                   ? 'Standard'
                   : (option as ProductVariantModel).name;
-              final price = isMainProduct
-                  ? null
-                  : '\$${(option as ProductVariantModel).sale_price.toStringAsFixed(2)}';
+              // Removed redundant price display requested by user
 
               return GestureDetector(
                 onTap: () {
@@ -846,18 +806,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               isSelected ? FontWeight.bold : FontWeight.w500,
                         ),
                       ),
-                      if (price != null) const SizedBox(height: 4),
-                      if (price != null)
-                        Text(
-                          price,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isSelected
-                                ? Colors.white.withOpacity(0.9)
-                                : primaryGreen,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                     ],
                   ),
                 ),

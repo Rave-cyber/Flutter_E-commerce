@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/customer/cart/cart_screen.dart';
@@ -7,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../models/product.dart';
+import '../../models/category_model.dart';
 import '../../firestore_service.dart';
 import '../../services/navigation_service.dart';
+import '../../services/customer/category_service.dart';
 import '../customer/product/product_detail_screen.dart';
 import '../customer/categories/categories_screen.dart';
 import '../customer/favorites/favorites_screen.dart';
@@ -31,14 +34,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final NavigationService _navService = NavigationService();
-  final List<String> categories = [
-    'All',
-    'Sofa',
-    'Chair',
-    'Table',
-    'Bed',
-    'Electronics'
-  ];
 
   String _selectedCategory = 'All';
   final Color primaryGreen = const Color(0xFF2C8610);
@@ -133,27 +128,100 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          IconButton(
-            icon: Icon(Icons.receipt_long, color: primaryGreen),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OrdersScreen(),
-                ),
+          // Orders with Badge
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: FirestoreService.getUserOrders(widget.user.id),
+            builder: (context, snapshot) {
+              final orderCount = snapshot.data?.length ?? 0;
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.receipt_long, color: primaryGreen),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OrdersScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: 'Order History',
+                  ),
+                  if (orderCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$orderCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
-            tooltip: 'Order History',
           ),
-          IconButton(
-            icon: Icon(Icons.shopping_cart, color: primaryGreen),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
+          // Cart with Badge
+          StreamBuilder<QuerySnapshot>(
+            stream: FirestoreService.getCartStream(widget.user.id),
+            builder: (context, snapshot) {
+              final cartCount = snapshot.data?.docs.length ?? 0;
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.shopping_cart, color: primaryGreen),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CartScreen()),
+                      );
+                    },
+                    tooltip: 'Shopping Cart',
+                  ),
+                  if (cartCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$cartCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
-            tooltip: 'Shopping Cart',
           ),
         ],
       ),
@@ -171,9 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeroBanner(),
-          _buildCategorySection(),
-          const SizedBox(height: 20),
-          _buildFeaturedProductsSection(),
           const SizedBox(height: 20),
           _buildProductsSection(),
         ],
@@ -355,108 +420,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Categories',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: primaryGreen,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 50,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: ChoiceChip(
-                  label: Text(categories[index]),
-                  selected: _selectedCategory == categories[index],
-                  selectedColor: primaryGreen,
-                  backgroundColor: Colors.grey[200],
-                  labelStyle: TextStyle(
-                    color: _selectedCategory == categories[index]
-                        ? Colors.white
-                        : primaryGreen,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedCategory = categories[index];
-                    });
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeaturedProductsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            'Featured Products',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: primaryGreen,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        StreamBuilder<List<ProductModel>>(
-          stream: FirestoreService.getFeaturedProducts(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildFeaturedShimmer();
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Text('Error loading featured products',
-                    style: TextStyle(color: Colors.red)),
-              );
-            }
-
-            final products = snapshot.data ?? [];
-            if (products.isEmpty) {
-              return const Center(child: Text('No featured products found'));
-            }
-
-            return CarouselSlider.builder(
-              itemCount: products.length,
-              options: CarouselOptions(
-                height: 280,
-                autoPlay: true,
-                enlargeCenterPage: true,
-                viewportFraction: 0.8,
-              ),
-              itemBuilder: (context, index, realIndex) {
-                return _buildProductCard(products[index]);
-              },
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildProductsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,21 +429,20 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'Products',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: primaryGreen,
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         StreamBuilder<List<ProductModel>>(
           stream: FirestoreService.getProductsByCategory(_selectedCategory),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildProductsShimmer();
-            }
+            // Keep previous data visible while loading to prevent blinking
+            final products = snapshot.data ?? [];
 
-            if (snapshot.hasError) {
+            if (snapshot.hasError && products.isEmpty) {
               return Center(
                 child: Column(
                   children: [
@@ -495,27 +457,43 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            final products = snapshot.data ?? [];
-            if (products.isEmpty) {
+            if (products.isEmpty &&
+                snapshot.connectionState != ConnectionState.waiting) {
               return const Center(
                 child: Text('No products found in this category'),
               );
             }
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.7,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return _buildProductCard(products[index]);
-              },
+            // Show products with a subtle loading overlay if still loading
+            return Stack(
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    return _buildProductCard(products[index]);
+                  },
+                ),
+                // Show loading overlay only if no products yet and still loading
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    products.isEmpty)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.white.withOpacity(0.9),
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -542,8 +520,9 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shadowColor: Colors.black.withOpacity(0.1),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -552,8 +531,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
                   ),
                   image: DecorationImage(
                     image: product.image.isNotEmpty
@@ -590,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Colors.red.shade700,
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
@@ -616,7 +595,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Product Details
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -625,21 +604,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     product.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: 14,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
 
                   // Price
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Text(
                         '\$${product.sale_price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 16,
                           color: primaryGreen,
                         ),
                       ),
@@ -648,7 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           '\$${product.base_price.toStringAsFixed(2)}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             color: Colors.grey[600],
                             decoration: TextDecoration.lineThrough,
                           ),
@@ -657,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   // Rating
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   StreamBuilder<List<Map<String, dynamic>>>(
                     stream:
                         FirestoreService.getProductRatingsStream(product.id),
@@ -719,12 +698,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   // Stock indicator
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   if (product.stock_quantity! > 0)
                     Text(
                       'In Stock',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.green[700],
                         fontWeight: FontWeight.w500,
                       ),
@@ -733,7 +712,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Out of Stock',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         color: Colors.red[700],
                         fontWeight: FontWeight.w500,
                       ),
@@ -743,45 +722,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturedShimmer() {
-    return SizedBox(
-      height: 280,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemBuilder: (context, index) {
-          return Container(
-            width: 200,
-            margin: const EdgeInsets.only(right: 16),
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }
@@ -804,7 +744,7 @@ class _HomeScreenState extends State<HomeScreen> {
           highlightColor: Colors.grey[100]!,
           child: Card(
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -812,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),

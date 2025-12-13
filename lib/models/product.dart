@@ -59,7 +59,7 @@ class ProductModel {
     return ProductModel(
       id: map['id'] ?? '',
       brand_id: map['brand_id'] ?? '',
-      category_id: map['category_id'] ?? '',
+      category_id: map['category_id'] ?? map['category'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       image: map['image'] ?? '',
