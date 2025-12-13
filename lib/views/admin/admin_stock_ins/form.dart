@@ -3,7 +3,6 @@ import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
 import '/models/stock_in_model.dart';
-import '/models/product_model.dart';
 import '/models/product_variant_model.dart';
 import '/models/supplier_model.dart';
 import '/models/warehouse_model.dart';

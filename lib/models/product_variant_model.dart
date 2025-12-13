@@ -7,7 +7,7 @@ class ProductVariantModel {
   String image;
   double base_price;
   double sale_price;
-  int? stock; // now optional
+  int? stock;
   bool is_archived;
   DateTime created_at;
   DateTime updated_at;

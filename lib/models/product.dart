@@ -2,14 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductModel {
   final String id;
-  final String brand_id; // required
-  final String category_id; // required
+  final String brand_id;
+  final String category_id;
   final String name;
   final String description;
   final String image;
   final double base_price;
   final double sale_price;
-  final int? stock_quantity; // now optional
+  final int? stock_quantity;
   final bool is_archived;
   final bool is_featured;
   final DateTime? created_at;
@@ -31,8 +31,6 @@ class ProductModel {
     this.updated_at,
   });
 
-  // Calculate total stock including all variants
-  // This will be implemented with variant data
   int get totalStock => stock_quantity ?? 0;
 
   Map<String, Object?> toMap() {
@@ -45,7 +43,7 @@ class ProductModel {
       'image': image,
       'base_price': base_price,
       'sale_price': sale_price,
-      'stock_quantity': stock_quantity ?? 0, // defaults to 0
+      'stock_quantity': stock_quantity ?? 0,
       'is_archived': is_archived,
       'is_featured': is_featured,
       'created_at': created_at != null

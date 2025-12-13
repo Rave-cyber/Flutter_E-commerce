@@ -66,6 +66,85 @@ class _AdminStockInIndexState extends State<AdminStockInIndex> {
     }
   }
 
+  /// Show detailed FIFO batch information in a dialog
+  void _showBatchDetails(StockInModel stockIn) async {
+    final deductedQuantity = stockIn.quantity - stockIn.remaining_quantity;
+    final isDepleted = stockIn.remaining_quantity == 0;
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Batch ${stockIn.id.substring(0, 8).toUpperCase()}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Product: ${stockIn.product_variant_id != null ? "Variant: ${stockIn.product_variant_id!.substring(0, 8).toUpperCase()}" : "Main: ${stockIn.product_id ?? "No Product"}"}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Total Quantity: ${stockIn.quantity} units',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  'Remaining: ${stockIn.remaining_quantity} units',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: stockIn.remaining_quantity == 0
+                        ? Colors.red
+                        : Colors.green,
+                  ),
+                ),
+                Text(
+                  'Deducted: $deductedQuantity units',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.orange,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LinearProgressIndicator(
+                  value: stockIn.remaining_quantity / stockIn.quantity,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isDepleted ? Colors.red : Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'FIFO Status: ${isDepleted ? "Depleted (Used in Stock-Out)" : "${((stockIn.remaining_quantity / stockIn.quantity) * 100).toInt()}% Remaining"}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isDepleted ? Colors.red : Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Date Created: ${stockIn.created_at?.toString().substring(0, 19) ?? "N/A"}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                Text(
+                  'Price: \$${stockIn.price.toStringAsFixed(2)}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -137,32 +216,189 @@ class _AdminStockInIndexState extends State<AdminStockInIndex> {
                           itemCount: paginatedList.length,
                           itemBuilder: (context, index) {
                             final item = paginatedList[index];
+                            final deductedQuantity =
+                                item.quantity - item.remaining_quantity;
+                            final isDepleted = item.remaining_quantity == 0;
+                            final remainingPercentage =
+                                (item.remaining_quantity / item.quantity * 100)
+                                    .round();
 
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
                               child: ListTile(
-                                leading: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: Colors.blueGrey,
-                                ),
-                                title: Text(
-                                  item.product_id ?? "No Product Assigned",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: item.is_archived
-                                        ? Colors.grey
-                                        : Colors.black,
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: isDepleted
+                                        ? Colors.red.withOpacity(0.2)
+                                        : Colors.green.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDepleted
+                                          ? Colors.red
+                                          : Colors.green,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    isDepleted
+                                        ? Icons.close
+                                        : Icons.check_circle,
+                                    color:
+                                        isDepleted ? Colors.red : Colors.green,
+                                    size: 24,
                                   ),
                                 ),
-                                subtitle: Text(
-                                  "Supplier ID: ${item.supplier_id}\n"
-                                  "Warehouse ID: ${item.warehouse_id}\n"
-                                  "Reason: ${item.reason}",
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.product_variant_id != null
+                                            ? 'Variant: ${item.product_variant_id!.substring(0, 8).toUpperCase()}'
+                                            : 'Product: ${item.product_id ?? "No Product Assigned"}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: item.is_archived
+                                              ? Colors.grey
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isDepleted
+                                            ? Colors.red
+                                            : Colors.green,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '$remainingPercentage%',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item.created_at
+                                                  ?.toString()
+                                                  .substring(0, 10) ??
+                                              "N/A",
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Icon(
+                                          Icons.access_time,
+                                          size: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Batch: ${item.id.substring(0, 8).toUpperCase()}',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Total: ${item.quantity} units',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Remaining: ${item.remaining_quantity} units',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: isDepleted
+                                                      ? Colors.red
+                                                      : Colors.green,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Deducted: $deductedQuantity units',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.orange,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 100,
+                                          child: LinearProgressIndicator(
+                                            value: item.remaining_quantity /
+                                                item.quantity,
+                                            backgroundColor: Colors.grey[300],
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              isDepleted
+                                                  ? Colors.red
+                                                  : Colors.green,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Reason: ${item.reason}',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                                 isThreeLine: true,
+                                onTap: () => _showBatchDetails(item),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    /// BATCH DETAILS
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.info_outline,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed: () => _showBatchDetails(item),
+                                      tooltip: 'View FIFO Batch Details',
+                                    ),
+
                                     /// ARCHIVE / UNARCHIVE
                                     IconButton(
                                       icon: Icon(

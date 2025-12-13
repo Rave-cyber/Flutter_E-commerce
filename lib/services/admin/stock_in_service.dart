@@ -1,18 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/models/stock_in_model.dart';
-import '/models/product_model.dart';
 import '/models/product_variant_model.dart';
 
 class StockInService {
   final CollectionReference _stockInCollection =
       FirebaseFirestore.instance.collection('stock_ins');
 
-  /// CREATE stock-in
+  /// CREATE stock-in with FIFO support
   Future<void> createStockIn(StockInModel stockIn) async {
     try {
-      // 1. Create the stock-in record
-      await _stockInCollection.doc(stockIn.id).set(stockIn.toMap());
-      print('Stock-in record created successfully!');
+      // 1. Create the stock-in record with remaining_quantity initialized
+      final stockInWithRemaining = StockInModel(
+        id: stockIn.id,
+        product_id: stockIn.product_id,
+        product_variant_id: stockIn.product_variant_id,
+        supplier_id: stockIn.supplier_id,
+        warehouse_id: stockIn.warehouse_id,
+        stock_checker_id: stockIn.stock_checker_id,
+        quantity: stockIn.quantity,
+        remaining_quantity:
+            stockIn.quantity, // Initialize with full quantity for FIFO tracking
+        price: stockIn.price,
+        reason: stockIn.reason,
+        is_archived: stockIn.is_archived,
+        created_at: stockIn.created_at,
+        updated_at: DateTime.now(),
+      );
+
+      await _stockInCollection
+          .doc(stockIn.id)
+          .set(stockInWithRemaining.toMap());
+      print('Stock-in record created successfully with FIFO tracking!');
 
       // 2. Update the corresponding stock
       final productsCollection =
@@ -83,7 +101,7 @@ class StockInService {
             .toList());
   }
 
-  /// UPDATE stock-in
+  /// UPDATE stock-in (use with caution - may affect FIFO logic)
   Future<void> updateStockIn(StockInModel stockIn) async {
     try {
       await _stockInCollection.doc(stockIn.id).update(stockIn.toMap());
@@ -93,7 +111,7 @@ class StockInService {
     }
   }
 
-  /// DELETE stock-in
+  /// DELETE stock-in (use with caution - may affect FIFO logic)
   Future<void> deleteStockIn(String id) async {
     try {
       await _stockInCollection.doc(id).delete();
@@ -145,6 +163,81 @@ class StockInService {
           .toList();
     } catch (e) {
       throw Exception('Failed to fetch stock-ins for variant: $e');
+    }
+  }
+
+  /// Get FIFO ordered stock-ins for a specific product/variant
+  /// This returns stock-in records ordered by creation date (oldest first)
+  Future<List<StockInModel>> getFIFOStockIns({
+    String? productId,
+    String? variantId,
+    bool includeDepleted = false,
+  }) async {
+    try {
+      Query query = _stockInCollection;
+
+      if (variantId != null) {
+        query = query.where('product_variant_id', isEqualTo: variantId);
+      } else if (productId != null) {
+        query = query.where('product_id', isEqualTo: productId);
+      }
+
+      final snapshot = await query.get();
+      List<StockInModel> stockIns = snapshot.docs
+          .map(
+              (doc) => StockInModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      // Filter in memory to avoid compound queries
+      if (!includeDepleted) {
+        stockIns = stockIns
+            .where((stockIn) => stockIn.remaining_quantity > 0)
+            .toList();
+      }
+
+      // Sort by creation date (oldest first) for FIFO
+      stockIns.sort((a, b) => a.created_at!.compareTo(b.created_at!));
+
+      return stockIns;
+    } catch (e) {
+      throw Exception('Failed to fetch FIFO stock-ins: $e');
+    }
+  }
+
+  /// Get available stock summary for FIFO tracking
+  Future<Map<String, int>> getStockSummary({
+    String? productId,
+    String? variantId,
+  }) async {
+    try {
+      final stockIns = await getFIFOStockIns(
+        productId: productId,
+        variantId: variantId,
+        includeDepleted: true,
+      );
+
+      int totalQuantity = 0;
+      int totalRemaining = 0;
+      int depletedBatches = 0;
+
+      for (final stockIn in stockIns) {
+        totalQuantity += stockIn.quantity;
+        totalRemaining += stockIn.remaining_quantity;
+        if (stockIn.remaining_quantity == 0) {
+          depletedBatches++;
+        }
+      }
+
+      return {
+        'totalQuantity': totalQuantity,
+        'totalRemaining': totalRemaining,
+        'totalDepleted': totalQuantity - totalRemaining,
+        'depletedBatches': depletedBatches,
+        'activeBatches': stockIns.where((s) => s.remaining_quantity > 0).length,
+        'totalBatches': stockIns.length,
+      };
+    } catch (e) {
+      throw Exception('Failed to get stock summary: $e');
     }
   }
 }
