@@ -259,79 +259,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
         break;
     }
 
-<<<<<<< HEAD
-    final id =
-        widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-    final product = ProductModel(
-      id: id,
-      name: _nameController.text,
-      description: _descController.text,
-      image: _imageUrl,
-      base_price: double.tryParse(_basePriceController.text) ?? 0,
-      sale_price: double.tryParse(_salePriceController.text) ?? 0,
-      stock_quantity: int.tryParse(_stockController.text) ?? 0,
-      is_archived: _isArchived,
-      category_id: _selectedCategory!.id,
-      brand_id: _selectedBrand!.id,
-    );
-
-    try {
-      if (widget.product == null) {
-        await _productService.createProduct(product);
-      } else {
-        await _productService.updateProduct(product);
-      }
-
-      // Save variants and their junction attributes
-      for (var entry in _variants) {
-        final variant = entry.variant;
-        variant.product_id = id;
-        if (variant.id.isEmpty) {
-          variant.id = DateTime.now().millisecondsSinceEpoch.toString();
-        }
-
-        // create/update variant
-        await _productService.createOrUpdateVariant(variant);
-
-        // remove existing attributes for this variant (if editing) then re-create
-        // (Assumes ProductService exposes deleteVariantAttributesForVariant)
-        try {
-          await _productService.deleteVariantAttributesForVariant(variant.id);
-        } catch (e) {
-          // ignore if method doesn't exist or nothing to delete
-        }
-
-        // create junction rows for each attribute pair
-        for (var pair in entry.attributes) {
-          // skip invalid pairs
-          final attrId = pair['attribute_id'] ?? '';
-          final valId = pair['attribute_value_id'] ?? '';
-          if (attrId.isEmpty || valId.isEmpty) continue;
-
-          final pvAttr = ProductVariantAttributeModel(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            product_variant_id: variant.id,
-            attribute_id: attrId,
-            attribute_value_id: valId,
-            created_at: DateTime.now(),
-            updated_at: DateTime.now(),
-          );
-
-          // Assumes ProductService exposes createVariantAttribute
-          await _productService.createVariantAttribute(
-            variantId: pvAttr.product_variant_id,
-            attributeId: pvAttr.attribute_id,
-            attributeValueId: pvAttr.attribute_value_id,
-          );
-        }
-      }
-
-      if (context.mounted) Navigator.pop(context);
-    } catch (e) {
-      debugPrint('Save error: $e');
-=======
     if (message.isNotEmpty) {
->>>>>>> 7a6a03e (stepper implemented in admin products)
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }

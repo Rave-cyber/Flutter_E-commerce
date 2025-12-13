@@ -543,4 +543,53 @@ class FirestoreService {
       throw e;
     }
   }
+
+  // Get banners (ordered by sequence)
+  static Stream<List<Map<String, dynamic>>> getBanners() {
+    return _firestore
+        .collection('banners')
+        .orderBy('order')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+    });
+  }
+
+  // Add banner
+  static Future<void> addBanner(Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('banners').add({
+        ...data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error adding banner: $e');
+      throw e;
+    }
+  }
+
+  // Delete banner
+  static Future<void> deleteBanner(String id) async {
+    try {
+      await _firestore.collection('banners').doc(id).delete();
+    } catch (e) {
+      print('Error deleting banner: $e');
+      throw e;
+    }
+  }
+
+  // Update banner (for order or editing)
+  static Future<void> updateBanner(String id, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('banners').doc(id).update(data);
+    } catch (e) {
+      print('Error updating banner: $e');
+      throw e;
+    }
+  }
 }
