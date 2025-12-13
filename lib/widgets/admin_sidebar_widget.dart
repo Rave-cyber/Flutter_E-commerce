@@ -30,7 +30,7 @@ class AdminSidebarWidget extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          // Header with gradient background
+          // Header with gradient background - Flexible height
           _buildHeader(),
 
           // Menu sections
@@ -161,77 +161,89 @@ class AdminSidebarWidget extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Material(
-      elevation: 4,
-      shadowColor: Colors.green.withOpacity(0.3),
-      child: Container(
-        height: 85,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.green.shade600,
-              Colors.green.shade800,
-            ],
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate appropriate height based on available space
+        final headerHeight = constraints.maxHeight.clamp(80.0, 120.0);
+
+        return Material(
+          elevation: 4,
+          shadowColor: Colors.green.withOpacity(0.3),
+          child: Container(
+            height: headerHeight,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.green.shade600,
+                  Colors.green.shade800,
+                ],
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        "Admin Panel",
-                        style: TextStyle(
-                          fontSize: 16,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.admin_panel_settings,
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 2,
-                              color: Colors.black26,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Admin Panel",
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0, 2),
+                                    blurRadius: 4,
+                                    color: Colors.black26,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "E-Commerce Management",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Text(
-                        "E-Commerce Management",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
