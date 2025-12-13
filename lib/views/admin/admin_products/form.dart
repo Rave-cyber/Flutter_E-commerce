@@ -63,6 +63,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
   List<_VariantEntry> _variants = [];
 
   bool _loading = true;
+  bool _isSaving = false;
   int _currentStep = 0;
 
   @override
@@ -79,6 +80,15 @@ class _AdminProductFormState extends State<AdminProductForm> {
     _isArchived = product?.is_archived ?? false;
 
     _initData();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _basePriceController.dispose();
+    _salePriceController.dispose();
+    super.dispose();
   }
 
   Future<void> _initData() async {
@@ -212,85 +222,177 @@ class _AdminProductFormState extends State<AdminProductForm> {
     });
   }
 
-  Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedCategory == null || _selectedBrand == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select category and brand')));
-      return;
+  // Stepper navigation methods
+  void _nextStep() {
+    if (_validateCurrentStep()) {
+      if (_currentStep < 3) {
+        setState(() => _currentStep++);
+      }
+    } else {
+      _showValidationMessage();
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
+  }
+
+  void _showValidationMessage() {
+    if (!context.mounted) return;
+
+    String message = '';
+    switch (_currentStep) {
+      case 1: // Basic Info step
+        if (_nameController.text.isEmpty) {
+          message = 'Product name is required';
+        } else if (_selectedCategory == null) {
+          message = 'Please select a category';
+        } else if (_selectedBrand == null) {
+          message = 'Please select a brand';
+        }
+        break;
     }
 
-    final id =
-        widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-    final product = ProductModel(
-      id: id,
-      name: _nameController.text,
-      description: _descController.text,
-      image: _imageUrl,
-      base_price: double.tryParse(_basePriceController.text) ?? 0,
-      sale_price: double.tryParse(_salePriceController.text) ?? 0,
-      is_archived: _isArchived,
-      category_id: _selectedCategory!.id,
-      brand_id: _selectedBrand!.id,
-    );
-
-    try {
-      if (widget.product == null) {
-        await _productService.createProduct(product);
-      } else {
-        await _productService.updateProduct(product);
-      }
-
-      // Save variants and their junction attributes
-      for (var entry in _variants) {
-        final variant = entry.variant;
-        variant.product_id = id;
-        if (variant.id.isEmpty) {
-          variant.id = DateTime.now().millisecondsSinceEpoch.toString();
-        }
-
-        // create/update variant
-        await _productService.createOrUpdateVariant(variant);
-
-        // remove existing attributes for this variant (if editing) then re-create
-        // (Assumes ProductService exposes deleteVariantAttributesForVariant)
-        try {
-          await _productService.deleteVariantAttributesForVariant(variant.id);
-        } catch (e) {
-          // ignore if method doesn't exist or nothing to delete
-        }
-
-        // create junction rows for each attribute pair
-        for (var pair in entry.attributes) {
-          // skip invalid pairs
-          final attrId = pair['attribute_id'] ?? '';
-          final valId = pair['attribute_value_id'] ?? '';
-          if (attrId.isEmpty || valId.isEmpty) continue;
-
-          final pvAttr = ProductVariantAttributeModel(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            product_variant_id: variant.id,
-            attribute_id: attrId,
-            attribute_value_id: valId,
-            created_at: DateTime.now(),
-            updated_at: DateTime.now(),
-          );
-
-          // Assumes ProductService exposes createVariantAttribute
-          await _productService.createVariantAttribute(
-            variantId: pvAttr.product_variant_id,
-            attributeId: pvAttr.attribute_id,
-            attributeValueId: pvAttr.attribute_value_id,
-          );
-        }
-      }
-
-      if (context.mounted) Navigator.pop(context);
-    } catch (e) {
-      debugPrint('Save error: $e');
+    if (message.isNotEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Failed to save')));
+          .showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+
+  // Individual step validation
+  bool _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0: // Image step
+        return true; // Image is optional
+      case 1: // Basic Info step
+        if (_nameController.text.isEmpty) {
+          return false;
+        }
+        if (_selectedCategory == null) {
+          return false;
+        }
+        if (_selectedBrand == null) {
+          return false;
+        }
+        return true;
+      case 2: // Pricing step
+        return true; // Pricing is optional
+      case 3: // Variants step
+        return true; // Variants are optional
+      default:
+        return true;
+    }
+  }
+
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    IconData? icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon) : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required String labelText,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+    String? Function(T?)? validator,
+    IconData? prefixIcon,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: labelText,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.green),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+    );
   }
 
   Widget _buildImagePicker(
@@ -352,102 +454,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFormField({
-    required String labelText,
-    required TextEditingController controller,
-    String? Function(String?)? validator,
-    IconData? prefixIcon,
-    int maxLines = 1,
-  }) {
-    return Material(
-      elevation: 4,
-      shadowColor: Colors.green.withOpacity(0.3),
-      borderRadius: BorderRadius.circular(12),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: labelText,
-          prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: Colors.green.shade600)
-              : null,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.green.shade200, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.green.shade600, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red.shade600, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red.shade600, width: 2),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required String labelText,
-    required T? value,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    String? Function(T?)? validator,
-    IconData? prefixIcon,
-  }) {
-    return Material(
-      elevation: 4,
-      shadowColor: Colors.green.withOpacity(0.3),
-      borderRadius: BorderRadius.circular(12),
-      child: DropdownButtonFormField<T>(
-        value: value,
-        items: items,
-        onChanged: onChanged,
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: labelText,
-          prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: Colors.green.shade600)
-              : null,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.green.shade200, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.green.shade600, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red.shade600, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red.shade600, width: 2),
-          ),
-        ),
       ),
     );
   }
@@ -581,209 +587,60 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   // Step 1: Product Image
   Widget _buildImageStep() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.green.shade50!,
-            Colors.white,
-            Colors.grey.shade50!,
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Material(
-              elevation: 0,
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.green.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.image,
-                              color: Colors.green.shade600, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Product Image',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildImagePicker(
-                        imageUrl: _imageUrl,
-                        onTap: _pickImage,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+    return _buildSectionCard(
+      title: 'Product Image',
+      child: _buildImagePicker(
+        imageUrl: _imageUrl,
+        onTap: _pickImage,
       ),
     );
   }
 
   // Step 2: Basic Information
   Widget _buildBasicInfoStep() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.green.shade50!,
-            Colors.white,
-            Colors.grey.shade50!,
-          ],
-        ),
-      ),
+    return _buildSectionCard(
+      title: 'Basic Information',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Material(
-              elevation: 0,
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.green.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              color: Colors.green.shade600, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Basic Information',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFormField(
-                        labelText: 'Product Name',
-                        controller: _nameController,
-                        prefixIcon: Icons.shopping_bag,
-                        validator: (val) => val == null || val.isEmpty
-                            ? 'Product name is required'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFormField(
-                        labelText: 'Description',
-                        controller: _descController,
-                        prefixIcon: Icons.description,
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDropdown<CategoryModel>(
-                        labelText: 'Category',
-                        value: _selectedCategory,
-                        items: _categories
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(c.name),
-                                ))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedCategory = val),
-                        prefixIcon: Icons.category,
-                        validator: (val) =>
-                            val == null ? 'Please select a category' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDropdown<BrandModel>(
-                        labelText: 'Brand',
-                        value: _selectedBrand,
-                        items: _brands
-                            .map((b) => DropdownMenuItem(
-                                  value: b,
-                                  child: Text(b.name),
-                                ))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedBrand = val),
-                        prefixIcon: Icons.storefront,
-                        validator: (val) =>
-                            val == null ? 'Please select a brand' : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          _buildTextField(
+            _nameController,
+            'Product Name',
+            icon: Icons.shopping_bag,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _descController,
+            'Description',
+            icon: Icons.description,
+            maxLines: 4,
+          ),
+          const SizedBox(height: 16),
+          _buildDropdown<CategoryModel>(
+            labelText: 'Category',
+            value: _selectedCategory,
+            items: _categories
+                .map((c) => DropdownMenuItem(
+                      value: c,
+                      child: Text(c.name),
+                    ))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedCategory = val),
+            prefixIcon: Icons.category,
+            validator: (val) => val == null ? 'Please select a category' : null,
+          ),
+          const SizedBox(height: 16),
+          _buildDropdown<BrandModel>(
+            labelText: 'Brand',
+            value: _selectedBrand,
+            items: _brands
+                .map((b) => DropdownMenuItem(
+                      value: b,
+                      child: Text(b.name),
+                    ))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedBrand = val),
+            prefixIcon: Icons.storefront,
+            validator: (val) => val == null ? 'Please select a brand' : null,
           ),
         ],
       ),
@@ -792,89 +649,20 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   // Step 3: Pricing
   Widget _buildPricingStep() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.green.shade50!,
-            Colors.white,
-            Colors.grey.shade50!,
-          ],
-        ),
-      ),
+    return _buildSectionCard(
+      title: 'Pricing',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Material(
-              elevation: 0,
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.green.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.attach_money,
-                              color: Colors.green.shade600, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Pricing',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFormField(
-                        labelText: 'Base Price',
-                        controller: _basePriceController,
-                        prefixIcon: Icons.monetization_on,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFormField(
-                        labelText: 'Sale Price',
-                        controller: _salePriceController,
-                        prefixIcon: Icons.local_offer,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          _buildTextField(
+            _basePriceController,
+            'Base Price',
+            icon: Icons.monetization_on,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            _salePriceController,
+            'Sale Price',
+            icon: Icons.local_offer,
           ),
         ],
       ),
@@ -883,556 +671,417 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   // Step 4: Product Variants
   Widget _buildVariantsStep() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.green.shade50!,
-            Colors.white,
-            Colors.grey.shade50!,
-          ],
-        ),
-      ),
+    return _buildSectionCard(
+      title: 'Product Variants',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
+          // Add variant button
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: _addVariant,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Material(
-              elevation: 0,
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.green.shade200,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.layers,
-                                  color: Colors.green.shade600, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Product Variants',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Material(
-                            elevation: 3,
-                            shadowColor: Colors.green.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
-                              onTap: _addVariant,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.green.shade400,
-                                      Colors.green.shade600,
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.add,
-                                        color: Colors.white, size: 16),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'ADD VARIANT',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Variant cards
-                      ..._variants.asMap().entries.map((entry) {
-                        final int index = entry.key;
-                        final _VariantEntry entryData = entry.value;
-                        final ProductVariantModel variant = entryData.variant;
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.green.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                                spreadRadius: 0,
-                              ),
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            elevation: 0,
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.white,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.green.shade200,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  children: [
-                                    // Variant header
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Material(
-                                          elevation: 2,
-                                          shadowColor:
-                                              Colors.red.withOpacity(0.3),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.red.shade100,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'Variant ${index + 1}',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.red.shade700,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Material(
-                                          elevation: 2,
-                                          shadowColor:
-                                              Colors.red.withOpacity(0.3),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          color: Colors.red.shade50,
-                                          child: InkWell(
-                                            onTap: () => _removeVariant(index),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                border: Border.all(
-                                                  color: Colors.red.shade200,
-                                                  width: 1,
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                Icons.delete,
-                                                size: 16,
-                                                color: Colors.red.shade600,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // Variant name
-                                    _buildFormField(
-                                      labelText: 'Variant Name',
-                                      controller: TextEditingController(
-                                          text: variant.name)
-                                        ..addListener(() {
-                                          variant.name = _nameController.text;
-                                        }),
-                                      prefixIcon: Icons.title,
-                                      validator: (val) =>
-                                          val == null || val.isEmpty
-                                              ? 'Variant name is required'
-                                              : null,
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // Variant Image
-                                    _buildImagePicker(
-                                      imageUrl: variant.image,
-                                      onTap: () async {
-                                        final picked =
-                                            await _productService.pickImage();
-                                        if (picked != null) {
-                                          setState(() {
-                                            variant.image = picked.url;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    const SizedBox(height: 16),
-
-                                    // Prices
-                                    Column(
-                                      children: [
-                                        _buildFormField(
-                                          labelText: 'Base Price',
-                                          controller: TextEditingController(
-                                            text: variant.base_price.toString(),
-                                          )..addListener(() {
-                                              variant.base_price =
-                                                  double.tryParse(
-                                                        TextEditingController(
-                                                          text: variant
-                                                              .base_price
-                                                              .toString(),
-                                                        ).text,
-                                                      ) ??
-                                                      0;
-                                            }),
-                                          prefixIcon: Icons.monetization_on,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildFormField(
-                                          labelText: 'Sale Price',
-                                          controller: TextEditingController(
-                                            text: variant.sale_price.toString(),
-                                          )..addListener(() {
-                                              variant.sale_price =
-                                                  double.tryParse(
-                                                        TextEditingController(
-                                                          text: variant
-                                                              .sale_price
-                                                              .toString(),
-                                                        ).text,
-                                                      ) ??
-                                                      0;
-                                            }),
-                                          prefixIcon: Icons.local_offer,
-                                        ),
-                                      ],
-                                    ),
-
-                                    const SizedBox(height: 16),
-
-                                    // Attributes section
-                                    Container(
-                                      margin: const EdgeInsets.only(top: 8),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.green.withOpacity(0.15),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 6),
-                                            spreadRadius: 0,
-                                          ),
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.05),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                            spreadRadius: 0,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Material(
-                                        elevation: 0,
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: Colors.green.shade50,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: Colors.green.shade200,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                // Header
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.settings,
-                                                      color:
-                                                          Colors.green.shade600,
-                                                      size: 18,
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      'Attributes',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: Colors.black87,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-
-                                                const SizedBox(height: 12),
-
-                                                // Attribute pairs UI - stacked vertically
-                                                ...entryData.attributes
-                                                    .asMap()
-                                                    .entries
-                                                    .map((pairEntry) {
-                                                  final pairIndex =
-                                                      pairEntry.key;
-                                                  final pair = pairEntry.value;
-
-                                                  return _build3DAttributePairUi(
-                                                      index, pairIndex, pair);
-                                                }).toList(),
-
-                                                const SizedBox(height: 12),
-
-                                                // Add attribute button
-                                                Center(
-                                                  child: Material(
-                                                    elevation: 3,
-                                                    shadowColor: Colors.green
-                                                        .withOpacity(0.3),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    child: InkWell(
-                                                      onTap: () =>
-                                                          _addAttributePairToVariant(
-                                                              index),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 16,
-                                                                vertical: 8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          gradient:
-                                                              LinearGradient(
-                                                            colors: [
-                                                              Colors.green
-                                                                  .shade400,
-                                                              Colors.green
-                                                                  .shade600,
-                                                            ],
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(Icons.add,
-                                                                color: Colors
-                                                                    .white,
-                                                                size: 16),
-                                                            const SizedBox(
-                                                                width: 4),
-                                                            Text(
-                                                              'Add Attribute',
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-
-                      if (_variants.isEmpty)
-                        Container(
-                          margin: const EdgeInsets.only(top: 16),
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.green.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                                spreadRadius: 0,
-                              ),
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            elevation: 0,
-                            borderRadius: BorderRadius.circular(12),
-                            color: Colors.grey.shade50,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey.shade200,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.layers_outlined,
-                                      color: Colors.grey.shade400,
-                                      size: 48,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No variants added yet',
-                                      style: TextStyle(
-                                        color: Colors.grey[700],
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Add product variants to create different versions of your product',
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 14,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+              ),
+              child: const Text(
+                'ADD VARIANT',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Variant cards
+          ..._variants.asMap().entries.map((entry) {
+            final int index = entry.key;
+            final _VariantEntry entryData = entry.value;
+            final ProductVariantModel variant = entryData.variant;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Material(
+                elevation: 0,
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.green.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Variant header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Variant ${index + 1}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _removeVariant(index),
+                              icon: Icon(
+                                Icons.delete,
+                                size: 16,
+                                color: Colors.red.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Variant name
+                        TextFormField(
+                          initialValue: variant.name,
+                          decoration: InputDecoration(
+                            labelText: 'Variant Name',
+                            prefixIcon: const Icon(Icons.title),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.green),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          onChanged: (value) {
+                            variant.name = value;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Variant Image
+                        _buildImagePicker(
+                          imageUrl: variant.image,
+                          onTap: () async {
+                            final picked = await _productService.pickImage();
+                            if (picked != null) {
+                              setState(() {
+                                variant.image = picked.url;
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Prices
+                        Column(
+                          children: [
+                            TextFormField(
+                              initialValue: variant.base_price.toString(),
+                              decoration: InputDecoration(
+                                labelText: 'Base Price',
+                                prefixIcon: const Icon(Icons.monetization_on),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      const BorderSide(color: Colors.green),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                variant.base_price =
+                                    double.tryParse(value) ?? 0;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              initialValue: variant.sale_price.toString(),
+                              decoration: InputDecoration(
+                                labelText: 'Sale Price',
+                                prefixIcon: const Icon(Icons.local_offer),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      const BorderSide(color: Colors.green),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                variant.sale_price =
+                                    double.tryParse(value) ?? 0;
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Attributes section
+                        _buildSectionCard(
+                          title: 'Attributes',
+                          child: Column(
+                            children: [
+                              // Attribute pairs UI - stacked vertically
+                              ...entryData.attributes
+                                  .asMap()
+                                  .entries
+                                  .map((pairEntry) {
+                                final pairIndex = pairEntry.key;
+                                final pair = pairEntry.value;
+
+                                return _build3DAttributePairUi(
+                                    index, pairIndex, pair);
+                              }).toList(),
+
+                              const SizedBox(height: 12),
+
+                              // Add attribute button
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () =>
+                                      _addAttributePairToVariant(index),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Add Attribute',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+
+          if (_variants.isEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Material(
+                elevation: 0,
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade50,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.grey.shade200,
+                      width: 1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.layers_outlined,
+                          color: Colors.grey.shade400,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No variants added yet',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Add product variants to create different versions of your product',
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // Validate each step before proceeding
-  bool _validateStep(int stepIndex) {
-    switch (stepIndex) {
-      case 0: // Image step
-        return true; // Image is optional
-      case 1: // Basic Info step
-        if (_nameController.text.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Product name is required')));
-          return false;
+  Future<void> _saveProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedCategory == null || _selectedBrand == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select category and brand')));
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    final id =
+        widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+    final product = ProductModel(
+      id: id,
+      name: _nameController.text,
+      description: _descController.text,
+      image: _imageUrl,
+      base_price: double.tryParse(_basePriceController.text) ?? 0,
+      sale_price: double.tryParse(_salePriceController.text) ?? 0,
+      is_archived: _isArchived,
+      category_id: _selectedCategory!.id,
+      brand_id: _selectedBrand!.id,
+    );
+
+    try {
+      if (widget.product == null) {
+        await _productService.createProduct(product);
+      } else {
+        await _productService.updateProduct(product);
+      }
+
+      // Save variants and their junction attributes
+      for (var entry in _variants) {
+        final variant = entry.variant;
+        variant.product_id = id;
+        if (variant.id.isEmpty) {
+          variant.id = DateTime.now().millisecondsSinceEpoch.toString();
         }
-        if (_selectedCategory == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a category')));
-          return false;
+
+        // create/update variant
+        await _productService.createOrUpdateVariant(variant);
+
+        // remove existing attributes for this variant (if editing) then re-create
+        // (Assumes ProductService exposes deleteVariantAttributesForVariant)
+        try {
+          await _productService.deleteVariantAttributesForVariant(variant.id);
+        } catch (e) {
+          // ignore if method doesn't exist or nothing to delete
         }
-        if (_selectedBrand == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a brand')));
-          return false;
+
+        // create junction rows for each attribute pair
+        for (var pair in entry.attributes) {
+          // skip invalid pairs
+          final attrId = pair['attribute_id'] ?? '';
+          final valId = pair['attribute_value_id'] ?? '';
+          if (attrId.isEmpty || valId.isEmpty) continue;
+
+          final pvAttr = ProductVariantAttributeModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            product_variant_id: variant.id,
+            attribute_id: attrId,
+            attribute_value_id: valId,
+            created_at: DateTime.now(),
+            updated_at: DateTime.now(),
+          );
+
+          // Assumes ProductService exposes createVariantAttribute
+          await _productService.createVariantAttribute(
+            variantId: pvAttr.product_variant_id,
+            attributeId: pvAttr.attribute_id,
+            attributeValueId: pvAttr.attribute_value_id,
+          );
         }
-        return true;
-      case 2: // Pricing step
-        return true; // Pricing is optional
-      case 3: // Variants step
-        return true; // Variants are optional
-      default:
-        return true;
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.product == null
+                ? 'Product created successfully!'
+                : 'Product updated successfully!'),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      debugPrint('Save error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to save product')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -1448,25 +1097,25 @@ class _AdminProductFormState extends State<AdminProductForm> {
         title: const Text('Image'),
         content: _buildImageStep(),
         isActive: _currentStep >= 0,
-        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+        state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),
       Step(
         title: const Text('Basic Info'),
         content: _buildBasicInfoStep(),
         isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+        state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),
       Step(
         title: const Text('Pricing'),
         content: _buildPricingStep(),
         isActive: _currentStep >= 2,
-        state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+        state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),
       Step(
         title: const Text('Variants'),
         content: _buildVariantsStep(),
         isActive: _currentStep >= 3,
-        state: _currentStep > 3 ? StepState.complete : StepState.indexed,
+        state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),
     ];
 
@@ -1505,144 +1154,66 @@ class _AdminProductFormState extends State<AdminProductForm> {
             child: Stepper(
               type: StepperType.vertical,
               currentStep: _currentStep,
-              steps: steps,
-              onStepContinue: () {
-                if (_validateStep(_currentStep)) {
-                  if (_currentStep < steps.length - 1) {
-                    setState(() {
-                      _currentStep += 1;
-                    });
-                  } else {
-                    _saveProduct();
-                  }
-                }
-              },
-              onStepCancel: () {
-                if (_currentStep > 0) {
-                  setState(() {
-                    _currentStep -= 1;
-                  });
-                }
-              },
+              onStepContinue:
+                  _currentStep == steps.length - 1 ? _saveProduct : _nextStep,
+              onStepCancel: _previousStep,
               onStepTapped: (step) {
-                // Allow backward navigation and forward navigation to validated steps
-                if (step <= _currentStep || _validateStep(_currentStep)) {
-                  setState(() {
-                    _currentStep = step;
-                  });
-                }
+                setState(() {
+                  _currentStep = step;
+                });
               },
-              controlsBuilder: (context, details) {
+              controlsBuilder: (BuildContext context, ControlsDetails details) {
                 return Padding(
-                  padding: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       if (_currentStep > 0)
-                        Material(
-                          elevation: 3,
-                          shadowColor: Colors.grey.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: () {
-                              if (_currentStep > 0) {
-                                setState(() {
-                                  _currentStep -= 1;
-                                });
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.arrow_back,
-                                      color: Colors.grey.shade600, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Back',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        ElevatedButton(
+                          onPressed: details.onStepCancel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
+                          child: const Text(
+                            'Back',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
-                      Material(
-                        elevation: 3,
-                        shadowColor: Colors.green.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          onTap: () {
-                            if (_validateStep(_currentStep)) {
-                              if (_currentStep < steps.length - 1) {
-                                setState(() {
-                                  _currentStep += 1;
-                                });
-                              } else {
-                                _saveProduct();
-                              }
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.green.shade400,
-                                  Colors.green.shade600,
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _currentStep == steps.length - 1
-                                      ? Icons.save
-                                      : Icons.arrow_forward,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _currentStep == steps.length - 1
-                                      ? (widget.product == null
-                                          ? 'Create Product'
-                                          : 'Update Product')
-                                      : 'Next',
-                                  style: const TextStyle(
+                      if (_currentStep > 0) const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: _isSaving ? null : details.onStepContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
+                            : Text(
+                                _currentStep == steps.length - 1
+                                    ? (widget.product == null
+                                        ? 'Create Product'
+                                        : 'Update Product')
+                                    : 'Next',
+                                style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                                    fontWeight: FontWeight.bold),
+                              ),
                       ),
                     ],
                   ),
                 );
               },
+              steps: steps,
             ),
           ),
         ),
