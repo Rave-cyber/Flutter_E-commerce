@@ -1,6 +1,7 @@
 import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/customer/cart/cart_screen.dart';
+import 'package:firebase/views/customer/orders/orders_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -133,6 +134,18 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
+            icon: Icon(Icons.receipt_long, color: primaryGreen),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrdersScreen(),
+                ),
+              );
+            },
+            tooltip: 'Order History',
+          ),
+          IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryGreen),
             onPressed: () {
               Navigator.push(
@@ -140,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => const CartScreen()),
               );
             },
+            tooltip: 'Shopping Cart',
           ),
         ],
       ),
@@ -510,6 +524,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProductCard(ProductModel product) {
+    // Calculate discount percentage outside widget tree
+    final hasDiscount = product.base_price > product.sale_price;
+    final discountPercent = hasDiscount
+        ? ((product.base_price - product.sale_price) / product.base_price * 100)
+            .toStringAsFixed(0)
+        : '0';
+    final discountValue = hasDiscount ? int.parse(discountPercent) : 0;
+    final showDiscountBadge = hasDiscount && discountValue > 0;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -550,7 +573,42 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 40,
                         ),
                       ),
-                    // Optional: Add a favorite button or discount badge
+                    // Discount badge - top left
+                    if (showDiscountBadge)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.red,
+                                Colors.red.shade700,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            '-$discountPercent%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
