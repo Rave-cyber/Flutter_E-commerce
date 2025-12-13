@@ -31,6 +31,10 @@ class ProductModel {
     this.updated_at,
   });
 
+  // Calculate total stock including all variants
+  // This will be implemented with variant data
+  int get totalStock => stock_quantity ?? 0;
+
   Map<String, Object?> toMap() {
     return {
       'id': id,

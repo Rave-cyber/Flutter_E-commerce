@@ -38,7 +38,9 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   bool _isArchived = false;
 
   List<ProductModel> _products = [];
-  List<ProductVariantModel> _variants = [];
+  List<ProductVariantModel> _allVariants = [];
+  List<ProductVariantModel> _productVariants =
+      []; // Variants for selected product
   List<SupplierModel> _suppliers = [];
   List<WarehouseModel> _warehouses = [];
   List<StockCheckerModel> _stockCheckers = [];
@@ -62,13 +64,13 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
     _stockCheckers = await StockCheckerService().fetchStockCheckersOnce();
 
     _products = await ProductService().fetchProductsOnce();
-    _variants = await ProductService().fetchAllVariants();
+    _allVariants = await ProductService().fetchAllVariants();
 
     if (widget.stockIn != null) {
       _selectedProduct =
           _products.firstWhereOrNull((p) => p.id == widget.stockIn!.product_id);
 
-      _selectedVariant = _variants
+      _selectedVariant = _allVariants
           .firstWhereOrNull((v) => v.id == widget.stockIn!.product_variant_id);
 
       _selectedSupplier = _suppliers
@@ -79,9 +81,26 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
 
       _selectedStockChecker = _stockCheckers
           .firstWhereOrNull((sc) => sc.id == widget.stockIn!.stock_checker_id);
+
+      // Load variants for the selected product
+      if (_selectedProduct != null) {
+        _loadProductVariants(_selectedProduct!);
+      }
     }
 
     setState(() {});
+  }
+
+  void _loadProductVariants(ProductModel product) {
+    _productVariants = _allVariants
+        .where((variant) => variant.product_id == product.id)
+        .toList();
+
+    // Clear selected variant if it doesn't belong to the new product
+    if (_selectedVariant != null &&
+        _selectedVariant!.product_id != product.id) {
+      _selectedVariant = null;
+    }
   }
 
   Future<void> _saveStockIn() async {
@@ -145,29 +164,36 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
                       onChanged: (val) {
                         setState(() {
                           _selectedProduct = val;
-                          // keep variants unchanged
+                          if (val != null) {
+                            _loadProductVariants(val);
+                          } else {
+                            _productVariants = [];
+                            _selectedVariant = null;
+                          }
                         });
                       }),
                   const SizedBox(height: 12),
 
-                  /// PRODUCT VARIANT DROPDOWN
-                  DropdownButtonFormField<ProductVariantModel>(
-                    value: _selectedVariant,
-                    decoration:
-                        const InputDecoration(labelText: 'Product Variant'),
-                    items: _variants
-                        .map((v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(v.name),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedVariant = val;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
+                  /// PRODUCT VARIANT DROPDOWN - Only show if product has variants
+                  if (_productVariants.isNotEmpty) ...[
+                    DropdownButtonFormField<ProductVariantModel>(
+                      value: _selectedVariant,
+                      decoration:
+                          const InputDecoration(labelText: 'Product Variant'),
+                      items: _productVariants
+                          .map((v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(v.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedVariant = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   /// SUPPLIER DROPDOWN
                   DropdownButtonFormField<SupplierModel>(
