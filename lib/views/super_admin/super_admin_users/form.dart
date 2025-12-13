@@ -30,6 +30,8 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   // Common Fields
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _middleNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -53,6 +55,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -70,23 +73,6 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Create Auth User
-      // Note: This signs in the new user automatically, so we might need to re-login super admin
-      // or handle it differently. For now, we assume simple creation flow.
-      // A better approach for admin creating users is using Firebase Admin SDK (cloud functions),
-      // but client SDK is limited.
-
-      // We'll use a secondary app instance or just simple registration for now
-      // knowing it might affect current session.
-      // OR better: Just call a service method that handles this.
-
-      // WARNING: Client SDK createUserWithEmailAndPassword signs in the new user.
-      // To avoid logging out the super admin, we should typically use a Cloud Function.
-      // For this task, we will proceed with the client SDK but be aware of the session switch caveat
-      // or assume the user accepts re-login for testing.
-
-      // HOWEVER, AuthService has registerWithEmailAndPassword which uses createUserWithEmailAndPassword.
-
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
       final firstName = _firstNameController.text.trim();
@@ -96,15 +82,6 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
       final contact = _contactController.text.trim();
 
       // Create User with Auth Service
-      // Note: We need to modify AuthService to support these extra fields or handle them here.
-      // AuthService.registerWithEmailAndPassword creates the UserModel in Firestore.
-
-      // We will implement custom creation logic here to handle sub-collections (customers/delivery_staff)
-
-      // 1. Create Auth User (CAUTION: Signs out current user)
-      // To properly support this without Cloud Functions, we are stuck.
-      // Let's assume for this MVP we just use the auth service and handle the result.
-
       final newUser = await _authService.registerWithEmailAndPassword(
         email,
         password,
@@ -193,6 +170,26 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
               const SizedBox(height: 10),
               _buildTextField(_passwordController, 'Password',
                   icon: Icons.lock, obscureText: true),
+              const SizedBox(height: 10),
+              // Confirm Password
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon: Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
               const SizedBox(height: 20),
 
               // Personal Info

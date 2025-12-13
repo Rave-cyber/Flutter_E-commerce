@@ -2,6 +2,7 @@ import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:firebase/views/auth/login_screen.dart';
 import 'package:firebase/views/super_admin/super_admin_dashboard/index.dart';
+import 'package:firebase/views/delivery_staff/delivery_staff_dashboard/index.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -133,6 +134,8 @@ class AuthWrapper extends StatelessWidget {
                 return const SuperAdminDashboardScreen();
               } else if (user.role == 'admin') {
                 return const AdminDashboard();
+              } else if (user.role == 'delivery_staff') {
+                return const DeliveryStaffDashboardScreen();
               } else {
                 // If you want customer data, fetch separately in HomeScreen or via another FutureBuilder
                 return HomeScreen(user: user);
