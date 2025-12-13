@@ -261,7 +261,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 fontSize: 16,
               ),
             ),
-            if (product.stock_quantity <= 5 && product.stock_quantity > 0)
+            if (product.stock_quantity! < 5 && product.stock_quantity! > 0)
               Text(
                 'Only ${product.stock_quantity} left',
                 style: const TextStyle(

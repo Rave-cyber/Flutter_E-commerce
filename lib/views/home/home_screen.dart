@@ -720,7 +720,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Stock indicator
                   const SizedBox(height: 4),
-                  if (product.stock_quantity > 0)
+                  if (product.stock_quantity! > 0)
                     Text(
                       'In Stock',
                       style: TextStyle(

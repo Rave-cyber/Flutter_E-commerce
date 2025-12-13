@@ -243,10 +243,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Determine stock based on selected option
     final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+        ? widget.product.stock_quantity ?? 0
+        : (_selectedOption as ProductVariantModel).stock ?? 0;
 
-    if (stock <= 0) {
+    if (stock < 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -317,10 +317,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Determine stock based on selected option
     final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+        ? widget.product.stock_quantity ?? 0
+        : (_selectedOption as ProductVariantModel).stock ?? 0;
 
-    if (stock <= 0) {
+    if (stock < 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -876,8 +876,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     // Get stock based on selected option
     final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+        ? widget.product.stock_quantity ?? 0
+        : (_selectedOption as ProductVariantModel).stock ?? 0;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -1642,8 +1642,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     // Get stock based on selected option
     final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+        ? widget.product.stock_quantity ?? 0
+        : (_selectedOption as ProductVariantModel).stock ?? 0;
 
     return Scaffold(
       body: CustomScrollView(

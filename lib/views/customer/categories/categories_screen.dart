@@ -328,7 +328,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  if (product.stock_quantity <= 5 && product.stock_quantity > 0)
+                  if (product.stock_quantity! < 5 &&
+                      product.stock_quantity! > 0)
                     Text(
                       'Only ${product.stock_quantity} left',
                       style: TextStyle(
