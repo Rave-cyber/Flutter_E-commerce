@@ -9,62 +9,72 @@ class AdminSeeder {
   // STATIC method to seed the admin user
   static Future<void> seedAdmin() async {
     try {
-      // Check if an admin already exists in Firestore
-      final adminQuery = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'admin')
-          .limit(1)
-          .get();
-
-      if (adminQuery.docs.isNotEmpty) {
-        print('ℹ️ Admin user already exists.');
-        return;
-      }
-
-      // Admin credentials
       const adminEmail = 'admin@gmail.com';
       const adminPassword = '123456';
 
-      // Check if email already exists in Firebase Auth (optional safety)
-      final existingMethods =
-          await _auth.fetchSignInMethodsForEmail(adminEmail);
+      User? user;
+      bool isNewUser = false;
 
-      UserCredential credential;
-
-      if (existingMethods.isEmpty) {
-        // Create Firebase Auth user
-        credential = await _auth.createUserWithEmailAndPassword(
+      try {
+        // Try to create the user first
+        UserCredential credential = await _auth.createUserWithEmailAndPassword(
           email: adminEmail,
           password: adminPassword,
         );
-      } else {
-        // Email already exists — retrieve existing user instead of failing
-        final existingUser = await _auth.signInWithEmailAndPassword(
-          email: adminEmail,
-          password: adminPassword,
-        );
-        credential = existingUser;
+        user = credential.user;
+        isNewUser = true;
+        print('✅ Admin Auth user created.');
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          // If email exists, try to sign in
+          try {
+            UserCredential credential = await _auth.signInWithEmailAndPassword(
+              email: adminEmail,
+              password: adminPassword,
+            );
+            user = credential.user;
+            // print('✅ Admin verified via login.');
+          } catch (signInError) {
+            print(
+                '⚠️ Admin email exists but login failed (wrong password?): $signInError');
+            return;
+          }
+        } else {
+          print('❌ Failed to create admin auth user: ${e.message}');
+          return;
+        }
+      } catch (e) {
+        print('❌ Unexpected error during admin creation: $e');
+        return;
       }
 
-      // Build the UserModel for Firestore
-      final adminUser = UserModel(
-        id: credential.user!.uid,
-        email: adminEmail,
-        role: 'admin',
-        display_name: 'System Administrator', // valid for admin-only
-        created_at: DateTime.now(),
-        is_archived: false,
-      );
+      if (user != null) {
+        // Ensure Firestore data exists and is correct
+        final userDocRef = _firestore.collection('users').doc(user.uid);
+        final userDoc = await userDocRef.get();
 
-      // Save admin data to Firestore
-      await _firestore
-          .collection('users')
-          .doc(adminUser.id)
-          .set(adminUser.toMap());
+        if (!userDoc.exists || isNewUser) {
+          // Build the UserModel
+          final adminUser = UserModel(
+            id: user.uid,
+            email: adminEmail,
+            role: 'admin',
+            display_name: 'System Administrator',
+            created_at: DateTime.now(),
+            is_archived: false,
+          );
 
-      print('✅ Admin user created/verified successfully.');
-      print('📧 Email: $adminEmail');
-      print('🔑 Password: $adminPassword (not stored in Firestore)');
+          await userDocRef.set(adminUser.toMap());
+          print('✅ Admin Firestore document created/seeded.');
+        } else {
+          // Document exists, check if role is correct
+          final data = userDoc.data();
+          if (data != null && data['role'] != 'admin') {
+            await userDocRef.update({'role': 'admin'});
+            print('✅ Fixed admin role in Firestore.');
+          }
+        }
+      }
     } catch (e) {
       print('❌ Error seeding admin: $e');
     }

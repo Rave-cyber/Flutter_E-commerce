@@ -6,6 +6,7 @@ import '../../models/user_model.dart';
 import '../../models/customer_model.dart';
 import 'register_screen.dart';
 import '../home/home_screen.dart';
+import '../super_admin/super_admin_dashboard/index.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -44,7 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       // Check role and navigate accordingly
-      if (user.role == 'admin') {
+      if (user.role == 'super_admin') {
+        // Navigate to SuperAdminDashboard
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SuperAdminDashboardScreen()),
+        );
+      } else if (user.role == 'admin') {
         // Navigate to AdminScreen
         Navigator.pushReplacement(
           context,

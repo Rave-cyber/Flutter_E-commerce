@@ -1,12 +1,14 @@
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:firebase/views/auth/login_screen.dart';
+import 'package:firebase/views/super_admin/super_admin_dashboard/index.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'services/admin_seeder.dart';
+import 'services/super_admin_seeder.dart';
 import 'views/splash/splash_screen.dart';
 import 'views/home/home_screen.dart';
 
@@ -16,6 +18,8 @@ void main() async {
 
   // Seed admin user on app start
   await AdminSeeder.seedAdmin();
+  // Seed super admin user on app start
+  await SuperAdminSeeder.seedSuperAdmin();
 
   runApp(const MyApp());
 }
@@ -117,15 +121,17 @@ class AuthWrapper extends StatelessWidget {
               }
 
               if (userSnapshot.hasError || userSnapshot.data == null) {
-                return const Scaffold(
-                  body: Center(child: Text('Failed to load user data')),
-                );
+                // If user data is missing but auth exists, it might be a sync issue or deleted user
+                // Could sign out here to be safe, or just show login
+                return const LoginScreen();
               }
 
               final user = userSnapshot.data!;
 
               // Navigate based on role
-              if (user.role == 'admin') {
+              if (user.role == 'super_admin') {
+                return const SuperAdminDashboardScreen();
+              } else if (user.role == 'admin') {
                 return const AdminDashboard();
               } else {
                 // If you want customer data, fetch separately in HomeScreen or via another FutureBuilder
