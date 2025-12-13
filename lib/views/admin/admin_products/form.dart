@@ -1,14 +1,17 @@
 import 'package:firebase/services/admin/product_sevice.dart';
+import 'package:firebase/services/admin/category_service.dart';
+import 'package:firebase/services/admin/brand_service.dart';
+import 'package:firebase/services/admin/attribute_service.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '/models/product.dart';
-import '/models/category_model.dart';
-import '/models/brand_model.dart';
-import '/models/attribute_model.dart';
-import '/models/attribute_value_model.dart';
-import '/models/product_variant_model.dart';
-import '/models/product_variant_attribute_model.dart';
-import 'form.dart';
+import '../../../models/product.dart';
+import '../../../models/category_model.dart';
+import '../../../models/brand_model.dart';
+import '../../../models/attribute_model.dart';
+import '../../../models/attribute_value_model.dart';
+import '../../../models/product_variant_model.dart';
+import '../../../models/product_variant_attribute_model.dart';
+import '../../../widgets/three_d_widgets.dart';
 
 class AdminProductForm extends StatefulWidget {
   final ProductModel? product;
@@ -34,6 +37,9 @@ class _VariantEntry {
 class _AdminProductFormState extends State<AdminProductForm> {
   final _formKey = GlobalKey<FormState>();
   final ProductService _productService = ProductService();
+  final CategoryService _categoryService = CategoryService();
+  final BrandService _brandService = BrandService();
+  final AttributeService _attributeService = AttributeService();
 
   late TextEditingController _nameController;
   late TextEditingController _descController;
@@ -88,8 +94,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
   }
 
   Future<void> _loadDropdowns() async {
-    final categories = await _productService.fetchCategories();
-    final brands = await _productService.fetchBrands();
+    final categories = await _categoryService.getCategories().first;
+    final brands = await _brandService.getBrands().first;
 
     setState(() {
       _categories = categories;
@@ -114,11 +120,11 @@ class _AdminProductFormState extends State<AdminProductForm> {
   }
 
   Future<void> _loadAttributes() async {
-    final attributes = await _productService.fetchAttributes();
+    final attributes = await _attributeService.getAttributes();
     Map<String, List<AttributeValueModel>> valuesMap = {};
 
     for (var attr in attributes) {
-      valuesMap[attr.id] = await _productService.fetchAttributeValues(attr.id);
+      valuesMap[attr.id] = await _attributeService.getAttributeValues(attr.id);
     }
 
     setState(() {
@@ -291,137 +297,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
     }
   }
 
-  Widget _build3DIcon(IconData icon, Color color, {double size = 24}) {
-    return Icon(
-      icon,
-      color: color,
-      size: size,
-      shadows: [
-        Shadow(
-          color: Colors.black,
-          offset: const Offset(1, 1),
-          blurRadius: 8,
-        ),
-        Shadow(
-          color: Colors.white,
-          offset: const Offset(-2, -2),
-          blurRadius: 4,
-        ),
-        Shadow(
-          color: color.withOpacity(0.8),
-          offset: const Offset(0, 0),
-          blurRadius: 2,
-        ),
-      ],
-    );
-  }
-
-  Widget _build3DFormField({
-    required String labelText,
-    required TextEditingController controller,
-    Widget? prefixIcon,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 2,
-            offset: const Offset(-1, -1),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: labelText,
-          labelStyle: TextStyle(
-            color: Colors.green.shade600,
-            fontWeight: FontWeight.w600,
-            shadows: [
-              Shadow(
-                color: Colors.white.withOpacity(0.8),
-                offset: const Offset(0, 1),
-                blurRadius: 1,
-              ),
-            ],
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          prefixIcon: prefixIcon,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        ),
-        validator: validator,
-      ),
-    );
-  }
-
-  Widget _build3DDropdown<T>({
-    required String labelText,
-    required T? value,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    Widget? prefixIcon,
-    String? Function(T?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 2,
-            offset: const Offset(-1, -1),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<T>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: labelText,
-          labelStyle: TextStyle(
-            color: Colors.green.shade600,
-            fontWeight: FontWeight.w600,
-            shadows: [
-              Shadow(
-                color: Colors.white.withOpacity(0.8),
-                offset: const Offset(0, 1),
-                blurRadius: 1,
-              ),
-            ],
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          prefixIcon: prefixIcon,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        ),
-        items: items,
-        onChanged: onChanged,
-        validator: validator,
-      ),
-    );
-  }
-
   Widget _build3DAttributePairUi(
       int variantIndex, int pairIndex, Map<String, String> pair) {
     final currentAttrId = pair['attribute_id'] ?? '';
@@ -448,190 +323,65 @@ class _AdminProductFormState extends State<AdminProductForm> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
           // Attribute dropdown
-          Expanded(
-            flex: 5,
-            child: _build3DDropdown<String>(
-              labelText: 'Attribute',
-              value: currentAttrId.isNotEmpty ? currentAttrId : null,
-              items: _attributes
-                  .map((a) => DropdownMenuItem(
-                        value: a.id,
-                        child: Text(a.name),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                final newAttrId = val ?? '';
-                final newValId = (newAttrId.isNotEmpty &&
-                        (_attributeValues[newAttrId]?.isNotEmpty ?? false))
-                    ? _attributeValues[newAttrId]![0].id
-                    : '';
-                setState(() {
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_id'] = newAttrId;
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_value_id'] = newValId;
-                });
-              },
-              prefixIcon: _build3DIcon(Icons.label, Colors.green.shade600),
-              validator: (v) =>
-                  v == null || v.isEmpty ? 'Select attribute' : null,
-            ),
+          ThreeDDropdown<String>(
+            labelText: 'Attribute',
+            value: currentAttrId.isNotEmpty ? currentAttrId : null,
+            items: _attributes
+                .map((a) => DropdownMenuItem(
+                      value: a.id,
+                      child: Text(a.name),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              final newAttrId = val ?? '';
+              final newValId = (newAttrId.isNotEmpty &&
+                      (_attributeValues[newAttrId]?.isNotEmpty ?? false))
+                  ? _attributeValues[newAttrId]![0].id
+                  : '';
+              setState(() {
+                _variants[variantIndex].attributes[pairIndex]['attribute_id'] =
+                    newAttrId;
+                _variants[variantIndex].attributes[pairIndex]
+                    ['attribute_value_id'] = newValId;
+              });
+            },
+            prefixIcon: ThreeDIcon(Icons.label, Colors.green.shade600),
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Select attribute' : null,
           ),
-          const SizedBox(width: 16),
-          // Value dropdown
-          Expanded(
-            flex: 5,
-            child: _build3DDropdown<String>(
-              labelText: 'Value',
-              value: currentValId.isNotEmpty ? currentValId : null,
-              items: (_attributeValues[currentAttrId] ?? [])
-                  .map((av) => DropdownMenuItem(
-                        value: av.id,
-                        child: Text(av.name),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _variants[variantIndex].attributes[pairIndex]
-                      ['attribute_value_id'] = val ?? '';
-                });
-              },
-              prefixIcon: _build3DIcon(
-                  Icons.format_list_bulleted, Colors.green.shade600),
-              validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Remove button
-          _build3DButton(
-            icon: Icons.delete,
-            color: Colors.red.shade600,
-            onPressed: () =>
-                _removeAttributePairFromVariant(variantIndex, pairIndex),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _build3DButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-    String? text,
-    bool isPressed = false,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: isPressed
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 4,
-                    offset: const Offset(2, 4),
-                    spreadRadius: 0,
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: const Offset(4, 8),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.8),
-                    blurRadius: 2,
-                    offset: const Offset(-1, -1),
-                    spreadRadius: 0,
-                  ),
-                ],
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
-    );
-  }
-
-  Widget _build3DImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.white.withOpacity(0.8),
-              blurRadius: 3,
-              offset: const Offset(-2, -2),
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: _imageUrl.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Image.network(
-                  _imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildImagePlaceholder('Failed to load image');
-                  },
-                ),
-              )
-            : _buildImagePlaceholder('Tap to add product image'),
-      ),
-    );
-  }
-
-  Widget _buildImagePlaceholder(String text) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey[200]!,
-            Colors.grey[100]!,
-          ],
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _build3DIcon(Icons.add_photo_alternate, Colors.green.shade600,
-              size: 40),
           const SizedBox(height: 16),
-          Text(
-            text,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              shadows: [
-                Shadow(
-                  color: Colors.white.withOpacity(0.8),
-                  offset: const Offset(0, 1),
-                  blurRadius: 1,
-                ),
-              ],
+          // Attribute value dropdown
+          ThreeDDropdown<String>(
+            labelText: 'Value',
+            value: currentValId.isNotEmpty ? currentValId : null,
+            items: (_attributeValues[currentAttrId] ?? [])
+                .map((av) => DropdownMenuItem(
+                      value: av.id,
+                      child: Text(av.name),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _variants[variantIndex].attributes[pairIndex]
+                    ['attribute_value_id'] = val ?? '';
+              });
+            },
+            prefixIcon:
+                ThreeDIcon(Icons.format_list_bulleted, Colors.green.shade600),
+            validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
+          ),
+          const SizedBox(height: 16),
+          // Remove button
+          Align(
+            alignment: Alignment.centerRight,
+            child: ThreeDButton(
+              icon: Icons.delete,
+              color: Colors.red.shade600,
+              onPressed: () =>
+                  _removeAttributePairFromVariant(variantIndex, pairIndex),
             ),
           ),
         ],
@@ -697,9 +447,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
                   ),
                   child: Row(
                     children: [
-                      _build3DButton(
+                      ThreeDButton(
                         icon: Icons.arrow_back,
-                        color: Colors.white.withOpacity(0.3),
+                        color:
+                            const Color.fromARGB(255, 0, 0, 0).withOpacity(0.3),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 20),
@@ -722,75 +473,47 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          widget.product == null ? 'NEW' : 'EDIT',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black,
-                                offset: Offset(0, 1),
-                                blurRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // 3D Image Section
-                _build3DSection(
+                ThreeDSection(
                   title: 'Product Image',
                   icon: Icons.image,
-                  child: _build3DImagePicker(),
+                  child: ThreeDImagePicker(
+                    imageUrl: _imageUrl,
+                    onTap: _pickImage,
+                  ),
                 ),
                 const SizedBox(height: 32),
 
                 // 3D Basic Information Section
-                _build3DSection(
+                ThreeDSection(
                   title: 'Basic Information',
                   icon: Icons.info_outline,
                   child: Column(
                     children: [
-                      _build3DFormField(
+                      ThreeDFormField(
                         labelText: 'Product Name',
                         controller: _nameController,
-                        prefixIcon: _build3DIcon(
+                        prefixIcon: ThreeDIcon(
                             Icons.shopping_bag, Colors.green.shade600),
                         validator: (val) => val == null || val.isEmpty
                             ? 'Product name is required'
                             : null,
                       ),
                       const SizedBox(height: 20),
-                      _build3DFormField(
+                      ThreeDFormField(
                         labelText: 'Description',
                         controller: _descController,
-                        prefixIcon: _build3DIcon(
+                        prefixIcon: ThreeDIcon(
                             Icons.description, Colors.green.shade600),
                         maxLines: 4,
                       ),
                       const SizedBox(height: 20),
-                      _build3DDropdown<CategoryModel>(
+                      ThreeDDropdown<CategoryModel>(
                         labelText: 'Category',
                         value: _selectedCategory,
                         items: _categories
@@ -802,12 +525,12 @@ class _AdminProductFormState extends State<AdminProductForm> {
                         onChanged: (val) =>
                             setState(() => _selectedCategory = val),
                         prefixIcon:
-                            _build3DIcon(Icons.category, Colors.green.shade600),
+                            ThreeDIcon(Icons.category, Colors.green.shade600),
                         validator: (val) =>
                             val == null ? 'Please select a category' : null,
                       ),
                       const SizedBox(height: 20),
-                      _build3DDropdown<BrandModel>(
+                      ThreeDDropdown<BrandModel>(
                         labelText: 'Brand',
                         value: _selectedBrand,
                         items: _brands
@@ -818,100 +541,51 @@ class _AdminProductFormState extends State<AdminProductForm> {
                             .toList(),
                         onChanged: (val) =>
                             setState(() => _selectedBrand = val),
-                        prefixIcon: _build3DIcon(
-                            Icons.storefront, Colors.green.shade600),
+                        prefixIcon:
+                            ThreeDIcon(Icons.storefront, Colors.green.shade600),
                         validator: (val) =>
                             val == null ? 'Please select a brand' : null,
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                              spreadRadius: 0,
-                            ),
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.8),
-                              blurRadius: 2,
-                              offset: const Offset(-1, -1),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            _build3DIcon(Icons.archive, Colors.red.shade600),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                'Archived',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red.shade700,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.8),
-                                      offset: const Offset(0, 1),
-                                      blurRadius: 1,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Switch(
-                              value: _isArchived,
-                              onChanged: (val) =>
-                                  setState(() => _isArchived = val),
-                              activeColor: Colors.red.shade600,
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // 3D Pricing Section
-                _build3DSection(
+                ThreeDSection(
                   title: 'Pricing',
                   icon: Icons.attach_money,
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: _build3DFormField(
-                          labelText: 'Base Price',
-                          controller: _basePriceController,
-                          prefixIcon: _build3DIcon(
-                              Icons.monetization_on, Colors.green.shade600),
+                      ThreeDFormField(
+                        labelText: 'Base Price',
+                        controller: _basePriceController,
+                        prefixIcon: ThreeDIcon(
+                          Icons.monetization_on,
+                          Colors.green.shade600,
                         ),
                       ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: _build3DFormField(
-                          labelText: 'Sale Price',
-                          controller: _salePriceController,
-                          prefixIcon: _build3DIcon(
-                              Icons.local_offer, Colors.green.shade600),
+                      const SizedBox(height: 20),
+                      ThreeDFormField(
+                        labelText: 'Sale Price',
+                        controller: _salePriceController,
+                        prefixIcon: ThreeDIcon(
+                          Icons.local_offer,
+                          Colors.green.shade600,
                         ),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 32),
 
                 // 3D Variants Section
-                _build3DSection(
+                ThreeDSection(
                   title: 'Product Variants',
                   icon: Icons.layers,
-                  action: _build3DButton(
+                  action: ThreeDButton(
                     icon: Icons.add,
                     color: Colors.green.shade600,
                     onPressed: _addVariant,
@@ -973,7 +647,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.red.shade700,
+                                        color: Colors.black,
                                         shadows: [
                                           Shadow(
                                             color:
@@ -985,7 +659,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                       ),
                                     ),
                                   ),
-                                  _build3DButton(
+                                  ThreeDButton(
                                     icon: Icons.delete,
                                     color: Colors.red.shade600,
                                     onPressed: () => _removeVariant(index),
@@ -995,13 +669,14 @@ class _AdminProductFormState extends State<AdminProductForm> {
                               const SizedBox(height: 20),
 
                               // Variant name
-                              _build3DFormField(
+                              ThreeDFormField(
                                 labelText: 'Variant Name',
                                 controller:
                                     TextEditingController(text: variant.name)
-                                      ..addListener(() =>
-                                          variant.name = _nameController.text),
-                                prefixIcon: _build3DIcon(
+                                      ..addListener(() {
+                                        variant.name = _nameController.text;
+                                      }),
+                                prefixIcon: ThreeDIcon(
                                     Icons.title, Colors.green.shade600),
                                 validator: (val) => val == null || val.isEmpty
                                     ? 'Variant name is required'
@@ -1010,7 +685,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
                               const SizedBox(height: 20),
 
                               // Variant Image
-                              GestureDetector(
+                              ThreeDImagePicker(
+                                imageUrl: variant.image,
                                 onTap: () async {
                                   final picked =
                                       await _productService.pickImage();
@@ -1020,135 +696,52 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                     });
                                   }
                                 },
-                                child: Container(
-                                  height: 140,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                        spreadRadius: 0,
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.white.withOpacity(0.8),
-                                        blurRadius: 2,
-                                        offset: const Offset(-1, -1),
-                                        spreadRadius: 0,
-                                      ),
-                                    ],
-                                  ),
-                                  child: variant.image.isNotEmpty
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(18),
-                                          child: Image.network(
-                                            variant.image,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return _buildImagePlaceholder(
-                                                  'Failed to load');
-                                            },
-                                          ),
-                                        )
-                                      : _buildImagePlaceholder(
-                                          'Add variant image'),
-                                ),
                               ),
                               const SizedBox(height: 20),
 
                               // Prices
-                              Row(
+                              Column(
                                 children: [
-                                  Expanded(
-                                    child: _build3DFormField(
-                                      labelText: 'Base Price',
-                                      controller: TextEditingController(
-                                          text: variant.base_price.toString())
-                                        ..addListener(() => variant
-                                            .base_price = double.tryParse(
-                                                _basePriceController.text) ??
-                                            0),
-                                      prefixIcon: _build3DIcon(
-                                          Icons.monetization_on,
-                                          Colors.green.shade600),
+                                  ThreeDFormField(
+                                    labelText: 'Base Price',
+                                    controller: TextEditingController(
+                                      text: variant.base_price.toString(),
+                                    )..addListener(() {
+                                        variant.base_price = double.tryParse(
+                                              TextEditingController(
+                                                text: variant.base_price
+                                                    .toString(),
+                                              ).text,
+                                            ) ??
+                                            0;
+                                      }),
+                                    prefixIcon: ThreeDIcon(
+                                      Icons.monetization_on,
+                                      Colors.green.shade600,
                                     ),
                                   ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: _build3DFormField(
-                                      labelText: 'Sale Price',
-                                      controller: TextEditingController(
-                                          text: variant.sale_price.toString())
-                                        ..addListener(() => variant
-                                            .sale_price = double.tryParse(
-                                                _salePriceController.text) ??
-                                            0),
-                                      prefixIcon: _build3DIcon(
-                                          Icons.local_offer,
-                                          Colors.green.shade600),
+                                  const SizedBox(height: 20),
+                                  ThreeDFormField(
+                                    labelText: 'Sale Price',
+                                    controller: TextEditingController(
+                                      text: variant.sale_price.toString(),
+                                    )..addListener(() {
+                                        variant.sale_price = double.tryParse(
+                                              TextEditingController(
+                                                text: variant.sale_price
+                                                    .toString(),
+                                              ).text,
+                                            ) ??
+                                            0;
+                                      }),
+                                    prefixIcon: ThreeDIcon(
+                                      Icons.local_offer,
+                                      Colors.green.shade600,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
 
-                              // Archived toggle
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade100,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                      spreadRadius: 0,
-                                    ),
-                                    BoxShadow(
-                                      color: Colors.white.withOpacity(0.8),
-                                      blurRadius: 2,
-                                      offset: const Offset(-1, -1),
-                                      spreadRadius: 0,
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    _build3DIcon(
-                                        Icons.archive, Colors.red.shade600),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Text(
-                                        'Variant Archived',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.red.shade700,
-                                          shadows: [
-                                            Shadow(
-                                              color:
-                                                  Colors.white.withOpacity(0.8),
-                                              offset: const Offset(0, 1),
-                                              blurRadius: 1,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Switch(
-                                      value: variant.is_archived,
-                                      onChanged: (val) => setState(
-                                          () => variant.is_archived = val),
-                                      activeColor: Colors.red.shade600,
-                                    ),
-                                  ],
-                                ),
-                              ),
                               const SizedBox(height: 20),
 
                               // Attributes section
@@ -1162,31 +755,32 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                       color: Colors.black.withOpacity(0.15),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
-                                      spreadRadius: 0,
                                     ),
                                     BoxShadow(
                                       color: Colors.white.withOpacity(0.8),
                                       blurRadius: 2,
                                       offset: const Offset(-1, -1),
-                                      spreadRadius: 0,
                                     ),
                                   ],
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Header
                                     Row(
                                       children: [
-                                        _build3DIcon(Icons.settings,
-                                            Colors.green.shade600,
-                                            size: 20),
+                                        ThreeDIcon(
+                                          Icons.settings,
+                                          Colors.green.shade600,
+                                          size: 20,
+                                        ),
                                         const SizedBox(width: 12),
                                         Text(
                                           'Attributes',
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade800,
+                                            color: Colors.black,
                                             shadows: [
                                               Shadow(
                                                 color: Colors.white
@@ -1199,28 +793,31 @@ class _AdminProductFormState extends State<AdminProductForm> {
                                         ),
                                       ],
                                     ),
+
                                     const SizedBox(height: 16),
 
-                                    // Attribute pairs UI
+                                    // Attribute pairs UI - stacked vertically
                                     ...entryData.attributes
                                         .asMap()
                                         .entries
                                         .map((pairEntry) {
                                       final pairIndex = pairEntry.key;
                                       final pair = pairEntry.value;
+
                                       return _build3DAttributePairUi(
                                           index, pairIndex, pair);
                                     }).toList(),
 
-                                    // Add attribute button
                                     const SizedBox(height: 16),
+
+                                    // Add attribute button
                                     Center(
-                                      child: _build3DButton(
+                                      child: ThreeDButton(
                                         icon: Icons.add,
                                         color: Colors.green.shade600,
+                                        text: 'Add Attribute',
                                         onPressed: () =>
                                             _addAttributePairToVariant(index),
-                                        text: 'Add Attribute',
                                       ),
                                     ),
                                   ],
@@ -1254,7 +851,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           ),
                           child: Column(
                             children: [
-                              _build3DIcon(
+                              ThreeDIcon(
                                   Icons.layers_outlined, Colors.grey.shade400,
                                   size: 48),
                               const SizedBox(height: 20),
@@ -1321,7 +918,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                       width: 250,
                       child: ElevatedButton.icon(
                         onPressed: _saveProduct,
-                        icon: _build3DIcon(Icons.save, Colors.white, size: 20),
+                        icon: ThreeDIcon(Icons.save, Colors.white, size: 20),
                         label: Text(
                           widget.product == null
                               ? 'CREATE PRODUCT'
@@ -1355,71 +952,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _build3DSection({
-    required String title,
-    required IconData icon,
-    required Widget child,
-    Widget? action,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 3,
-            offset: const Offset(-2, -2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    _build3DIcon(icon, Colors.green.shade600, size: 28),
-                    const SizedBox(width: 16),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade800,
-                        shadows: [
-                          Shadow(
-                            color: Colors.white.withOpacity(0.8),
-                            offset: const Offset(0, 1),
-                            blurRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (action != null) action,
-              ],
-            ),
-            const SizedBox(height: 24),
-            child,
-          ],
         ),
       ),
     );
