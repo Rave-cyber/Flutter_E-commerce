@@ -5,6 +5,7 @@ import '../views/admin/admin_dashboard/index.dart';
 import '../views/admin/admin_customers/index.dart';
 import '../views/admin/admin_orders/index.dart';
 import '../views/admin/admin_orders/sales_report_screen.dart';
+import '../views/admin/admin_banners/admin_banners_screen.dart';
 import '../views/admin/admin_products/index.dart';
 import '../views/admin/admin_categories/index.dart';
 import '../views/admin/admin_brands/index.dart';
@@ -58,6 +59,13 @@ class AdminSidebarWidget extends StatelessWidget {
                     title: 'Dashboard',
                     route: '/admin/dashboard',
                     isSelected: selectedRoute == '/admin/dashboard',
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.image,
+                    title: 'Banners',
+                    route: '/admin/banners',
+                    isSelected: selectedRoute == '/admin/banners',
                   ),
                   const SizedBox(height: 16),
                   _buildSectionHeader('Sales & Customers'),
@@ -449,6 +457,9 @@ class AdminSidebarWidget extends StatelessWidget {
         break;
       case '/admin/sales-report':
         targetWidget = const SalesReportScreen();
+        break;
+      case '/admin/banners':
+        targetWidget = const AdminBannersScreen();
         break;
       case '/admin/products':
         targetWidget = const AdminProductsIndex();

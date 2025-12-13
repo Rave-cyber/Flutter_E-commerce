@@ -39,43 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentBannerIndex = 0;
 
   // Banner data with online images for furniture and appliances
-  final List<Map<String, dynamic>> _banners = [
-    {
-      'image':
-          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      'title': 'Modern Living Room',
-      'subtitle': 'Create your dream space with our premium furniture',
-      'buttonText': 'Shop Now'
-    },
-    {
-      'image':
-          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2058&q=80',
-      'title': 'Smart Appliances',
-      'subtitle': 'Upgrade your home with the latest technology',
-      'buttonText': 'Discover'
-    },
-    {
-      'image':
-          'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      'title': 'Bedroom Collection',
-      'subtitle': 'Sleep in comfort and style',
-      'buttonText': 'Explore'
-    },
-    {
-      'image':
-          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
-      'title': 'Kitchen Essentials',
-      'subtitle': 'Modern appliances for modern kitchens',
-      'buttonText': 'Browse'
-    },
-    {
-      'image':
-          'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2067&q=80',
-      'title': 'Office Furniture',
-      'subtitle': 'Productive spaces start with great furniture',
-      'buttonText': 'Shop Office'
-    },
-  ];
+  // Dynamic banners loaded from Firestore
 
   @override
   void initState() {
@@ -239,164 +203,186 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeroBanner() {
-    return Column(
-      children: [
-        CarouselSlider(
-          items: _banners.map((banner) {
-            return _buildBannerItem(banner);
-          }).toList(),
-          options: CarouselOptions(
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getBanners(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
             height: 200,
-            autoPlay: true,
-            autoPlayInterval: const Duration(seconds: 5),
-            autoPlayAnimationDuration: const Duration(milliseconds: 800),
-            autoPlayCurve: Curves.fastOutSlowIn,
-            enlargeCenterPage: true,
-            aspectRatio: 16 / 9,
-            viewportFraction: 0.9,
-            onPageChanged: (index, reason) {
-              setState(() {
-                _currentBannerIndex = index;
-              });
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildBannerIndicator(),
-      ],
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final banners = snapshot.data ?? [];
+        if (banners.isEmpty) return const SizedBox();
+
+        return Column(
+          children: [
+            CarouselSlider(
+              items: banners.map((banner) {
+                return _buildBannerItem(banner);
+              }).toList(),
+              options: CarouselOptions(
+                height: 200,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 5),
+                autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                autoPlayCurve: Curves.fastOutSlowIn,
+                enlargeCenterPage: true,
+                aspectRatio: 16 / 9,
+                viewportFraction: 0.9,
+                onPageChanged: (index, reason) {
+                  setState(() {
+                    _currentBannerIndex = index;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildBannerIndicator(banners.length),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildBannerItem(Map<String, dynamic> banner) {
-    return Container(
-      margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Background Image
-            Image.network(
-              banner['image'],
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: Colors.grey[200],
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: Icon(Icons.error, color: Colors.red),
-                  ),
-                );
-              },
-            ),
-
-            // Gradient Overlay
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.3),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-
-            // Content - with constrained height and padding
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              top: 0, // Take full height but with proper constraints
-              child: Padding(
-                padding: const EdgeInsets.all(16.0), // Reduced padding
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Title with max lines
-                    Text(
-                      banner['title'],
-                      style: const TextStyle(
-                        fontSize: 20, // Slightly smaller font
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6), // Reduced spacing
-                    // Subtitle with max lines
-                    Text(
-                      banner['subtitle'],
-                      style: const TextStyle(
-                        fontSize: 14, // Slightly smaller font
-                        color: Colors.white,
-                      ),
-                      maxLines: 2, // Allow 2 lines for subtitle
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 12), // Reduced spacing
-                    // Button
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16, // Reduced padding
-                        vertical: 8, // Reduced padding
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryGreen,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        banner['buttonText'],
-                        style: const TextStyle(
-                          fontSize: 12, // Smaller font
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return GestureDetector(
+      onTap: () {
+        // TODO: Implement dynamic routing based on banner data (e.g. banner['link'])
+        // For now, satisfy "clickable" request by navigating to Categories
+        _onTabTapped(1); // switch to Categories tab
+      },
+      child: Container(
+        margin: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              // Background Image
+              Image.network(
+                banner['image'],
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Icon(Icons.error, color: Colors.red),
+                    ),
+                  );
+                },
+              ),
+
+              // Gradient Overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.black.withOpacity(0.6),
+                      Colors.black.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+
+              // Content - with constrained height and padding
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                top: 0, // Take full height but with proper constraints
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0), // Reduced padding
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Title with max lines
+                      Text(
+                        banner['title'],
+                        style: const TextStyle(
+                          fontSize: 20, // Slightly smaller font
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6), // Reduced spacing
+                      // Subtitle with max lines
+                      Text(
+                        banner['subtitle'],
+                        style: const TextStyle(
+                          fontSize: 14, // Slightly smaller font
+                          color: Colors.white,
+                        ),
+                        maxLines: 2, // Allow 2 lines for subtitle
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12), // Reduced spacing
+                      // Button
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16, // Reduced padding
+                          vertical: 8, // Reduced padding
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryGreen,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          banner['buttonText'],
+                          style: const TextStyle(
+                            fontSize: 12, // Smaller font
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBannerIndicator() {
+  Widget _buildBannerIndicator(int count) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: _banners.asMap().entries.map((entry) {
+      children: List.generate(count, (index) {
         return Container(
           width: 8.0,
           height: 8.0,
@@ -404,11 +390,11 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: primaryGreen.withOpacity(
-              _currentBannerIndex == entry.key ? 1.0 : 0.4,
+              _currentBannerIndex == index ? 1.0 : 0.4,
             ),
           ),
         );
-      }).toList(),
+      }),
     );
   }
 
