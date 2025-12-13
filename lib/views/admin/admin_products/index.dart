@@ -141,7 +141,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
             ),
             const SizedBox(height: 16),
 
-            // FILTER DROPDOWN - Elevated
+            // FILTER AND PER PAGE DROPDOWN - Elevated
             Material(
               elevation: 3,
               shadowColor: Colors.green.withOpacity(0.2),
@@ -182,6 +182,33 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                             if (val != null) {
                               setState(() {
                                 _filterStatus = val;
+                                _currentPage = 1;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: _itemsPerPage,
+                          items: const [
+                            DropdownMenuItem(value: 10, child: Text('10')),
+                            DropdownMenuItem(value: 25, child: Text('25')),
+                            DropdownMenuItem(value: 50, child: Text('50')),
+                            DropdownMenuItem(value: 100, child: Text('100')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _itemsPerPage = val;
                                 _currentPage = 1;
                               });
                             }
