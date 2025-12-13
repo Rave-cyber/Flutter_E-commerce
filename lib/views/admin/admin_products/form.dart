@@ -292,32 +292,27 @@ class _AdminProductFormState extends State<AdminProductForm> {
   }
 
   Widget _build3DIcon(IconData icon, Color color, {double size = 24}) {
-    return Container(
-      width: size + 8,
-      height: size + 8,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(size / 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 6,
-            offset: const Offset(2, 4),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 2,
-            offset: const Offset(-1, -1),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: size,
-      ),
+    return Icon(
+      icon,
+      color: color,
+      size: size,
+      shadows: [
+        Shadow(
+          color: Colors.black,
+          offset: const Offset(3, 3),
+          blurRadius: 8,
+        ),
+        Shadow(
+          color: Colors.white,
+          offset: const Offset(-2, -2),
+          blurRadius: 4,
+        ),
+        Shadow(
+          color: color.withOpacity(0.8),
+          offset: const Offset(0, 0),
+          blurRadius: 2,
+        ),
+      ],
     );
   }
 
