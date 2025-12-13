@@ -299,7 +299,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
       shadows: [
         Shadow(
           color: Colors.black,
-          offset: const Offset(3, 3),
+          offset: const Offset(1, 1),
           blurRadius: 8,
         ),
         Shadow(
