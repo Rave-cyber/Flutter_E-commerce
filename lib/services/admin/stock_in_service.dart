@@ -23,19 +23,37 @@ class StockInService {
       if (stockIn.product_variant_id != null) {
         // If this stock-in is for a variant
         final variantDoc = variantsCollection.doc(stockIn.product_variant_id);
+
+        // First, get the current variant data
+        final variantSnapshot = await variantDoc.get();
+        final productId = variantSnapshot.get('product_id');
+
+        // Calculate the new total stock for all variants
+        final allVariantsSnapshot = await variantsCollection
+            .where('product_id', isEqualTo: productId)
+            .get();
+
+        int totalVariantStock = 0;
+        for (var doc in allVariantsSnapshot.docs) {
+          if (doc.id == stockIn.product_variant_id) {
+            // This is the variant we're updating
+            final currentStock = (doc.data()['stock'] ?? 0) as int;
+            totalVariantStock += currentStock + stockIn.quantity;
+          } else {
+            // Other variants
+            final variantStock = (doc.data()['stock'] ?? 0) as int;
+            totalVariantStock += variantStock;
+          }
+        }
+
+        // Now update everything in a transaction
         await FirebaseFirestore.instance.runTransaction((transaction) async {
-          final snapshot = await transaction.get(variantDoc);
-          final currentStock = (snapshot.get('stock') ?? 0) as int;
+          // Update the variant stock
+          final currentStock = (variantSnapshot.get('stock') ?? 0) as int;
           transaction
               .update(variantDoc, {'stock': currentStock + stockIn.quantity});
 
-          // Now also update main product stock as sum of all variants
-          final productId = snapshot.get('product_id');
-          final variantsSnapshot = await variantsCollection
-              .where('product_id', isEqualTo: productId)
-              .get();
-          final totalVariantStock = variantsSnapshot.docs
-              .fold<int>(0, (sum, doc) => sum + (doc['stock'] ?? 0) as int);
+          // Update the main product stock
           final productDoc = productsCollection.doc(productId);
           transaction.update(productDoc, {'stock_quantity': totalVariantStock});
         });
