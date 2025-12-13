@@ -122,18 +122,18 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
             // Compact Filters
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Filters',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Expanded(
@@ -141,25 +141,25 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                             controller: _searchController,
                             decoration: const InputDecoration(
                               labelText: 'Search',
-                              prefixIcon: Icon(Icons.search, size: 18),
+                              prefixIcon: Icon(Icons.search, size: 16),
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                                  horizontal: 6, vertical: 6),
                               isDense: true,
                             ),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: TextField(
                             controller: _dateRangeController,
                             decoration: const InputDecoration(
                               labelText: 'Date Range',
-                              prefixIcon: Icon(Icons.date_range, size: 18),
+                              prefixIcon: Icon(Icons.date_range, size: 16),
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                                  horizontal: 6, vertical: 6),
                               isDense: true,
                             ),
                             readOnly: true,
@@ -168,10 +168,10 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
+                      spacing: 6,
+                      runSpacing: 3,
                       children: [
                         _buildFilterDropdown(
                           'Brand',
@@ -248,14 +248,14 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
   Widget _buildFilterDropdown(String label, String value, List<String> items,
       Function(String?) onChanged) {
     return SizedBox(
-      width: 120,
+      width: 90,
       child: DropdownButtonFormField<String>(
         value: value,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           isDense: true,
         ),
         items: items.map((item) {
@@ -264,6 +264,7 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
             child: Text(
               item == 'all' ? 'All' : item.replaceAll('_', ' ').toUpperCase(),
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10),
             ),
           );
         }).toList(),
