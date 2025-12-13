@@ -291,72 +291,356 @@ class _AdminProductFormState extends State<AdminProductForm> {
     }
   }
 
-  Widget _buildAttributePairUi(
+  Widget _build3DIcon(IconData icon, Color color, {double size = 24}) {
+    return Container(
+      width: size + 8,
+      height: size + 8,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(size / 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(2, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 2,
+            offset: const Offset(-1, -1),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Icon(
+        icon,
+        color: Colors.white,
+        size: size,
+      ),
+    );
+  }
+
+  Widget _build3DFormField({
+    required String labelText,
+    required TextEditingController controller,
+    Widget? prefixIcon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 2,
+            offset: const Offset(-1, -1),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: labelText,
+          labelStyle: TextStyle(
+            color: Colors.green.shade600,
+            fontWeight: FontWeight.w600,
+            shadows: [
+              Shadow(
+                color: Colors.white.withOpacity(0.8),
+                offset: const Offset(0, 1),
+                blurRadius: 1,
+              ),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          prefixIcon: prefixIcon,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _build3DDropdown<T>({
+    required String labelText,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+    Widget? prefixIcon,
+    String? Function(T?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 2,
+            offset: const Offset(-1, -1),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<T>(
+        value: value,
+        decoration: InputDecoration(
+          labelText: labelText,
+          labelStyle: TextStyle(
+            color: Colors.green.shade600,
+            fontWeight: FontWeight.w600,
+            shadows: [
+              Shadow(
+                color: Colors.white.withOpacity(0.8),
+                offset: const Offset(0, 1),
+                blurRadius: 1,
+              ),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          prefixIcon: prefixIcon,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        ),
+        items: items,
+        onChanged: onChanged,
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _build3DAttributePairUi(
       int variantIndex, int pairIndex, Map<String, String> pair) {
     final currentAttrId = pair['attribute_id'] ?? '';
     final currentValId = pair['attribute_value_id'] ?? '';
 
-    return Row(
-      children: [
-        // Attribute dropdown
-        Expanded(
-          flex: 5,
-          child: DropdownButtonFormField<String>(
-            value: currentAttrId.isNotEmpty ? currentAttrId : null,
-            decoration: const InputDecoration(labelText: 'Attribute'),
-            items: _attributes
-                .map((a) => DropdownMenuItem(
-                      value: a.id,
-                      child: Text(a.name),
-                    ))
-                .toList(),
-            onChanged: (val) {
-              final newAttrId = val ?? '';
-              final newValId = (newAttrId.isNotEmpty &&
-                      (_attributeValues[newAttrId]?.isNotEmpty ?? false))
-                  ? _attributeValues[newAttrId]![0].id
-                  : '';
-              setState(() {
-                _variants[variantIndex].attributes[pairIndex]['attribute_id'] =
-                    newAttrId;
-                _variants[variantIndex].attributes[pairIndex]
-                    ['attribute_value_id'] = newValId;
-              });
-            },
-            validator: (v) =>
-                v == null || v.isEmpty ? 'Select attribute' : null,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+            spreadRadius: 0,
           ),
-        ),
-        const SizedBox(width: 8),
-        // Value dropdown
-        Expanded(
-          flex: 5,
-          child: DropdownButtonFormField<String>(
-            value: currentValId.isNotEmpty ? currentValId : null,
-            decoration: const InputDecoration(labelText: 'Value'),
-            items: (_attributeValues[currentAttrId] ?? [])
-                .map((av) => DropdownMenuItem(
-                      value: av.id,
-                      child: Text(av.name),
-                    ))
-                .toList(),
-            onChanged: (val) {
-              setState(() {
-                _variants[variantIndex].attributes[pairIndex]
-                    ['attribute_value_id'] = val ?? '';
-              });
-            },
-            validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 3,
+            offset: const Offset(-1, -1),
+            spreadRadius: 0,
           ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Attribute dropdown
+          Expanded(
+            flex: 5,
+            child: _build3DDropdown<String>(
+              labelText: 'Attribute',
+              value: currentAttrId.isNotEmpty ? currentAttrId : null,
+              items: _attributes
+                  .map((a) => DropdownMenuItem(
+                        value: a.id,
+                        child: Text(a.name),
+                      ))
+                  .toList(),
+              onChanged: (val) {
+                final newAttrId = val ?? '';
+                final newValId = (newAttrId.isNotEmpty &&
+                        (_attributeValues[newAttrId]?.isNotEmpty ?? false))
+                    ? _attributeValues[newAttrId]![0].id
+                    : '';
+                setState(() {
+                  _variants[variantIndex].attributes[pairIndex]
+                      ['attribute_id'] = newAttrId;
+                  _variants[variantIndex].attributes[pairIndex]
+                      ['attribute_value_id'] = newValId;
+                });
+              },
+              prefixIcon: _build3DIcon(Icons.label, Colors.green.shade600),
+              validator: (v) =>
+                  v == null || v.isEmpty ? 'Select attribute' : null,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Value dropdown
+          Expanded(
+            flex: 5,
+            child: _build3DDropdown<String>(
+              labelText: 'Value',
+              value: currentValId.isNotEmpty ? currentValId : null,
+              items: (_attributeValues[currentAttrId] ?? [])
+                  .map((av) => DropdownMenuItem(
+                        value: av.id,
+                        child: Text(av.name),
+                      ))
+                  .toList(),
+              onChanged: (val) {
+                setState(() {
+                  _variants[variantIndex].attributes[pairIndex]
+                      ['attribute_value_id'] = val ?? '';
+                });
+              },
+              prefixIcon: _build3DIcon(
+                  Icons.format_list_bulleted, Colors.green.shade600),
+              validator: (v) => v == null || v.isEmpty ? 'Select value' : null,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Remove button
+          _build3DButton(
+            icon: Icons.delete,
+            color: Colors.red.shade600,
+            onPressed: () =>
+                _removeAttributePairFromVariant(variantIndex, pairIndex),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _build3DButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+    String? text,
+    bool isPressed = false,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isPressed
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(2, 4),
+                    spreadRadius: 0,
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(4, 8),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.8),
+                    blurRadius: 2,
+                    offset: const Offset(-1, -1),
+                    spreadRadius: 0,
+                  ),
+                ],
         ),
-        const SizedBox(width: 8),
-        // Remove button
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: () =>
-              _removeAttributePairFromVariant(variantIndex, pairIndex),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+
+  Widget _build3DImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.white.withOpacity(0.8),
+              blurRadius: 3,
+              offset: const Offset(-2, -2),
+              spreadRadius: 0,
+            ),
+          ],
         ),
-      ],
+        child: _imageUrl.isNotEmpty
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.network(
+                  _imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildImagePlaceholder('Failed to load image');
+                  },
+                ),
+              )
+            : _buildImagePlaceholder('Tap to add product image'),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder(String text) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey[200]!,
+            Colors.grey[100]!,
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _build3DIcon(Icons.add_photo_alternate, Colors.green.shade600,
+              size: 40),
+          const SizedBox(height: 16),
+          Text(
+            text,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              shadows: [
+                Shadow(
+                  color: Colors.white.withOpacity(0.8),
+                  offset: const Offset(0, 1),
+                  blurRadius: 1,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -368,272 +652,779 @@ class _AdminProductFormState extends State<AdminProductForm> {
     }
 
     return AdminLayout(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Back + Title
-              Row(
-                children: [
-                  BackButton(onPressed: () => Navigator.pop(context)),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.product == null ? 'Create Product' : 'Edit Product',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.blueGrey[50]!,
+              Colors.white,
+              Colors.grey[100]!,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 3D Header Section
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.shade400,
+                        Colors.green.shade600,
+                        Colors.green.shade700,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.3),
+                        blurRadius: 5,
+                        offset: const Offset(-2, -2),
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Image picker
-              GestureDetector(
-                onTap: _pickImage,
-                child: _imageUrl.isNotEmpty
-                    ? Image.network(_imageUrl, height: 150, fit: BoxFit.cover)
-                    : Container(
-                        height: 150,
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: Icon(Icons.camera_alt, size: 50),
+                  child: Row(
+                    children: [
+                      _build3DButton(
+                        icon: Icons.arrow_back,
+                        color: Colors.white.withOpacity(0.3),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Text(
+                          widget.product == null
+                              ? 'Create Product'
+                              : 'Edit Product',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-              ),
-              const SizedBox(height: 16),
-
-              // Product fields
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Product Name'),
-                validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _descController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-
-              // Category Dropdown
-              DropdownButtonFormField<CategoryModel>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: _categories
-                    .map((c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(c.name),
-                        ))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val),
-                validator: (val) =>
-                    val == null ? 'Please select a category' : null,
-              ),
-              const SizedBox(height: 8),
-
-              // Brand Dropdown
-              DropdownButtonFormField<BrandModel>(
-                value: _selectedBrand,
-                decoration: const InputDecoration(labelText: 'Brand'),
-                items: _brands
-                    .map((b) => DropdownMenuItem(
-                          value: b,
-                          child: Text(b.name),
-                        ))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedBrand = val),
-                validator: (val) =>
-                    val == null ? 'Please select a brand' : null,
-              ),
-              const SizedBox(height: 8),
-
-              TextFormField(
-                controller: _basePriceController,
-                decoration: const InputDecoration(labelText: 'Base Price'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _salePriceController,
-                decoration: const InputDecoration(labelText: 'Sale Price'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _stockController,
-                decoration: const InputDecoration(labelText: 'Stock Quantity'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('Archived'),
-                value: _isArchived,
-                onChanged: (val) => setState(() => _isArchived = val),
-              ),
-              const SizedBox(height: 16),
-
-              // Product Variants Section header + add
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Product Variants',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  TextButton.icon(
-                    onPressed: _addVariant,
-                    icon: const Icon(Icons.add),
-                    label: const Text('+ Add Product Variant'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Variant cards
-              ..._variants.asMap().entries.map((entry) {
-                final int index = entry.key;
-                final _VariantEntry entryData = entry.value;
-                final ProductVariantModel variant = entryData.variant;
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      children: [
-                        // Remove variant
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _removeVariant(index),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 0,
                             ),
                           ],
                         ),
-
-                        // Variant name
-                        TextFormField(
-                          initialValue: variant.name,
-                          decoration:
-                              const InputDecoration(labelText: 'Variant Name'),
-                          onChanged: (val) => variant.name = val,
-                          validator: (val) =>
-                              val == null || val.isEmpty ? 'Required' : null,
+                        child: Text(
+                          widget.product == null ? 'NEW' : 'EDIT',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
 
-                        // Variant Image picker
-                        GestureDetector(
-                          onTap: () async {
-                            final picked = await _productService.pickImage();
-                            if (picked != null) {
-                              setState(() {
-                                variant.image = picked.url;
-                              });
-                            }
-                          },
-                          child: variant.image.isNotEmpty
-                              ? Image.network(variant.image,
-                                  height: 100, fit: BoxFit.cover)
-                              : Container(
-                                  height: 100,
-                                  color: Colors.grey[200],
-                                  child: const Center(
-                                    child: Icon(Icons.camera_alt, size: 40),
-                                  ),
+                // 3D Image Section
+                _build3DSection(
+                  title: 'Product Image',
+                  icon: Icons.image,
+                  child: _build3DImagePicker(),
+                ),
+                const SizedBox(height: 32),
+
+                // 3D Basic Information Section
+                _build3DSection(
+                  title: 'Basic Information',
+                  icon: Icons.info_outline,
+                  child: Column(
+                    children: [
+                      _build3DFormField(
+                        labelText: 'Product Name',
+                        controller: _nameController,
+                        prefixIcon: _build3DIcon(
+                            Icons.shopping_bag, Colors.green.shade600),
+                        validator: (val) => val == null || val.isEmpty
+                            ? 'Product name is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      _build3DFormField(
+                        labelText: 'Description',
+                        controller: _descController,
+                        prefixIcon: _build3DIcon(
+                            Icons.description, Colors.green.shade600),
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 20),
+                      _build3DDropdown<CategoryModel>(
+                        labelText: 'Category',
+                        value: _selectedCategory,
+                        items: _categories
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(c.name),
+                                ))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedCategory = val),
+                        prefixIcon:
+                            _build3DIcon(Icons.category, Colors.green.shade600),
+                        validator: (val) =>
+                            val == null ? 'Please select a category' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      _build3DDropdown<BrandModel>(
+                        labelText: 'Brand',
+                        value: _selectedBrand,
+                        items: _brands
+                            .map((b) => DropdownMenuItem(
+                                  value: b,
+                                  child: Text(b.name),
+                                ))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedBrand = val),
+                        prefixIcon: _build3DIcon(
+                            Icons.storefront, Colors.green.shade600),
+                        validator: (val) =>
+                            val == null ? 'Please select a brand' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                              spreadRadius: 0,
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.8),
+                              blurRadius: 2,
+                              offset: const Offset(-1, -1),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            _build3DIcon(Icons.archive, Colors.red.shade600),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'Archived',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade700,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.white.withOpacity(0.8),
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 1,
+                                    ),
+                                  ],
                                 ),
+                              ),
+                            ),
+                            Switch(
+                              value: _isArchived,
+                              onChanged: (val) =>
+                                  setState(() => _isArchived = val),
+                              activeColor: Colors.red.shade600,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
 
-                        // Prices and Stock
-                        TextFormField(
-                          initialValue: variant.base_price.toString(),
-                          decoration:
-                              const InputDecoration(labelText: 'Base Price'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (val) =>
-                              variant.base_price = double.tryParse(val) ?? 0,
+                // 3D Pricing Section
+                _build3DSection(
+                  title: 'Pricing',
+                  icon: Icons.attach_money,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _build3DFormField(
+                          labelText: 'Base Price',
+                          controller: _basePriceController,
+                          prefixIcon: _build3DIcon(
+                              Icons.monetization_on, Colors.green.shade600),
                         ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: variant.sale_price.toString(),
-                          decoration:
-                              const InputDecoration(labelText: 'Sale Price'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (val) =>
-                              variant.sale_price = double.tryParse(val) ?? 0,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _build3DFormField(
+                          labelText: 'Sale Price',
+                          controller: _salePriceController,
+                          prefixIcon: _build3DIcon(
+                              Icons.local_offer, Colors.green.shade600),
                         ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          initialValue: variant.stock.toString(),
-                          decoration: const InputDecoration(
-                              labelText: 'Stock Quantity'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (val) =>
-                              variant.stock = int.tryParse(val) ?? 0,
-                        ),
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          title: const Text('Archived'),
-                          value: variant.is_archived,
-                          onChanged: (val) =>
-                              setState(() => variant.is_archived = val),
-                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
 
-                        const Divider(),
+                // 3D Variants Section
+                _build3DSection(
+                  title: 'Product Variants',
+                  icon: Icons.layers,
+                  action: _build3DButton(
+                    icon: Icons.add,
+                    color: Colors.green.shade600,
+                    onPressed: _addVariant,
+                    text: 'ADD VARIANT',
+                  ),
+                  child: Column(
+                    children: [
+                      // Variant cards
+                      ..._variants.asMap().entries.map((entry) {
+                        final int index = entry.key;
+                        final _VariantEntry entryData = entry.value;
+                        final ProductVariantModel variant = entryData.variant;
 
-                        // Attributes list for this variant
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Attributes',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                                spreadRadius: 0,
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.8),
+                                blurRadius: 3,
+                                offset: const Offset(-2, -2),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              // Variant header
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 4,
+                                          offset: const Offset(1, 2),
+                                          spreadRadius: 0,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      'Variant ${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.red.shade700,
+                                        shadows: [
+                                          Shadow(
+                                            color:
+                                                Colors.white.withOpacity(0.8),
+                                            offset: const Offset(0, 1),
+                                            blurRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  _build3DButton(
+                                    icon: Icons.delete,
+                                    color: Colors.red.shade600,
+                                    onPressed: () => _removeVariant(index),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Variant name
+                              _build3DFormField(
+                                labelText: 'Variant Name',
+                                controller:
+                                    TextEditingController(text: variant.name)
+                                      ..addListener(() =>
+                                          variant.name = _nameController.text),
+                                prefixIcon: _build3DIcon(
+                                    Icons.title, Colors.green.shade600),
+                                validator: (val) => val == null || val.isEmpty
+                                    ? 'Variant name is required'
+                                    : null,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Variant Image
+                              GestureDetector(
+                                onTap: () async {
+                                  final picked =
+                                      await _productService.pickImage();
+                                  if (picked != null) {
+                                    setState(() {
+                                      variant.image = picked.url;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  height: 140,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 5),
+                                        spreadRadius: 0,
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.8),
+                                        blurRadius: 2,
+                                        offset: const Offset(-1, -1),
+                                        spreadRadius: 0,
+                                      ),
+                                    ],
+                                  ),
+                                  child: variant.image.isNotEmpty
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(18),
+                                          child: Image.network(
+                                            variant.image,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return _buildImagePlaceholder(
+                                                  'Failed to load');
+                                            },
+                                          ),
+                                        )
+                                      : _buildImagePlaceholder(
+                                          'Add variant image'),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Prices
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _build3DFormField(
+                                      labelText: 'Base Price',
+                                      controller: TextEditingController(
+                                          text: variant.base_price.toString())
+                                        ..addListener(() => variant
+                                            .base_price = double.tryParse(
+                                                _basePriceController.text) ??
+                                            0),
+                                      prefixIcon: _build3DIcon(
+                                          Icons.monetization_on,
+                                          Colors.green.shade600),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _build3DFormField(
+                                      labelText: 'Sale Price',
+                                      controller: TextEditingController(
+                                          text: variant.sale_price.toString())
+                                        ..addListener(() => variant
+                                            .sale_price = double.tryParse(
+                                                _salePriceController.text) ??
+                                            0),
+                                      prefixIcon: _build3DIcon(
+                                          Icons.local_offer,
+                                          Colors.green.shade600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Archived toggle
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                      spreadRadius: 0,
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.8),
+                                      blurRadius: 2,
+                                      offset: const Offset(-1, -1),
+                                      spreadRadius: 0,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    _build3DIcon(
+                                        Icons.archive, Colors.red.shade600),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        'Variant Archived',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.red.shade700,
+                                          shadows: [
+                                            Shadow(
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
+                                              offset: const Offset(0, 1),
+                                              blurRadius: 1,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: variant.is_archived,
+                                      onChanged: (val) => setState(
+                                          () => variant.is_archived = val),
+                                      activeColor: Colors.red.shade600,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Attributes section
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                      spreadRadius: 0,
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.8),
+                                      blurRadius: 2,
+                                      offset: const Offset(-1, -1),
+                                      spreadRadius: 0,
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        _build3DIcon(Icons.settings,
+                                            Colors.green.shade600,
+                                            size: 20),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Attributes',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green.shade800,
+                                            shadows: [
+                                              Shadow(
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
+                                                offset: const Offset(0, 1),
+                                                blurRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Attribute pairs UI
+                                    ...entryData.attributes
+                                        .asMap()
+                                        .entries
+                                        .map((pairEntry) {
+                                      final pairIndex = pairEntry.key;
+                                      final pair = pairEntry.value;
+                                      return _build3DAttributePairUi(
+                                          index, pairIndex, pair);
+                                    }).toList(),
+
+                                    // Add attribute button
+                                    const SizedBox(height: 16),
+                                    Center(
+                                      child: _build3DButton(
+                                        icon: Icons.add,
+                                        color: Colors.green.shade600,
+                                        onPressed: () =>
+                                            _addAttributePairToVariant(index),
+                                        text: 'Add Attribute',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+
+                      if (_variants.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(48),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                                spreadRadius: 0,
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.8),
+                                blurRadius: 3,
+                                offset: const Offset(-2, -2),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _build3DIcon(
+                                  Icons.layers_outlined, Colors.grey.shade400,
+                                  size: 48),
+                              const SizedBox(height: 20),
+                              Text(
+                                'No variants added yet',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.white.withOpacity(0.8),
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Add product variants to create different versions of your product',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 14,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.white.withOpacity(0.8),
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
 
-                        // Attribute pairs UI
-                        ...entryData.attributes
-                            .asMap()
-                            .entries
-                            .map((pairEntry) {
-                          final pairIndex = pairEntry.key;
-                          final pair = pairEntry.value;
-                          return _buildAttributePairUi(index, pairIndex, pair);
-                        }).toList(),
-
-                        // Add attribute button
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add Attribute'),
-                            onPressed: () => _addAttributePairToVariant(index),
-                          ),
+                // 3D Save Button
+                Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                          spreadRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.8),
+                          blurRadius: 3,
+                          offset: const Offset(-2, -2),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
+                    child: SizedBox(
+                      width: 250,
+                      child: ElevatedButton.icon(
+                        onPressed: _saveProduct,
+                        icon: _build3DIcon(Icons.save, Colors.white, size: 20),
+                        label: Text(
+                          widget.product == null
+                              ? 'CREATE PRODUCT'
+                              : 'UPDATE PRODUCT',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade600,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
                   ),
-                );
-              }).toList(),
-
-              const SizedBox(height: 16),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _saveProduct,
-                  child: Text(widget.product == null ? 'Create' : 'Update'),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _build3DSection({
+    required String title,
+    required IconData icon,
+    required Widget child,
+    Widget? action,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.8),
+            blurRadius: 3,
+            offset: const Offset(-2, -2),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    _build3DIcon(icon, Colors.green.shade600, size: 28),
+                    const SizedBox(width: 16),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade800,
+                        shadows: [
+                          Shadow(
+                            color: Colors.white.withOpacity(0.8),
+                            offset: const Offset(0, 1),
+                            blurRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (action != null) action,
+              ],
+            ),
+            const SizedBox(height: 24),
+            child,
+          ],
         ),
       ),
     );
