@@ -3,6 +3,10 @@ import '../../../layouts/admin_layout.dart';
 import '/models/brand_model.dart';
 import '/services/admin/brand_service.dart';
 import '/views/admin/admin_brands/form.dart';
+import '/widgets/product_search_widget.dart';
+import '/widgets/product_filter_widget.dart';
+import '/widgets/product_pagination_widget.dart';
+import '/widgets/floating_action_button_widget.dart';
 
 class AdminBrandsIndex extends StatefulWidget {
   const AdminBrandsIndex({Key? key}) : super(key: key);
@@ -69,45 +73,39 @@ class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // SEARCH FIELD
-            TextField(
+            // SEARCH FIELD - Using ProductSearchWidget
+            ProductSearchWidget(
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search Brands',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() {
-                _currentPage = 1;
-              }),
+              onChanged: () {
+                setState(() {
+                  _currentPage = 1;
+                });
+              },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // FILTER DROPDOWN
-            Row(
-              children: [
-                const Text('Filter: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _filterStatus,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'active', child: Text('Active')),
-                    DropdownMenuItem(
-                        value: 'archived', child: Text('Archived')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _filterStatus = val;
-                        _currentPage = 1;
-                      });
-                    }
-                  },
-                ),
-              ],
+            // FILTER WIDGET - Using ProductFilterWidget
+            ProductFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _filterStatus = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
+              onItemsPerPageChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _itemsPerPage = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // BRAND LIST
             Expanded(
@@ -132,112 +130,221 @@ class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
                           itemCount: paginatedBrands.length,
                           itemBuilder: (context, index) {
                             final brand = paginatedBrands[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                title: Text(
-                                  brand.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: brand.is_archived
-                                        ? Colors.grey
-                                        : Colors.black,
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 4),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.green.withOpacity(0.15),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                    spreadRadius: 0,
                                   ),
-                                ),
-                                subtitle: Text(
-                                    brand.is_archived ? 'Archived' : 'Active'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Archive / Unarchive
-                                    IconButton(
-                                      icon: Icon(
-                                        brand.is_archived
-                                            ? Icons.unarchive
-                                            : Icons.archive,
-                                        color: Colors.orange,
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                elevation: 0,
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.white,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.green.shade200,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.all(16),
+                                    title: Text(
+                                      brand.name,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: brand.is_archived
+                                            ? Colors.grey
+                                            : Colors.black87,
                                       ),
-                                      onPressed: () async {
-                                        final action = brand.is_archived
-                                            ? 'unarchive'
-                                            : 'archive';
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: Text('Confirm $action'),
-                                            content: Text(
-                                              'Are you sure you want to $action "${brand.name}"?',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
+                                    ),
+                                    subtitle: Text(
+                                      brand.is_archived ? 'Archived' : 'Active',
+                                      style: TextStyle(
+                                        color: brand.is_archived
+                                            ? Colors.grey[600]
+                                            : Colors.green[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    trailing: Material(
+                                      elevation: 2,
+                                      shadowColor:
+                                          Colors.black.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[50],
+                                      child: PopupMenuButton<String>(
+                                        icon: Icon(
+                                          Icons.more_vert,
+                                          color: Colors.grey[700],
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        elevation: 8,
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => AdminBrandForm(
+                                                  brand: brand,
+                                                ),
                                               ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: Text(
-                                                    '${action[0].toUpperCase()}${action.substring(1)}'),
+                                            );
+                                          } else if (value == 'archive' ||
+                                              value == 'unarchive') {
+                                            final action = value;
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: Text('Confirm $action'),
+                                                content: Text(
+                                                  'Are you sure you want to $action "${brand.name}"?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.orange,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: Text(
+                                                      '${action[0].toUpperCase()}${action.substring(1)}',
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        );
+                                            );
 
-                                        if (confirm == true) {
-                                          await _brandService
-                                              .toggleArchive(brand);
-                                        }
-                                      },
-                                    ),
-                                    // Edit
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AdminBrandForm(
-                                              brand: brand,
+                                            if (confirm == true) {
+                                              await _brandService
+                                                  .toggleArchive(brand);
+                                            }
+                                          } else if (value == 'delete') {
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: const Text(
+                                                    'Confirm Delete'),
+                                                content: Text(
+                                                    'Are you sure you want to delete "${brand.name}"?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: const Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm == true) {
+                                              await _brandService
+                                                  .deleteBrand(brand.id);
+                                            }
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit, size: 20),
+                                                SizedBox(width: 8),
+                                                Text('Edit'),
+                                              ],
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    // Delete
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Confirm Delete'),
-                                            content: Text(
-                                                'Are you sure you want to delete "${brand.name}"?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
+                                          PopupMenuItem(
+                                            value: brand.is_archived
+                                                ? 'unarchive'
+                                                : 'archive',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  brand.is_archived
+                                                      ? Icons.unarchive
+                                                      : Icons.archive,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(brand.is_archived
+                                                    ? 'Unarchive'
+                                                    : 'Archive'),
+                                              ],
+                                            ),
                                           ),
-                                        );
-
-                                        if (confirm == true) {
-                                          await _brandService
-                                              .deleteBrand(brand.id);
-                                        }
-                                      },
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 20,
+                                                    color: Colors.red),
+                                                SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        color: Colors.red)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             );
@@ -245,20 +352,14 @@ class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
                         ),
                       ),
 
-                      // PAGINATION CONTROLS
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _prevPage,
-                          ),
-                          Text('Page $_currentPage'),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(brands.length),
-                          ),
-                        ],
+                      // PAGINATION CONTROLS - Using ProductPaginationWidget
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: ProductPaginationWidget(
+                          currentPage: _currentPage,
+                          onPreviousPage: _prevPage,
+                          onNextPage: () => _nextPage(brands.length),
+                        ),
                       ),
                     ],
                   );
@@ -266,21 +367,17 @@ class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
               ),
             ),
 
-            // FLOATING BUTTON
-            Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminBrandForm(),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.add),
-                tooltip: 'Add Brand',
-              ),
+            // FLOATING BUTTON - Using FloatingActionButtonWidget
+            FloatingActionButtonWidget(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminBrandForm(),
+                  ),
+                );
+              },
+              tooltip: 'Add Brand',
             ),
           ],
         ),
