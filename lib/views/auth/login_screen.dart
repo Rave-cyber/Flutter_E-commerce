@@ -1,9 +1,11 @@
+import 'package:firebase/models/delivery_staff_model.dart';
 import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
 import '../../models/customer_model.dart';
+import '../delivery_staff/delivery_staff_dashboard/index.dart';
 import 'register_screen.dart';
 import '../home/home_screen.dart';
 import '../super_admin/super_admin_dashboard/index.dart';
@@ -69,6 +71,37 @@ class _LoginScreenState extends State<LoginScreen> {
               user: user,
               customer: customer,
             ),
+          ),
+        );
+      } else if (user.role == 'delivery_staff') {
+        // Load DeliveryStaffModel for delivery staff
+        // Note: You need to implement getDeliveryStaffData in AuthService or fetch it here
+        // For now we assume we might need to fetch it similarly to getCustomerData
+
+        // We'll query firestore directly here or add a method in AuthService.
+        // Let's do it cleanly by adding a method to AuthService first, OR query here.
+        // Since I cannot edit AuthService in this step (restricted to login_screen instructions usually implies minimal changes),
+        // I will implement the fetch logic here if needed, but the clean way is to rely on AuthService.
+        // However, the instructions didn't explicitly say "add method to AuthService", but "add logic for logging in".
+
+        final deliveryStaffQuery = await authService.firestore
+            .collection('delivery_staff')
+            .where('user_id', isEqualTo: user.id)
+            .limit(1)
+            .get();
+
+        if (deliveryStaffQuery.docs.isEmpty)
+          throw 'Delivery Staff profile not found';
+
+        // We can pass the model if the dashboard needs it, but currently it's a simple dashboard
+        final deliveryStaff =
+            DeliveryStaffModel.fromMap(deliveryStaffQuery.docs.first.data());
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const DeliveryStaffDashboardScreen(), // Pass deliveryStaff if needed
           ),
         );
       } else {
