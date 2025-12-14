@@ -16,7 +16,6 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
   final BrandService _brandService = BrandService();
 
   late TextEditingController _nameController;
-  bool _isArchived = false;
   bool _isSaving = false;
   int _currentStep = 0;
 
@@ -25,7 +24,6 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
     super.initState();
     final brand = widget.brand;
     _nameController = TextEditingController(text: brand?.name ?? '');
-    _isArchived = brand?.is_archived ?? false;
   }
 
   @override
@@ -77,8 +75,8 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
           return false;
         }
         return true;
-      case 1: // Settings step
-        return true; // Settings are optional
+      case 1: // Review step
+        return true;
       default:
         return true;
     }
@@ -192,43 +190,51 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
     );
   }
 
-  // Step 2: Settings
-  Widget _buildSettingsStep() {
+  // Step 2: Review
+  Widget _buildReviewStep() {
     return _buildSectionCard(
-      title: 'Settings',
+      title: 'Review',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Archived Switch
+          Text(
+            'Please review the brand information before saving:',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 20),
           Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
               color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: SwitchListTile(
-              title: Row(
-                children: [
-                  Icon(
-                    _isArchived ? Icons.unarchive : Icons.archive,
-                    color: Colors.orange.shade600,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Brand Name:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Archived',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _nameController.text.isNotEmpty
+                      ? _nameController.text
+                      : 'Not specified',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
-              value: _isArchived,
-              onChanged: (val) => setState(() => _isArchived = val),
-              activeColor: Colors.orange.shade600,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -247,7 +253,7 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
     final brand = BrandModel(
       id: id,
       name: _nameController.text.trim(),
-      is_archived: _isArchived,
+      is_archived: false,
       created_at: widget.brand?.created_at ?? DateTime.now(),
       updated_at: DateTime.now(),
     );
@@ -290,8 +296,8 @@ class _AdminBrandFormState extends State<AdminBrandForm> {
         state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),
       Step(
-        title: const Text('Settings'),
-        content: _buildSettingsStep(),
+        title: const Text('Review'),
+        content: _buildReviewStep(),
         isActive: _currentStep >= 1,
         state: _validateCurrentStep() ? StepState.complete : StepState.indexed,
       ),

@@ -17,7 +17,6 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
   final AttributeService _attributeService = AttributeService();
 
   late TextEditingController _nameController;
-  bool _isArchived = false;
   bool _isSaving = false;
   int _currentStep = 0;
 
@@ -29,7 +28,6 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
     super.initState();
     final attribute = widget.attribute;
     _nameController = TextEditingController(text: attribute?.name ?? '');
-    _isArchived = attribute?.is_archived ?? false;
 
     // If editing an attribute, load existing values
     if (attribute != null) {
@@ -313,41 +311,6 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
             icon: Icons.label,
             required: true,
           ),
-          const SizedBox(height: 24),
-
-          // Archived Switch
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: SwitchListTile(
-              title: Row(
-                children: [
-                  Icon(
-                    _isArchived ? Icons.unarchive : Icons.archive,
-                    color: Colors.orange.shade600,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Archived',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                ],
-              ),
-              value: _isArchived,
-              onChanged: (val) => setState(() => _isArchived = val),
-              activeColor: Colors.orange.shade600,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -415,7 +378,7 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
     final attribute = AttributeModel(
       id: attributeId,
       name: _nameController.text.trim(),
-      is_archived: _isArchived,
+      is_archived: false, // Default to false since we're removing the toggle
       created_at: widget.attribute?.created_at ?? DateTime.now(),
       updated_at: DateTime.now(),
     );
