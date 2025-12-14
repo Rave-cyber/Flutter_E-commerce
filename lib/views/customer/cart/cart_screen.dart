@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'guest_cart_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -51,16 +52,7 @@ class _CartScreenState extends State<CartScreen> {
     final user = Provider.of<AuthService>(context).currentUser;
 
     if (user == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Cart'),
-          backgroundColor: Colors.white,
-          elevation: 0,
-        ),
-        body: const Center(
-          child: Text('Please login to view your cart'),
-        ),
-      );
+      return const GuestCartScreen();
     }
 
     return Scaffold(
