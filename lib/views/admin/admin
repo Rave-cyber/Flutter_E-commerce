@@ -238,22 +238,22 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
             required: true,
           ),
           const SizedBox(height: 16),
-          // Container(
-          //   decoration: BoxDecoration(
-          //     color: Colors.grey.shade50,
-          //     borderRadius: BorderRadius.circular(12),
-          //     border: Border.all(color: Colors.grey.shade300),
-          //   ),
-          //   child: SwitchListTile(
-          //     title: const Text('Archived'),
-          //     subtitle: const Text('Hide this supplier from active lists'),
-          //     value: _isArchived,
-          //     onChanged: (val) => setState(() => _isArchived = val),
-          //     shape: RoundedRectangleBorder(
-          //       borderRadius: BorderRadius.circular(12),
-          //     ),
-          //   ),
-          // ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: SwitchListTile(
+              title: const Text('Archived'),
+              subtitle: const Text('Hide this supplier from active lists'),
+              value: _isArchived,
+              onChanged: (val) => setState(() => _isArchived = val),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -265,8 +265,8 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
     setState(() => _isSaving = true);
 
     try {
-      final id = widget.supplier?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString();
+      final id =
+          widget.supplier?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
       final supplier = SupplierModel(
         id: id,
