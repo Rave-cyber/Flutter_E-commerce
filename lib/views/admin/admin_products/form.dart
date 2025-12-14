@@ -473,7 +473,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
             child: imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return _buildImagePlaceholder();
                     },
