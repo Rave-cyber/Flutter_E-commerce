@@ -219,14 +219,12 @@ class FirestoreService {
       return null;
     }
   }
-  // Add these methods to your existing FirestoreService class:
 
-// Get product variants
-  // Update the getProductVariants method in FirestoreService
+  // Get product variants
   static Stream<List<ProductVariantModel>> getProductVariants(
       String productId) {
     return _firestore
-        .collection('product_variants') // Changed from 'products/{id}/variants'
+        .collection('product_variants')
         .where('product_id', isEqualTo: productId)
         .where('is_archived', isEqualTo: false)
         .snapshots()
@@ -243,14 +241,12 @@ class FirestoreService {
     });
   }
 
-// Also update the getVariantById method:
+  // Get variant by ID
   static Future<ProductVariantModel?> getVariantById(
       String productId, String variantId) async {
     try {
-      final doc = await _firestore
-          .collection('product_variants') // Changed here too
-          .doc(variantId)
-          .get();
+      final doc =
+          await _firestore.collection('product_variants').doc(variantId).get();
 
       if (doc.exists) {
         final data = doc.data()!;
@@ -270,7 +266,7 @@ class FirestoreService {
     }
   }
 
-// Get brand by ID
+  // Get brand by ID
   static Future<Map<String, dynamic>?> getBrandById(String brandId) async {
     try {
       final doc = await _firestore.collection('brands').doc(brandId).get();
@@ -287,7 +283,7 @@ class FirestoreService {
     }
   }
 
-// Get category by ID
+  // Get category by ID
   static Future<Map<String, dynamic>?> getCategoryById(
       String categoryId) async {
     try {
@@ -306,7 +302,7 @@ class FirestoreService {
     }
   }
 
-// Get all brands
+  // Get all brands
   static Stream<List<Map<String, dynamic>>> getAllBrands() {
     return _firestore.collection('brands').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -318,7 +314,7 @@ class FirestoreService {
     });
   }
 
-// Get all categories
+  // Get all categories
   static Stream<List<Map<String, dynamic>>> getAllCategories() {
     return _firestore.collection('categories').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -330,10 +326,11 @@ class FirestoreService {
     });
   }
 
-  // Create order
+  // Create order - UPDATED WITH customerName
   static Future<String> createOrder({
     required String userId,
     required String customerId,
+    required String customerName, // ADDED: Customer name parameter
     required List<Map<String, dynamic>> items,
     required double subtotal,
     required double shipping,
@@ -350,6 +347,7 @@ class FirestoreService {
         'id': orderId,
         'userId': userId,
         'customerId': customerId,
+        'customerName': customerName, // ADDED: Store customer name
         'items': items,
         'subtotal': subtotal,
         'shipping': shipping,
@@ -503,9 +501,7 @@ class FirestoreService {
     });
   }
 
-  // Add a product rating. If the user has a delivered order for this product,
-  // the rating will be activated immediately. Otherwise it will be saved but
-  // marked as not activated.
+  // Add a product rating
   static Future<void> addProductRating({
     required String productId,
     required String userId,
