@@ -17,6 +17,14 @@ class ProductCardWidget extends StatelessWidget {
     required this.onMenuSelected,
   }) : super(key: key);
 
+  // Helper function to format price with commas
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(2).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match match) => '${match[1]},',
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -338,32 +346,39 @@ class ProductCardWidget extends StatelessWidget {
                       ),
                     ),
 
-                    // Price - Elevated
-                    Material(
-                      elevation: 3,
-                      shadowColor: Colors.green.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade600,
-                            ],
+                    // Price with Animated Peso Icon
+                    Row(
+                      children: [
+                        // Animated Peso Symbol
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 2000),
+                          curve: Curves.easeInOut,
+                          child: Text(
+                            '₱',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade600,
+                              shadows: [
+                                Shadow(
+                                  offset: const Offset(1, 1),
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Text(
-                          '\$${product.sale_price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 16,
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatPrice(product.sale_price),
+                          style: TextStyle(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Colors.green.shade700,
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
