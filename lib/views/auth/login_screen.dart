@@ -32,7 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      // Instantiate AuthService directly
+      final authService = AuthService();
 
       // Firebase login
       final firebaseUser = await authService.signInWithEmailAndPassword(
@@ -80,15 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else if (user.role == 'delivery_staff') {
         // Load DeliveryStaffModel for delivery staff
-        // Note: You need to implement getDeliveryStaffData in AuthService or fetch it here
-        // For now we assume we might need to fetch it similarly to getCustomerData
-
-        // We'll query firestore directly here or add a method in AuthService.
-        // Let's do it cleanly by adding a method to AuthService first, OR query here.
-        // Since I cannot edit AuthService in this step (restricted to login_screen instructions usually implies minimal changes),
-        // I will implement the fetch logic here if needed, but the clean way is to rely on AuthService.
-        // However, the instructions didn't explicitly say "add method to AuthService", but "add logic for logging in".
-
         final deliveryStaffQuery = await authService.firestore
             .collection('delivery_staff')
             .where('user_id', isEqualTo: user.id)
@@ -98,15 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
         if (deliveryStaffQuery.docs.isEmpty)
           throw 'Delivery Staff profile not found';
 
-        // We can pass the model if the dashboard needs it, but currently it's a simple dashboard
         final deliveryStaff =
             DeliveryStaffModel.fromMap(deliveryStaffQuery.docs.first.data());
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                const DeliveryStaffDashboardScreen(), // Pass deliveryStaff if needed
+            builder: (_) => const DeliveryStaffDashboardScreen(),
           ),
         );
       } else {
@@ -117,6 +107,84 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Instantiate AuthService directly
+      final authService = AuthService();
+
+      // Google sign-in
+      final user = await authService.signInWithGoogle();
+
+      if (user == null) {
+        // User cancelled sign-in
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Merge guest cart if any
+      await LocalCartService.mergeGuestCart(user.id);
+
+      if (!mounted) return;
+
+      // Check role and navigate accordingly
+      if (user.role == 'super_admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SuperAdminDashboardScreen()),
+        );
+      } else if (user.role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+      } else if (user.role == 'customer') {
+        final CustomerModel? customer = await authService.getCustomerData();
+        if (customer == null) throw 'Customer profile not found';
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              user: user,
+              customer: customer,
+            ),
+          ),
+        );
+      } else if (user.role == 'delivery_staff') {
+        final deliveryStaffQuery = await authService.firestore
+            .collection('delivery_staff')
+            .where('user_id', isEqualTo: user.id)
+            .limit(1)
+            .get();
+
+        if (deliveryStaffQuery.docs.isEmpty)
+          throw 'Delivery Staff profile not found';
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DeliveryStaffDashboardScreen(),
+          ),
+        );
+      } else {
+        throw 'Invalid user role';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign-in failed: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -227,6 +295,36 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Sign In',
                             style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Google Sign-In button (FIXED - using network image)
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _loginWithGoogle,
+                    icon: Image.network(
+                      'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback if network image fails
+                        return Icon(Icons.g_mobiledata, size: 24);
+                      },
+                    ),
+                    label: const Text(
+                      'Sign in with Google',
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
 
