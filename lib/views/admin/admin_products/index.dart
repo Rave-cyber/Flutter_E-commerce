@@ -95,6 +95,31 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+  int _getTotalPages(List<ProductModel> products) {
+    // Apply filters
+    List<ProductModel> filtered = products.where((product) {
+      if (_filterStatus == 'active') return !product.is_archived;
+      if (_filterStatus == 'archived') return product.is_archived;
+      return true;
+    }).toList();
+
+    // Apply search
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered
+          .where((product) => product.name
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
+    }
+
+    // Calculate total pages
+    if (filtered.isEmpty) {
+      return 1;
+    }
+
+    return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
+  }
+
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -276,6 +301,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                   final products = snapshot.data!;
                   final paginatedProducts =
                       _applyFilterSearchPagination(products);
+                  final totalPages = _getTotalPages(products);
 
                   return Column(
                     children: [
@@ -306,6 +332,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                           // PAGINATION CONTROLS - Left end
                           ProductPaginationWidget(
                             currentPage: _currentPage,
+                            totalPages: totalPages,
                             onPreviousPage: _prevPage,
                             onNextPage: () => _nextPage(products.length),
                           ),
