@@ -17,6 +17,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
   final WarehouseService _warehouseService = WarehouseService();
 
   late TextEditingController _nameController;
+  late TextEditingController _streetAddressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   bool _isArchived = false;
@@ -42,12 +43,22 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     super.initState();
     final warehouse = widget.warehouse;
     _nameController = TextEditingController(text: warehouse?.name ?? '');
+    _streetAddressController = TextEditingController(text: '');
     _latitudeController =
         TextEditingController(text: warehouse?.latitude.toString() ?? '');
     _longitudeController =
         TextEditingController(text: warehouse?.longitude.toString() ?? '');
     _isArchived = warehouse?.is_archived ?? false;
     _loadRegions();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _streetAddressController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadRegions() async {
@@ -183,6 +194,10 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
 
   String _buildWarehouseAddress() {
     List<String> parts = [];
+
+    if (_streetAddressController.text.trim().isNotEmpty) {
+      parts.add(_streetAddressController.text.trim());
+    }
     if (_selectedBarangay != null) {
       parts.add(_selectedBarangay!['name']);
     }
@@ -259,8 +274,10 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Warehouse Name'),
+                    decoration: const InputDecoration(
+                      labelText: 'Warehouse Name',
+                      prefixIcon: Icon(Icons.warehouse),
+                    ),
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Required' : null,
                   ),
@@ -269,12 +286,26 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
 
                   // ADDRESS SECTION
                   const Text(
-                    'Warehouse Location',
+                    'Complete Address',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // STREET ADDRESS
+                  TextFormField(
+                    controller: _streetAddressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Street Address',
+                      prefixIcon: Icon(Icons.home),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+
                   const SizedBox(height: 16),
 
                   // REGION DROPDOWN
@@ -417,7 +448,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
 
                   const SizedBox(height: 16),
 
-                  // DISPLAY SELECTED ADDRESS
+                  // DISPLAY COMPLETE ADDRESS
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -513,7 +544,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'You can find coordinates using Google Maps or online coordinate tools. The address above helps identify the correct location.',
+                            'You can find coordinates using Google Maps or online coordinate tools. The complete address above helps identify the correct location.',
                             style: TextStyle(
                               color: Colors.blue[800],
                               fontSize: 12,
