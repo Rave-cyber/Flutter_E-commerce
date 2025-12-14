@@ -31,6 +31,30 @@ class FirestoreService {
     });
   }
 
+  // Get discounted products
+  static Stream<List<ProductModel>> getDiscountedProducts() {
+    return _firestore
+        .collection('products')
+        .where('is_archived', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            return ProductModel.fromMap({
+              'id': doc.id,
+              ...data,
+            });
+          })
+          .where((product) => product.base_price > product.sale_price)
+          .toList();
+    }).handleError((error) {
+      print('Error fetching discounted products: $error');
+      // Return empty list if query fails
+      return Stream.value(<ProductModel>[]);
+    });
+  }
+
   // Get products by category
   // Replace the getProductsByCategory method in FirestoreService:
   static Stream<List<ProductModel>> getProductsByCategory(String category) {

@@ -39,6 +39,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: primaryGreen),
         title: Text(
           'My Wishlist',
           style: TextStyle(
@@ -58,6 +59,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: primaryGreen),
         title: Text(
           'Wishlist',
           style: TextStyle(

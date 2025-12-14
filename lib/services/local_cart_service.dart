@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,9 +87,19 @@ class LocalCartService {
     await prefs.remove(_cartKey);
   }
 
+  static final _cartController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  // Get cart stream
+  static Stream<List<Map<String, dynamic>>> getCartStream() async* {
+    yield await getCart();
+    yield* _cartController.stream;
+  }
+
   // Save helper
   static Future<void> _saveCart(List<Map<String, dynamic>> cart) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_cartKey, jsonEncode(cart));
+    _cartController.add(cart);
   }
 }
