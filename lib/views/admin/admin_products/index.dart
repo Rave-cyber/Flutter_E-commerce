@@ -10,7 +10,7 @@ import '../../../widgets/product_filter_widget.dart';
 import '../../../widgets/product_card_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
-import '../../../widgets/product_details_modal.dart';
+import '../../../widgets/product_details_modal_vertical.dart';
 
 class AdminProductsIndex extends StatefulWidget {
   const AdminProductsIndex({Key? key}) : super(key: key);
