@@ -844,7 +844,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           initialValue: variant.name,
                           decoration: InputDecoration(
                             labelText: 'Variant Name',
-                            prefixIcon: const Icon(Icons.title),
+                            prefixIcon: const Icon(Icons.style),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -909,7 +909,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                         Column(
                           children: [
                             TextFormField(
-                              initialValue: variant.base_price.toString(),
+                              initialValue: '',
                               decoration: InputDecoration(
                                 labelText: 'Base Price',
                                 prefixIcon: const Icon(Icons.monetization_on),
@@ -937,7 +937,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              initialValue: variant.sale_price.toString(),
+                              initialValue: '',
                               decoration: InputDecoration(
                                 labelText: 'Sale Price',
                                 prefixIcon: const Icon(Icons.local_offer),
