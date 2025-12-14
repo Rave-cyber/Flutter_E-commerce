@@ -10,6 +10,7 @@ import '../../../widgets/product_filter_widget.dart';
 import '../../../widgets/product_card_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
+import '../../../widgets/product_details_modal.dart';
 
 class AdminProductsIndex extends StatefulWidget {
   const AdminProductsIndex({Key? key}) : super(key: key);
@@ -233,6 +234,19 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
     }
   }
 
+  void _showProductDetailsModal(ProductModel product) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ProductDetailsModal(
+          product: product,
+          getCategoryName: _getCategoryName,
+          getBrandName: _getBrandName,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -318,6 +332,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                               getBrandName: _getBrandName,
                               onMenuSelected: (value) =>
                                   _handleMenuSelection(value, product),
+                              onTap: () => _showProductDetailsModal(product),
                             );
                           },
                         ),
