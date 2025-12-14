@@ -361,7 +361,21 @@ class _AdminProductFormState extends State<AdminProductForm> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.green.shade200,
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(20),
             child: child,
