@@ -337,37 +337,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
             const SizedBox(height: 24),
 
-            // Charts Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Charts Section - Changed to vertical layout
+            Column(
               children: [
                 // Sales Trend Chart
-                Expanded(
-                  flex: 2,
-                  child: _buildSalesChart(),
-                ),
-                const SizedBox(width: 16),
+                _buildSalesChart(),
+                const SizedBox(height: 16),
                 // Inventory Status Chart
-                Expanded(
-                  child: _buildInventoryChart(),
-                ),
+                _buildInventoryChart(),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Bottom Row Charts
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Bottom Row Charts - Changed to vertical layout
+            Column(
               children: [
                 // Customer Growth Chart
-                Expanded(
-                  child: _buildCustomerGrowthChart(),
-                ),
-                const SizedBox(width: 16),
+                _buildCustomerGrowthChart(),
+                const SizedBox(height: 16),
                 // Stock Movement Chart
-                Expanded(
-                  child: _buildStockMovementChart(),
-                ),
+                _buildStockMovementChart(),
               ],
             ),
             const SizedBox(height: 24),
