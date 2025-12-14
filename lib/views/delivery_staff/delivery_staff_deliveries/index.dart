@@ -2,51 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/delivery_staff_layout.dart';
 import '../../../firestore_service.dart';
+import 'form.dart';
 
-class DeliveryStaffOrdersScreen extends StatelessWidget {
-  const DeliveryStaffOrdersScreen({super.key});
+class DeliveryStaffDeliveriesScreen extends StatelessWidget {
+  const DeliveryStaffDeliveriesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const DeliveryStaffLayout(
-      title: 'Orders',
-      selectedRoute: '/delivery-staff/orders',
-      child: OrdersList(),
+      title: 'Deliveries',
+      selectedRoute: '/delivery-staff/deliveries',
+      child: DeliveriesList(),
     );
   }
 }
 
-class OrdersList extends StatelessWidget {
-  const OrdersList({super.key});
+class DeliveriesList extends StatelessWidget {
+  const DeliveriesList({super.key});
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: FirestoreService.getDeliveryStaffOrders(),
+      stream: FirestoreService.getDeliveryStaffDeliveries(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(child: Text('Error loading orders'));
+          return const Center(child: Text('Error loading deliveries'));
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final orders = snapshot.data ?? [];
+        final deliveries = snapshot.data ?? [];
 
-        if (orders.isEmpty) {
+        if (deliveries.isEmpty) {
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.inbox_outlined,
+                  Icons.local_shipping_outlined,
                   size: 64,
                   color: Colors.grey,
                 ),
                 SizedBox(height: 16),
                 Text(
-                  'No orders available',
+                  'No deliveries available',
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.grey,
@@ -59,10 +60,10 @@ class OrdersList extends StatelessWidget {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: orders.length,
+          itemCount: deliveries.length,
           itemBuilder: (context, index) {
-            final order = orders[index];
-            return OrderCard(order: order);
+            final delivery = deliveries[index];
+            return DeliveryCard(delivery: delivery);
           },
         );
       },
@@ -70,18 +71,21 @@ class OrdersList extends StatelessWidget {
   }
 }
 
-class OrderCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+class DeliveryCard extends StatelessWidget {
+  final Map<String, dynamic> delivery;
 
-  const OrderCard({super.key, required this.order});
+  const DeliveryCard({super.key, required this.delivery});
 
   @override
   Widget build(BuildContext context) {
-    final items = (order['items'] as List<dynamic>?) ?? [];
-    final totalAmount = order['total']?.toDouble() ?? 0.0;
-    final createdAt = order['createdAt'] as Timestamp?;
-    final shippingAddress = order['shippingAddress'] ?? 'No address provided';
-    final contactNumber = order['contactNumber'] ?? 'No contact number';
+    final items = (delivery['items'] as List<dynamic>?) ?? [];
+    final totalAmount = delivery['total']?.toDouble() ?? 0.0;
+    final createdAt = delivery['createdAt'] as Timestamp?;
+    final shippedAt = delivery['shippedAt'] as Timestamp?;
+    final shippingAddress =
+        delivery['shippingAddress'] ?? 'No address provided';
+    final contactNumber = delivery['contactNumber'] ?? 'No contact number';
+    final deliveryStaffId = delivery['deliveryStaffId'] ?? '';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -90,7 +94,7 @@ class OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Order header
+            // Delivery header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -98,7 +102,7 @@ class OrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Order #${order['id'].toString().substring(0, 8)}',
+                      'Order #${delivery['id'].toString().substring(0, 8)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -106,9 +110,9 @@ class OrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Status: ${order['status']}',
-                      style: TextStyle(
-                        color: _getStatusColor(order['status']),
+                      'Status: ${delivery['status']}',
+                      style: const TextStyle(
+                        color: Colors.orange,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -120,14 +124,14 @@ class OrderCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade100,
+                    color: Colors.blue.shade100,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '₱${totalAmount.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: Colors.blue,
                     ),
                   ),
                 ),
@@ -136,7 +140,7 @@ class OrderCard extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Order details
+            // Delivery details
             Text(
               'Items: ${items.length} item(s)',
               style: const TextStyle(fontWeight: FontWeight.w500),
@@ -154,20 +158,36 @@ class OrderCard extends StatelessWidget {
               ),
             ],
 
+            if (shippedAt != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Picked Up: ${_formatDate(shippedAt.toDate())}',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ],
+
+            if (deliveryStaffId.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Delivery Staff: ${deliveryStaffId.substring(0, 8)}...',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ],
+
             const SizedBox(height: 16),
 
-            // Pick up button
+            // Delivered button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _showPickupConfirmation(context, order),
+                onPressed: () => _navigateToDeliveryForm(context, delivery),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text(
-                  'Pick Up Order',
+                  'Mark as Delivered',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -181,79 +201,19 @@ class OrderCard extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'confirmed':
-        return Colors.blue;
-      case 'processing':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  void _showPickupConfirmation(
-      BuildContext context, Map<String, dynamic> order) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Pickup'),
-          content: Text(
-              'Are you sure you want to pick up order #${order['id'].toString().substring(0, 8)}?\n\n'
-              'This will change the order status to "shipped" and move it to your deliveries list.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // Close dialog
-                await _pickupOrder(context, order);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Confirm Pickup'),
-            ),
-          ],
-        );
-      },
+  void _navigateToDeliveryForm(
+      BuildContext context, Map<String, dynamic> delivery) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DeliveryProofForm(
+          delivery: delivery,
+        ),
+      ),
     );
-  }
-
-  Future<void> _pickupOrder(
-      BuildContext context, Map<String, dynamic> order) async {
-    try {
-      // Get current delivery staff ID (you'll need to implement user authentication)
-      // For now, using a placeholder - replace with actual user ID
-      const deliveryStaffId = 'current_delivery_staff_id';
-
-      await FirestoreService.markOrderAsShipped(order['id'], deliveryStaffId);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order picked up successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error picking up order: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }
