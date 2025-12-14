@@ -349,7 +349,7 @@ class FirestoreService {
         'shipping': shipping,
         'total': total,
         'paymentMethod': paymentMethod,
-        'status': 'pending',
+        'status': 'confirmed',
         'shippingAddress': shippingAddress,
         'contactNumber': contactNumber,
         'createdAt': FieldValue.serverTimestamp(),

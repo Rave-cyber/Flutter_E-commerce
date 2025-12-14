@@ -5,6 +5,7 @@ class ProductVariantModel {
   String product_id;
   String name;
   String image;
+  List<String>? images;
   double base_price;
   double sale_price;
   int? stock;
@@ -17,6 +18,7 @@ class ProductVariantModel {
     required this.product_id,
     required this.name,
     required this.image,
+    this.images,
     required this.base_price,
     required this.sale_price,
     required this.stock,
@@ -31,6 +33,7 @@ class ProductVariantModel {
       'product_id': product_id,
       'name': name,
       'image': image,
+      'images': images,
       'base_price': base_price,
       'sale_price': sale_price,
       'stock': stock,
@@ -42,10 +45,18 @@ class ProductVariantModel {
 
   factory ProductVariantModel.fromMap(Map<String, dynamic> map) {
     return ProductVariantModel(
+<<<<<<< HEAD
       id: map['id'],
       product_id: map['product_id'],
       name: map['name'],
       image: map['image'],
+=======
+      id: map['id'] ?? '',
+      product_id: map['product_id'] ?? '',
+      name: map['name'] ?? '',
+      image: map['image'] ?? '',
+      images: map['images'] != null ? List<String>.from(map['images']) : null,
+>>>>>>> 2031c7f (If product has variant/s, only the product variants are being shown as the options | Once the payment is succesful, order status should automatically be set to 'confirmed')
       base_price: (map['base_price'] ?? 0).toDouble(),
       sale_price: (map['sale_price'] ?? 0).toDouble(),
       stock: map['stock'] ?? 0,

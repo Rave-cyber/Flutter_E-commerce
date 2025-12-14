@@ -7,6 +7,7 @@ class ProductModel {
   final String name;
   final String description;
   final String image;
+  final List<String>? images;
   final double base_price;
   final double sale_price;
   final int? stock_quantity;
@@ -22,6 +23,7 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.image,
+    this.images,
     required this.base_price,
     required this.sale_price,
     this.stock_quantity, // optional
@@ -41,6 +43,7 @@ class ProductModel {
       'name': name,
       'description': description,
       'image': image,
+      'images': images,
       'base_price': base_price,
       'sale_price': sale_price,
       'stock_quantity': stock_quantity ?? 0,
@@ -63,6 +66,7 @@ class ProductModel {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       image: map['image'] ?? '',
+      images: map['images'] != null ? List<String>.from(map['images']) : null,
       base_price: map['base_price'] != null
           ? (map['base_price'] as num).toDouble()
           : 0.0,

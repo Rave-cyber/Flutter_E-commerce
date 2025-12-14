@@ -12,6 +12,7 @@ import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/services/local_cart_service.dart';
+import 'package:firebase/widgets/image_slider_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -112,9 +113,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _variants = variantsList;
           _loadingVariants = false;
 
-          // Default: main product is selected
-          _selectedOption = widget.product;
-          _isSelectingMainProduct = true;
+          // If product has variants, select first variant by default
+          // Otherwise, select main product
+          if (variantsList.isNotEmpty) {
+            _selectedOption = variantsList.first;
+            _isSelectingMainProduct = false;
+          } else {
+            _selectedOption = widget.product;
+            _isSelectingMainProduct = true;
+          }
         });
       }
     } catch (e) {
@@ -484,6 +491,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildImageCarousel() {
+    List<String> images = [];
+
+    if (_isSelectingMainProduct) {
+      // Use multiple images if available, otherwise fallback to single image
+      if (widget.product.images != null && widget.product.images!.isNotEmpty) {
+        images = widget.product.images!;
+      } else if (widget.product.image.isNotEmpty) {
+        images = [widget.product.image];
+      }
+    } else if (_selectedOption is ProductVariantModel) {
+      final variant = _selectedOption as ProductVariantModel;
+      // Use multiple images if available, otherwise fallback to single image or main product image
+      if (variant.images != null && variant.images!.isNotEmpty) {
+        images = variant.images!;
+      } else if (variant.image.isNotEmpty) {
+        images = [variant.image];
+      } else if (widget.product.image.isNotEmpty) {
+        images = [widget.product.image];
+      }
+    }
+
+    return Stack(
+      children: [
+        ImageSliderWidget(
+          images: images,
+          height: 420,
+          primaryColor: primaryGreen,
+        ),
+        _buildOverlayButtons(),
+      ],
+    );
+  }
+
+  Widget _buildImageCarouselOld() {
     String imageUrl = '';
 
     if (_isSelectingMainProduct) {
@@ -748,10 +789,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
-    // Combine main product and variants
-    final allOptions = <dynamic>[widget.product, ..._variants];
-
-    if (allOptions.length == 1) {
+    // Only show variants when they exist, never show main product as "Standard"
+    if (_variants.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -784,31 +823,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: List.generate(allOptions.length, (index) {
-              final option = allOptions[index];
-              final isMainProduct = index == 0;
-              final isSelected = _isSelectingMainProduct
-                  ? index == 0
-                  : (option is ProductVariantModel &&
-                      _selectedOption is ProductVariantModel &&
-                      (option as ProductVariantModel).id ==
-                          (_selectedOption as ProductVariantModel).id);
-
-              final name = isMainProduct
-                  ? 'Standard'
-                  : (option as ProductVariantModel).name;
-              // Removed redundant price display requested by user
+            children: List.generate(_variants.length, (index) {
+              final variant = _variants[index];
+              final isSelected = (_selectedOption is ProductVariantModel &&
+                  variant.id == (_selectedOption as ProductVariantModel).id);
 
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    if (index == 0) {
-                      _selectedOption = widget.product;
-                      _isSelectingMainProduct = true;
-                    } else {
-                      _selectedOption = option as ProductVariantModel;
-                      _isSelectingMainProduct = false;
-                    }
+                    _selectedOption = variant;
+                    _isSelectingMainProduct = false;
                   });
                 },
                 child: AnimatedContainer(
@@ -846,7 +870,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        name,
+                        variant.name,
                         style: TextStyle(
                           fontSize: 14,
                           color: isSelected ? Colors.white : Colors.grey[800],
