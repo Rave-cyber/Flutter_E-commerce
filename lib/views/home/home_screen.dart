@@ -257,9 +257,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBannerItem(Map<String, dynamic> banner) {
     return GestureDetector(
       onTap: () {
-        // TODO: Implement dynamic routing based on banner data (e.g. banner['link'])
-        // For now, satisfy "clickable" request by navigating to Categories
-        _onTabTapped(1); // switch to Categories tab
+        if (banner['categoryId'] != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoriesScreen(
+                user: widget.user,
+                initialCategoryId: banner['categoryId'],
+              ),
+            ),
+          );
+        } else {
+          // Default behavior: go to Categories tab
+          _onTabTapped(1);
+        }
       },
       child: Container(
         margin: const EdgeInsets.all(8.0),
