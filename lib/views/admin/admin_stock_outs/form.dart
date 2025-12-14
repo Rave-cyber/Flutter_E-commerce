@@ -40,6 +40,24 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       _quantityController.text = widget.stockOut!.quantity.toString();
       _reasonController.text = widget.stockOut!.reason;
     }
+
+    // Add listener to quantity controller for real-time validation
+    _quantityController.addListener(_onQuantityChanged);
+  }
+
+  @override
+  void dispose() {
+    _quantityController.removeListener(_onQuantityChanged);
+    _quantityController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  void _onQuantityChanged() {
+    // Trigger real-time validation when quantity changes
+    setState(() {
+      // This will trigger form validation
+    });
   }
 
   Future<void> _loadData() async {
@@ -116,33 +134,55 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       final id = widget.stockOut?.id ??
           DateTime.now().millisecondsSinceEpoch.toString();
 
-      // Validate stock availability for new stock-outs
-      if (widget.stockOut == null) {
-        final availableStock = await _checkStockAvailability();
-        final requestedQuantity = int.tryParse(_quantityController.text) ?? 0;
+      // Validate stock availability
+      final availableStock = await _checkStockAvailability();
+      final requestedQuantity = int.tryParse(_quantityController.text) ?? 0;
 
-        if (availableStock < requestedQuantity) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    'Insufficient stock. Available: $availableStock, Requested: $requestedQuantity'),
-                backgroundColor: Colors.red,
-              ),
-            );
+      // For updates, calculate remaining stock after accounting for current stock-out
+      int maxAllowedQuantity = availableStock;
+      if (widget.stockOut != null) {
+        maxAllowedQuantity +=
+            widget.stockOut!.quantity; // Add back current stock-out quantity
+      }
+
+      if (requestedQuantity > maxAllowedQuantity) {
+        if (context.mounted) {
+          String errorMessage;
+          if (widget.stockOut != null) {
+            errorMessage =
+                'Quantity exceeds available stock. Maximum allowed: $maxAllowedQuantity, Requested: $requestedQuantity';
+          } else {
+            errorMessage =
+                'Insufficient stock. Available: $availableStock, Requested: $requestedQuantity';
           }
-          setState(() {
-            _isLoading = false;
-          });
-          return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'View Stock Details',
+                textColor: Colors.white,
+                onPressed: () {
+                  _showStockDetails(
+                      availableStock, requestedQuantity, maxAllowedQuantity);
+                },
+              ),
+            ),
+          );
         }
+        setState(() {
+          _isLoading = false;
+        });
+        return;
       }
 
       final stockOut = StockOutModel(
         id: id,
         product_id: _selectedProduct?.id,
         product_variant_id: _selectedVariant?.id,
-        quantity: int.tryParse(_quantityController.text) ?? 0,
+        quantity: requestedQuantity,
         reason: _reasonController.text.trim(),
         created_at: widget.stockOut?.created_at ?? DateTime.now(),
         updated_at: DateTime.now(),
@@ -177,8 +217,9 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Error saving stock-out: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -218,6 +259,74 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       print('Error checking stock availability: $e');
       return 0;
     }
+  }
+
+  /// Show detailed stock information dialog
+  void _showStockDetails(
+      int availableStock, int requestedQuantity, int maxAllowedQuantity) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Stock Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Product: ${_selectedProduct?.name ?? 'N/A'}'),
+            if (_selectedVariant != null)
+              Text('Variant: ${_selectedVariant!.name}'),
+            const SizedBox(height: 8),
+            Text('Available Stock: $availableStock'),
+            Text('Current Stock-Out: ${widget.stockOut?.quantity ?? 0}'),
+            Text('Max Allowed Quantity: $maxAllowedQuantity'),
+            Text('Requested Quantity: $requestedQuantity'),
+            const SizedBox(height: 8),
+            if (requestedQuantity > maxAllowedQuantity)
+              Text(
+                'Cannot proceed: Requested quantity exceeds available stock.',
+                style: TextStyle(
+                  color: Colors.red[700],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get real-time stock validation message
+  Future<String?> _getStockValidationMessage(int requestedQuantity) async {
+    if (_selectedProduct == null || requestedQuantity <= 0) {
+      return null;
+    }
+
+    try {
+      final availableStock = await _checkStockAvailability();
+      int maxAllowedQuantity = availableStock;
+
+      if (widget.stockOut != null) {
+        maxAllowedQuantity += widget.stockOut!.quantity;
+      }
+
+      if (requestedQuantity > maxAllowedQuantity) {
+        if (widget.stockOut != null) {
+          return 'Exceeds stock limit. Max: $maxAllowedQuantity';
+        } else {
+          return 'Insufficient stock. Available: $availableStock';
+        }
+      }
+    } catch (e) {
+      print('Error validating stock: $e');
+    }
+
+    return null;
   }
 
   @override
@@ -320,6 +429,21 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
                         return 'Enter a valid positive number';
                       }
                       return null;
+                    },
+                    onChanged: (val) async {
+                      // Real-time stock validation
+                      final quantity = int.tryParse(val) ?? 0;
+                      final message =
+                          await _getStockValidationMessage(quantity);
+                      if (message != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            backgroundColor: Colors.orange,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
                     },
                   ),
                   const SizedBox(height: 16),
