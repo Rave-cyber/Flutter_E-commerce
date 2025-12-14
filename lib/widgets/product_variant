@@ -26,8 +26,7 @@ class _ProductVariantSelectionModalState
   int _itemsPerPage = 10;
   int _currentPage = 0;
 
-  List<ProductVariantModel> _applyFilterSearchPagination(
-      List<ProductVariantModel> variants) {
+  List<ProductVariantModel> _applyFilterSearchPagination(List<ProductVariantModel> variants) {
     // For variants, we'll show all by default since they don't have is_archived property
     List<ProductVariantModel> filtered = variants.where((variant) {
       // Since variants don't have archived status, we'll show all active variants
@@ -36,10 +35,9 @@ class _ProductVariantSelectionModalState
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
-      filtered = filtered
-          .where((variant) => variant.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+      filtered = filtered.where((variant) => variant.name
+          .toLowerCase()
+          .contains(_searchController.text.toLowerCase()))
           .toList();
     }
 
@@ -60,10 +58,9 @@ class _ProductVariantSelectionModalState
 
     // Apply search
     if (_searchController.text.isNotEmpty) {
-      filtered = filtered
-          .where((variant) => variant.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+      filtered = filtered.where((variant) => variant.name
+          .toLowerCase()
+          .contains(_searchController.text.toLowerCase()))
           .toList();
     }
 

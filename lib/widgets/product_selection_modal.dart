@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
+import '../../../widgets/product_search_widget.dart';
+import '../../../widgets/product_filter_widget.dart';
+import '../../../widgets/product_pagination_widget.dart';
 
 class ProductSelectionModal extends StatefulWidget {
   final List<ProductModel> products;
@@ -20,74 +23,91 @@ class ProductSelectionModal extends StatefulWidget {
 
 class _ProductSelectionModalState extends State<ProductSelectionModal> {
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _itemsPerPageController = TextEditingController();
-
-  List<ProductModel> _filteredProducts = [];
-  int _currentPage = 0;
+  String _filterStatus = 'active';
   int _itemsPerPage = 10;
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredProducts = widget.products;
-    _itemsPerPageController.text = _itemsPerPage.toString();
-  }
+  int _currentPage = 0;
 
   bool _hasVariants(ProductModel product) {
     return widget.allVariants
         .any((variant) => variant.product_id == product.id);
   }
 
-  void _filterProducts() {
-    setState(() {
-      _searchQuery = _searchController.text.toLowerCase().trim();
-      _currentPage = 0; // Reset to first page when filtering
+  List<ProductModel> _applyFilterSearchPagination(List<ProductModel> products) {
+    // FILTER
+    List<ProductModel> filtered = products.where((product) {
+      if (_filterStatus == 'active') return !product.is_archived;
+      if (_filterStatus == 'archived') return product.is_archived;
+      return true;
+    }).toList();
 
-      if (_searchQuery.isEmpty) {
-        _filteredProducts = widget.products;
-      } else {
-        _filteredProducts = widget.products.where((product) {
-          return product.name.toLowerCase().contains(_searchQuery) ||
-              (product.sku?.toLowerCase().contains(_searchQuery) ?? false);
-        }).toList();
-      }
-    });
-  }
-
-  void _updateItemsPerPage(String value) {
-    setState(() {
-      _itemsPerPage = int.tryParse(value) ?? 10;
-      _currentPage = 0; // Reset to first page when changing items per page
-    });
-  }
-
-  List<ProductModel> _getCurrentPageProducts() {
-    final startIndex = _currentPage * _itemsPerPage;
-    final endIndex =
-        (startIndex + _itemsPerPage).clamp(0, _filteredProducts.length);
-
-    if (startIndex >= _filteredProducts.length) {
-      return [];
+    // SEARCH
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered
+          .where((product) => product.name
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
     }
 
-    return _filteredProducts.sublist(startIndex, endIndex);
+    // PAGINATION
+    final start = (_currentPage) * _itemsPerPage;
+    final end = start + _itemsPerPage;
+    if (start >= filtered.length) return [];
+    return filtered.sublist(
+        start, end > filtered.length ? filtered.length : end);
   }
 
-  int get _totalPages => (_filteredProducts.length / _itemsPerPage).ceil();
+  int _getTotalPages(List<ProductModel> products) {
+    // Apply filters
+    List<ProductModel> filtered = products.where((product) {
+      if (_filterStatus == 'active') return !product.is_archived;
+      if (_filterStatus == 'archived') return product.is_archived;
+      return true;
+    }).toList();
 
-  void _goToPreviousPage() {
+    // Apply search
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered
+          .where((product) => product.name
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
+    }
+
+    // Calculate total pages
+    if (filtered.isEmpty) {
+      return 1;
+    }
+
+    return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
+  }
+
+  void _nextPage(int totalItems) {
+    if (_currentPage * _itemsPerPage < totalItems) {
+      setState(() => _currentPage++);
+    }
+  }
+
+  void _prevPage() {
     if (_currentPage > 0) {
+      setState(() => _currentPage--);
+    }
+  }
+
+  void _onFilterChanged(String? value) {
+    if (value != null) {
       setState(() {
-        _currentPage--;
+        _filterStatus = value;
+        _currentPage = 0;
       });
     }
   }
 
-  void _goToNextPage() {
-    if (_currentPage < _totalPages - 1) {
+  void _onItemsPerPageChanged(int? value) {
+    if (value != null) {
       setState(() {
-        _currentPage++;
+        _itemsPerPage = value;
+        _currentPage = 0;
       });
     }
   }
@@ -95,175 +115,208 @@ class _ProductSelectionModalState extends State<ProductSelectionModal> {
   @override
   void dispose() {
     _searchController.dispose();
-    _itemsPerPageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentProducts = _getCurrentPageProducts();
+    final paginatedProducts = _applyFilterSearchPagination(widget.products);
+    final totalPages = _getTotalPages(widget.products);
 
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Container(
         width: double.maxFinite,
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  'Select Product',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Search Bar
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search by name or SKU',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) => _filterProducts(),
-            ),
-            const SizedBox(height: 16),
-
-            // Controls Row
-            Row(
-              children: [
-                const Text('Items per page:'),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    controller: _itemsPerPageController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Text(
+                    'Select Product',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade800,
                     ),
-                    onSubmitted: _updateItemsPerPage,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                    'Showing ${currentProducts.length} of ${_filteredProducts.length} products'),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.grey.shade600),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
 
-            // Products Table
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text('SKU')),
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Variants')),
-                      DataColumn(label: Text('Base Price')),
-                      DataColumn(label: Text('Sale Price')),
-                      DataColumn(label: Text('Stock')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: currentProducts.map((product) {
-                      final isSelected =
-                          widget.selectedProduct?.id == product.id;
-                      final hasVariants = _hasVariants(product);
-                      return DataRow(
-                        selected: isSelected,
-                        onSelectChanged: (selected) {
-                          if (selected == true) {
-                            Navigator.of(context).pop(product);
-                          }
-                        },
-                        cells: [
-                          DataCell(Text(product.sku ?? 'N/A')),
-                          DataCell(Text(product.name)),
-                          DataCell(
-                            Row(
+              // Search Field
+              ProductSearchWidget(
+                controller: _searchController,
+                onChanged: () => setState(() {
+                  _currentPage = 0;
+                }),
+              ),
+              const SizedBox(height: 16),
+
+              // Filter and Per Page Dropdown
+              ProductFilterWidget(
+                filterStatus: _filterStatus,
+                itemsPerPage: _itemsPerPage,
+                onFilterChanged: _onFilterChanged,
+                onItemsPerPageChanged: _onItemsPerPageChanged,
+              ),
+              const SizedBox(height: 16),
+
+              // Products List with Bottom Controls
+              Expanded(
+                child: paginatedProducts.isEmpty
+                    ? Center(
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  hasVariants
-                                      ? Icons.check_circle
-                                      : Icons.remove_circle,
-                                  color:
-                                      hasVariants ? Colors.green : Colors.grey,
-                                  size: 16,
+                                Icon(Icons.inventory_2_outlined,
+                                    size: 64, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No products found.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(hasVariants ? 'Yes' : 'No'),
                               ],
                             ),
                           ),
-                          DataCell(Text(
-                              '₱${product.base_price.toStringAsFixed(2)}')),
-                          DataCell(Text(
-                              '₱${product.sale_price.toStringAsFixed(2)}')),
-                          DataCell(
-                              Text(product.stock_quantity?.toString() ?? '0')),
-                          DataCell(
-                            ElevatedButton(
-                              onPressed: () =>
-                                  Navigator.of(context).pop(product),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    isSelected ? Colors.green : null,
-                              ),
-                              child: Text(isSelected ? 'Selected' : 'Select'),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          // Products List
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: paginatedProducts.length,
+                              itemBuilder: (context, index) {
+                                final product = paginatedProducts[index];
+                                final isSelected =
+                                    widget.selectedProduct?.id == product.id;
+                                final hasVariants = _hasVariants(product);
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? Colors.green
+                                          : Colors.grey.shade300,
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.all(16),
+                                    leading: CircleAvatar(
+                                      backgroundColor: Colors.green.shade50,
+                                      child: Icon(
+                                        hasVariants
+                                            ? Icons.check_circle
+                                            : Icons.remove_circle,
+                                        color: hasVariants
+                                            ? Colors.green
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      product.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('SKU: ${product.sku ?? "N/A"}'),
+                                        Text(
+                                            '₱${product.base_price.toStringAsFixed(2)} - ₱${product.sale_price.toStringAsFixed(2)}'),
+                                        Text(
+                                            'Stock: ${product.stock_quantity ?? 0}'),
+                                      ],
+                                    ),
+                                    trailing: ElevatedButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(product),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isSelected
+                                            ? Colors.green
+                                            : Colors.grey.shade100,
+                                        foregroundColor: isSelected
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: Text(
+                                          isSelected ? 'Selected' : 'Select'),
+                                    ),
+                                    onTap: () =>
+                                        Navigator.of(context).pop(product),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            // Pagination Controls
-            Row(
-              children: [
-                const Text('Page:'),
-                const SizedBox(width: 8),
-                Text(
-                  '${_currentPage + 1} of $_totalPages',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: _currentPage > 0 ? _goToPreviousPage : null,
-                  disabledColor: Colors.grey,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed:
-                      _currentPage < _totalPages - 1 ? _goToNextPage : null,
-                  disabledColor: Colors.grey,
-                ),
-              ],
-            ),
-          ],
+                          const SizedBox(height: 16),
+
+                          // Bottom Controls - Pagination
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ProductPaginationWidget(
+                                currentPage: _currentPage + 1,
+                                totalPages: totalPages,
+                                onPreviousPage: _prevPage,
+                                onNextPage: () =>
+                                    _nextPage(widget.products.length),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
