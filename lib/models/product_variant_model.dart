@@ -45,18 +45,11 @@ class ProductVariantModel {
 
   factory ProductVariantModel.fromMap(Map<String, dynamic> map) {
     return ProductVariantModel(
-<<<<<<< HEAD
-      id: map['id'],
-      product_id: map['product_id'],
-      name: map['name'],
-      image: map['image'],
-=======
       id: map['id'] ?? '',
       product_id: map['product_id'] ?? '',
       name: map['name'] ?? '',
       image: map['image'] ?? '',
       images: map['images'] != null ? List<String>.from(map['images']) : null,
->>>>>>> 2031c7f (If product has variant/s, only the product variants are being shown as the options | Once the payment is succesful, order status should automatically be set to 'confirmed')
       base_price: (map['base_price'] ?? 0).toDouble(),
       sale_price: (map['sale_price'] ?? 0).toDouble(),
       stock: map['stock'] ?? 0,
