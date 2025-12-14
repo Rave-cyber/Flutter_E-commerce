@@ -102,7 +102,7 @@ class ProductCardWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Product Name and Status
+                          // Product Name with Status Icon
                           Row(
                             children: [
                               Expanded(
@@ -119,32 +119,39 @@ class ProductCardWidget extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              // Status Badge - Elevated
-                              Material(
-                                elevation: 2,
-                                shadowColor: product.is_archived
-                                    ? Colors.red.withOpacity(0.3)
-                                    : Colors.green.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: product.is_archived
-                                        ? Colors.red[100]
-                                        : Colors.green[100],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    product.is_archived ? 'Archived' : 'Active',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                              // Animated Status Circle Icon
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: product.is_archived
+                                      ? Colors.grey.shade400
+                                      : Colors.green.shade500,
+                                  boxShadow: [
+                                    BoxShadow(
                                       color: product.is_archived
-                                          ? Colors.red[700]
-                                          : Colors.green[700],
+                                          ? Colors.grey.withOpacity(0.3)
+                                          : Colors.green.withOpacity(0.4),
+                                      blurRadius: 3,
+                                      offset: const Offset(0, 1),
+                                      spreadRadius: 0.5,
                                     ),
-                                  ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // Status Text
+                              Text(
+                                product.is_archived ? 'archived' : 'active',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: product.is_archived
+                                      ? Colors.grey.shade600
+                                      : Colors.green.shade600,
                                 ),
                               ),
                             ],
