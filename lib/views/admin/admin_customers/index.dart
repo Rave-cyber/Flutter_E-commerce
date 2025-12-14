@@ -2,7 +2,7 @@ import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
-import '../../../widgets/product_search_widget.dart';
+import '../../../widgets/customer_search_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/product_filter_widget.dart';
 import '../../../widgets/customer_card_widget.dart';
@@ -254,7 +254,7 @@ class _AdminCustomersIndexState extends State<AdminCustomersIndex> {
         child: Column(
           children: [
             // SEARCH FIELD
-            ProductSearchWidget(
+            CustomerSearchWidget(
               controller: _searchController,
               onChanged: () => setState(() {
                 _currentPage = 1;
