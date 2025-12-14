@@ -37,6 +37,7 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _reasonController = TextEditingController();
   bool _isArchived = false;
+  bool _isLoading = true;
 
   List<ProductModel> _products = [];
   List<ProductVariantModel> _allVariants = [];
@@ -60,6 +61,10 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     _suppliers = await SupplierService().fetchSuppliersOnce();
     _warehouses = await WarehouseService().fetchWarehousesOnce();
     _stockCheckers = await StockCheckerService().fetchStockCheckersOnce();
@@ -89,7 +94,9 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
       }
     }
 
-    setState(() {});
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _loadProductVariants(ProductModel product) {
@@ -136,6 +143,8 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   }
 
   void _showProductSelectionModal() async {
+    if (_isLoading) return;
+
     final selectedProduct = await showDialog<ProductModel>(
       context: context,
       builder: (context) => ProductSelectionModal(
@@ -159,7 +168,7 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   }
 
   void _showProductVariantSelectionModal() async {
-    if (_productVariants.isEmpty) return;
+    if (_isLoading || _productVariants.isEmpty) return;
 
     final selectedVariant = await showDialog<ProductVariantModel>(
       context: context,
@@ -178,6 +187,14 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return AdminLayout(
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return AdminLayout(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
