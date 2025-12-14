@@ -6,6 +6,8 @@ import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'guest_cart_screen.dart';
+import '../../../../models/product.dart';
+import '../../../../models/product_variant_model.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -258,6 +260,28 @@ class _CartScreenState extends State<CartScreen> {
     if (user == null) return;
 
     try {
+      // Get current cart item data
+      final cartItemDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('cart')
+          .doc(itemId)
+          .get();
+
+      if (!cartItemDoc.exists) return;
+
+      final cartData = cartItemDoc.data() as Map<String, dynamic>;
+      final productId = cartData['productId'] ?? '';
+      final variantId = cartData['variantId'];
+
+      // Check available stock
+      final availableStock = await _getAvailableStock(productId, variantId);
+
+      if (newQuantity > availableStock) {
+        _showSnackBar('Cannot exceed available stock ($availableStock items)');
+        return;
+      }
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -269,6 +293,38 @@ class _CartScreenState extends State<CartScreen> {
       });
     } catch (e) {
       _showSnackBar('Error updating quantity');
+    }
+  }
+
+  Future<int> _getAvailableStock(String productId, String? variantId) async {
+    try {
+      if (variantId != null && variantId.isNotEmpty) {
+        // Get variant stock
+        final variantDoc = await FirebaseFirestore.instance
+            .collection('product_variants')
+            .doc(variantId)
+            .get();
+
+        if (variantDoc.exists) {
+          final variantData = variantDoc.data() as Map<String, dynamic>;
+          return variantData['stock'] ?? 0;
+        }
+      } else {
+        // Get product stock
+        final productDoc = await FirebaseFirestore.instance
+            .collection('products')
+            .doc(productId)
+            .get();
+
+        if (productDoc.exists) {
+          final productData = productDoc.data() as Map<String, dynamic>;
+          return productData['stock_quantity'] ?? 0;
+        }
+      }
+      return 0;
+    } catch (e) {
+      print('Error fetching stock: $e');
+      return 0;
     }
   }
 
@@ -741,6 +797,119 @@ class _CartItem extends StatefulWidget {
 }
 
 class __CartItemState extends State<_CartItem> {
+  late TextEditingController _quantityController;
+  late FocusNode _quantityFocus;
+  bool _isEditingQuantity = false;
+  int _availableStock = 0;
+  bool _isLoadingStock = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final quantity = widget.data['quantity'] ?? 1;
+    _quantityController = TextEditingController(text: quantity.toString());
+    _quantityFocus = FocusNode();
+    _loadStockInfo();
+  }
+
+  @override
+  void dispose() {
+    _quantityController.dispose();
+    _quantityFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadStockInfo() async {
+    try {
+      final productId = widget.data['productId'] ?? '';
+      final variantId = widget.data['variantId'];
+
+      if (variantId != null && variantId.isNotEmpty) {
+        // Get variant stock
+        final variantDoc = await FirebaseFirestore.instance
+            .collection('product_variants')
+            .doc(variantId)
+            .get();
+
+        if (variantDoc.exists) {
+          final variantData = variantDoc.data() as Map<String, dynamic>;
+          setState(() {
+            _availableStock = variantData['stock'] ?? 0;
+            _isLoadingStock = false;
+          });
+        } else {
+          setState(() {
+            _availableStock = 0;
+            _isLoadingStock = false;
+          });
+        }
+      } else {
+        // Get product stock
+        final productDoc = await FirebaseFirestore.instance
+            .collection('products')
+            .doc(productId)
+            .get();
+
+        if (productDoc.exists) {
+          final productData = productDoc.data() as Map<String, dynamic>;
+          setState(() {
+            _availableStock = productData['stock_quantity'] ?? 0;
+            _isLoadingStock = false;
+          });
+        } else {
+          setState(() {
+            _availableStock = 0;
+            _isLoadingStock = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading stock: $e');
+      setState(() {
+        _availableStock = 0;
+        _isLoadingStock = false;
+      });
+    }
+  }
+
+  void _startEditingQuantity() {
+    setState(() {
+      _isEditingQuantity = true;
+    });
+    _quantityController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _quantityController.text.length,
+    );
+    _quantityFocus.requestFocus();
+  }
+
+  void _stopEditingQuantity() {
+    setState(() {
+      _isEditingQuantity = false;
+    });
+    _quantityFocus.unfocus();
+
+    // Update quantity in database
+    final newQuantity = int.tryParse(_quantityController.text) ?? 1;
+    if (newQuantity >= 1 && newQuantity <= _availableStock) {
+      widget.updateQuantity(widget.itemId, newQuantity);
+    } else if (newQuantity > _availableStock) {
+      // Show error and revert to previous quantity
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Cannot exceed available stock ($_availableStock items)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _quantityController.text = (widget.data['quantity'] ?? 1).toString();
+    } else {
+      // Minimum quantity is 1
+      _quantityController.text = '1';
+      widget.updateQuantity(widget.itemId, 1);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final quantity = widget.data['quantity'] ?? 1;
@@ -834,6 +1003,29 @@ class __CartItemState extends State<_CartItem> {
                       color: widget.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // Stock Information
+                  if (!_isLoadingStock)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 14,
+                          color:
+                              _availableStock > 0 ? Colors.green : Colors.red,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Stock: $_availableStock',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                _availableStock > 0 ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -850,27 +1042,54 @@ class __CartItemState extends State<_CartItem> {
                               height: 32,
                               child: IconButton(
                                 icon: const Icon(Icons.remove, size: 16),
-                                onPressed: () => widget.updateQuantity(
-                                    widget.itemId, quantity - 1),
-                                color: quantity <= 1
+                                onPressed: !_isEditingQuantity && quantity > 1
+                                    ? () => widget.updateQuantity(
+                                        widget.itemId, quantity - 1)
+                                    : null,
+                                color: quantity <= 1 || _isEditingQuantity
                                     ? widget.textSecondary
                                     : widget.primaryGreen,
                                 padding: EdgeInsets.zero,
                                 iconSize: 16,
                               ),
                             ),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              constraints: const BoxConstraints(minWidth: 24),
-                              child: Text(
-                                quantity.toString(),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: widget.textPrimary,
-                                ),
-                                textAlign: TextAlign.center,
+                            GestureDetector(
+                              onTap: !_isEditingQuantity
+                                  ? _startEditingQuantity
+                                  : null,
+                              child: Container(
+                                width: 50,
+                                height: 32,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: _isEditingQuantity
+                                    ? TextField(
+                                        controller: _quantityController,
+                                        focusNode: _quantityFocus,
+                                        keyboardType: TextInputType.number,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: widget.textPrimary,
+                                        ),
+                                        decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                          isDense: true,
+                                        ),
+                                        onSubmitted: (_) =>
+                                            _stopEditingQuantity(),
+                                      )
+                                    : Text(
+                                        quantity.toString(),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: widget.textPrimary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                               ),
                             ),
                             SizedBox(
@@ -878,9 +1097,15 @@ class __CartItemState extends State<_CartItem> {
                               height: 32,
                               child: IconButton(
                                 icon: const Icon(Icons.add, size: 16),
-                                onPressed: () => widget.updateQuantity(
-                                    widget.itemId, quantity + 1),
-                                color: widget.primaryGreen,
+                                onPressed: !_isEditingQuantity &&
+                                        quantity < _availableStock
+                                    ? () => widget.updateQuantity(
+                                        widget.itemId, quantity + 1)
+                                    : null,
+                                color: quantity >= _availableStock ||
+                                        _isEditingQuantity
+                                    ? widget.textSecondary
+                                    : widget.primaryGreen,
                                 padding: EdgeInsets.zero,
                                 iconSize: 16,
                               ),
@@ -905,6 +1130,18 @@ class __CartItemState extends State<_CartItem> {
                       ),
                     ],
                   ),
+                  if (_isEditingQuantity)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Tap Done to save, Cancel to revert',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: widget.textSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
