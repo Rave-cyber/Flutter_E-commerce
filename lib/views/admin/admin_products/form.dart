@@ -47,6 +47,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
   late TextEditingController _salePriceController;
 
   String _imageUrl = '';
+  String _generatedSku = '';
   bool _isArchived = false;
 
   // Dropdown state
@@ -76,6 +77,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
         TextEditingController(text: product?.base_price.toString() ?? '');
     _salePriceController =
         TextEditingController(text: product?.sale_price.toString() ?? '');
+    _generatedSku = product?.sku ?? '';
     _imageUrl = product?.image ?? '';
     _isArchived = product?.is_archived ?? false;
 
@@ -89,6 +91,42 @@ class _AdminProductFormState extends State<AdminProductForm> {
     _basePriceController.dispose();
     _salePriceController.dispose();
     super.dispose();
+  }
+
+  /// Generate SKU based on category, brand, and timestamp
+  String _generateSKU(
+      CategoryModel category, BrandModel brand, String productName) {
+    final timestamp = DateTime.now()
+        .millisecondsSinceEpoch
+        .toString()
+        .substring(8); // Last 6 digits
+    final categoryCode =
+        category.name.substring(0, 3).toUpperCase().replaceAll(' ', '');
+    final brandCode =
+        brand.name.substring(0, 3).toUpperCase().replaceAll(' ', '');
+    final nameCode = productName.isNotEmpty
+        ? productName.substring(0, 2).toUpperCase().replaceAll(' ', '')
+        : 'PR';
+
+    return '$categoryCode-$brandCode-$nameCode-$timestamp';
+  }
+
+  /// Generate variant SKU based on main product SKU and variant index
+  String _generateVariantSKU(String mainSku, int variantIndex) {
+    final suffix = String.fromCharCode(65 + variantIndex); // A, B, C, etc.
+    return '$mainSku-$suffix';
+  }
+
+  /// Update SKU when category, brand, or name changes
+  void _updateSKU() {
+    if (_selectedCategory != null &&
+        _selectedBrand != null &&
+        _nameController.text.isNotEmpty) {
+      setState(() {
+        _generatedSku = _generateSKU(
+            _selectedCategory!, _selectedBrand!, _nameController.text);
+      });
+    }
   }
 
   Future<void> _initData() async {
@@ -189,6 +227,9 @@ class _AdminProductFormState extends State<AdminProductForm> {
         base_price: 0,
         sale_price: 0,
         is_archived: false,
+        sku: _generatedSku.isNotEmpty
+            ? _generateVariantSKU(_generatedSku, _variants.length)
+            : null,
         created_at: DateTime.now(),
         updated_at: DateTime.now(),
       );
@@ -199,6 +240,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
   void _removeVariant(int index) {
     setState(() {
       _variants.removeAt(index);
+      // Regenerate SKUs for remaining variants
+      _variants.asMap().entries.forEach((entry) {
+        if (_generatedSku.isNotEmpty) {
+          entry.value.variant.sku =
+              _generateVariantSKU(_generatedSku, entry.key);
+        }
+      });
     });
   }
 
@@ -330,14 +378,19 @@ class _AdminProductFormState extends State<AdminProductForm> {
     bool obscureText = false,
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool required = false,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      readOnly: readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: required ? '$label *' : label,
         prefixIcon: icon != null ? Icon(icon) : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -351,10 +404,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
           borderSide: const BorderSide(color: Colors.green),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        if (required && (value == null || value.isEmpty)) {
           return 'Please enter $label';
         }
         return null;
@@ -369,6 +422,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
     required void Function(T?) onChanged,
     String? Function(T?)? validator,
     IconData? prefixIcon,
+    bool required = false,
   }) {
     return DropdownButtonFormField<T>(
       value: value,
@@ -376,7 +430,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
       onChanged: onChanged,
       validator: validator,
       decoration: InputDecoration(
-        labelText: labelText,
+        labelText: required ? '$labelText *' : labelText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -606,6 +660,11 @@ class _AdminProductFormState extends State<AdminProductForm> {
             _nameController,
             'Product Name',
             icon: Icons.shopping_bag,
+            required: true,
+            onTap: () {
+              // Update SKU when name changes
+              _nameController.addListener(_updateSKU);
+            },
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -613,6 +672,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
             'Description',
             icon: Icons.description,
             maxLines: 4,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            TextEditingController(text: _generatedSku),
+            'SKU (Auto-Generated)',
+            icon: Icons.qr_code,
+            readOnly: true,
           ),
           const SizedBox(height: 16),
           _buildDropdown<CategoryModel>(
@@ -624,9 +690,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
                       child: Text(c.name),
                     ))
                 .toList(),
-            onChanged: (val) => setState(() => _selectedCategory = val),
+            onChanged: (val) {
+              setState(() => _selectedCategory = val);
+              _updateSKU();
+            },
             prefixIcon: Icons.category,
             validator: (val) => val == null ? 'Please select a category' : null,
+            required: true,
           ),
           const SizedBox(height: 16),
           _buildDropdown<BrandModel>(
@@ -638,9 +708,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
                       child: Text(b.name),
                     ))
                 .toList(),
-            onChanged: (val) => setState(() => _selectedBrand = val),
+            onChanged: (val) {
+              setState(() => _selectedBrand = val);
+              _updateSKU();
+            },
             prefixIcon: Icons.storefront,
             validator: (val) => val == null ? 'Please select a brand' : null,
+            required: true,
           ),
         ],
       ),
@@ -657,12 +731,14 @@ class _AdminProductFormState extends State<AdminProductForm> {
             _basePriceController,
             'Base Price',
             icon: Icons.monetization_on,
+            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             _salePriceController,
             'Sale Price',
             icon: Icons.local_offer,
+            keyboardType: TextInputType.number,
           ),
         ],
       ),
@@ -787,6 +863,31 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           onChanged: (value) {
                             variant.name = value;
                           },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Variant SKU (Auto-generated, read-only)
+                        TextFormField(
+                          initialValue: variant.sku ?? '',
+                          decoration: InputDecoration(
+                            labelText: 'Variant SKU (Auto-Generated)',
+                            prefixIcon: const Icon(Icons.qr_code),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.green),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                          ),
+                          readOnly: true,
                         ),
                         const SizedBox(height: 16),
 
@@ -1005,6 +1106,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
       id: id,
       name: _nameController.text,
       description: _descController.text,
+      sku: _generatedSku.isNotEmpty ? _generatedSku : null,
       image: _imageUrl,
       base_price: double.tryParse(_basePriceController.text) ?? 0,
       sale_price: double.tryParse(_salePriceController.text) ?? 0,

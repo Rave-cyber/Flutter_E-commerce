@@ -10,6 +10,7 @@ class ProductVariantModel {
   double sale_price;
   int? stock;
   bool is_archived;
+  String? sku;
   DateTime created_at;
   DateTime updated_at;
 
@@ -23,6 +24,7 @@ class ProductVariantModel {
     required this.sale_price,
     this.stock, // optional
     required this.is_archived,
+    this.sku,
     required this.created_at,
     required this.updated_at,
   });
@@ -38,6 +40,7 @@ class ProductVariantModel {
       'sale_price': sale_price,
       'stock': stock ?? 0, // default to 0
       'is_archived': is_archived,
+      'sku': sku,
       'created_at': created_at,
       'updated_at': updated_at,
     };
@@ -54,6 +57,7 @@ class ProductVariantModel {
       sale_price: (map['sale_price'] ?? 0).toDouble(),
       stock: map['stock'] ?? 0, // default to 0
       is_archived: map['is_archived'] ?? false,
+      sku: map['sku'],
       created_at: (map['created_at'] as Timestamp).toDate(),
       updated_at: (map['updated_at'] as Timestamp).toDate(),
     );

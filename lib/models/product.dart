@@ -13,6 +13,7 @@ class ProductModel {
   final int? stock_quantity;
   final bool is_archived;
   final bool is_featured;
+  final String? sku;
   final DateTime? created_at;
   final DateTime? updated_at;
 
@@ -29,6 +30,7 @@ class ProductModel {
     this.stock_quantity, // optional
     required this.is_archived,
     this.is_featured = false,
+    this.sku,
     this.created_at,
     this.updated_at,
   });
@@ -49,6 +51,7 @@ class ProductModel {
       'stock_quantity': stock_quantity ?? 0,
       'is_archived': is_archived,
       'is_featured': is_featured,
+      'sku': sku,
       'created_at': created_at != null
           ? Timestamp.fromDate(created_at!)
           : Timestamp.now(),
@@ -78,6 +81,7 @@ class ProductModel {
           : 0, // default to 0
       is_archived: map['is_archived'] ?? false,
       is_featured: map['is_featured'] ?? false,
+      sku: map['sku'],
       created_at: (map['created_at'] as Timestamp?)?.toDate(),
       updated_at: (map['updated_at'] as Timestamp?)?.toDate(),
     );
