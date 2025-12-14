@@ -115,7 +115,14 @@ class AuthService {
   // Sign out
   // ------------------------------
   Future<void> signOut() async {
+    // Sign out from Firebase
     await _auth.signOut();
+    // Also clear any cached Google Sign-In session so next login shows account picker
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.disconnect().catchError((_) {});
+      await googleSignIn.signOut().catchError((_) {});
+    } catch (_) {}
   }
 
   // ------------------------------
@@ -124,6 +131,12 @@ class AuthService {
   Future<UserModel?> signInWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
+
+      // Ensure no cached session so the chooser is shown
+      try {
+        await googleSignIn.signOut();
+      } catch (_) {}
+
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {

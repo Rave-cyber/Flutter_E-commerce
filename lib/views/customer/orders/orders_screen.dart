@@ -5,6 +5,7 @@ import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/firestore_service.dart';
 import 'package:firebase/views/customer/orders/order_detail_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({Key? key}) : super(key: key);
@@ -16,6 +17,7 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   // Using #2C8610 green as specified
   final Color primaryGreen = const Color(0xFF2C8610);
+  final Color lightGreen = const Color(0xFFE8F5E9);
   final Color backgroundColor = const Color(0xFFF8FAFC);
   final Color textPrimary = const Color(0xFF1A1A1A);
   final Color textSecondary = const Color(0xFF64748B);
@@ -63,10 +65,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.shopping_bag_outlined,
-                size: 64,
-                color: primaryGreen.withOpacity(0.7),
+              // Local Lottie animation for auth required state
+              Lottie.asset(
+                'assets/lottie/auth_required.json', // Your local file
+                height: 150,
+                width: 150,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               Text(
@@ -143,7 +147,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
           return Column(
             children: [
-              _buildFilterChips(),
+              // Green filter chips
+              _buildGreenFilterChips(),
               _buildOrdersList(filteredOrders, context),
             ],
           );
@@ -152,46 +157,56 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildFilterChips() {
+  Widget _buildGreenFilterChips() {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        itemCount: _statusFilters.length,
-        itemBuilder: (context, index) {
-          final status = _statusFilters[index];
-          final isSelected = _selectedStatus == status;
-          final config = _getStatusConfig(status == 'all' ? 'all' : status);
+        child: Row(
+          children: _statusFilters.map((status) {
+            final isSelected = _selectedStatus == status;
+            final label = status == 'all' ? 'All' : _capitalize(status);
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(
-                status == 'all' ? 'All' : config['text'],
-                style: TextStyle(
-                  color: isSelected ? Colors.white : textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : primaryGreen,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedStatus = selected ? status : 'all';
+                  });
+                },
+                backgroundColor: lightGreen,
+                selectedColor: primaryGreen,
+                side: BorderSide(
+                  color: isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
+                  width: 1,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 0,
+                shadowColor: Colors.transparent,
               ),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedStatus = selected ? status : 'all';
-                });
-              },
-              backgroundColor: Colors.white,
-              selectedColor: config['backgroundColor'],
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          );
-        },
+            );
+          }).toList(),
+        ),
       ),
     );
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
   }
 
   Widget _buildErrorState(dynamic error, BuildContext context) {
@@ -201,10 +216,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.red[300],
+            // Local error animation
+            Lottie.asset(
+              'assets/animations/box_empty.json', // Your local file
+              height: 120,
+              width: 120,
             ),
             const SizedBox(height: 16),
             Text(
@@ -236,10 +252,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 64,
-              color: primaryGreen.withOpacity(0.5),
+            // Local Lottie animation for empty orders
+            Lottie.asset(
+              noOrders
+                  ? 'assets/animations/Box empty.json' // Your local file
+                  : 'assets/animations/Empty Cart.json', // Your local file
+              height: 200,
+              width: 200,
+              repeat: true,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 20),
             Text(
@@ -308,7 +329,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ? DateFormat('MMM dd, yyyy').format(createdAt.toDate())
         : '';
 
-    final statusConfig = _getStatusConfig(status);
+    // Using consistent green theme for all statuses
+    final statusText = _capitalize(status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -379,7 +401,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               const SizedBox(height: 16),
 
-              // Footer with status and total
+              // Footer with status and total - ALL GREEN
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -387,7 +409,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: statusConfig['backgroundColor'],
+                      color: primaryGreen.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -396,13 +418,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         Icon(
                           _getStatusIcon(status),
                           size: 12,
-                          color: statusConfig['color'],
+                          color: primaryGreen,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          statusConfig['text'],
+                          statusText,
                           style: TextStyle(
-                            color: statusConfig['color'],
+                            color: primaryGreen,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -478,59 +500,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Map<String, dynamic> _getStatusConfig(String status) {
-    switch (status.toLowerCase()) {
-      case 'all':
-        return {
-          'backgroundColor': const Color(0xFFF1F5F9),
-          'color': const Color(0xFF64748B),
-          'text': 'All',
-        };
-      case 'pending':
-        return {
-          'backgroundColor': const Color(0xFFFFF7ED),
-          'color': const Color(0xFF9A3412),
-          'text': 'Pending',
-        };
-      case 'confirmed':
-        return {
-          'backgroundColor': const Color(0xFFE0F2FE),
-          'color': const Color(0xFF0369A1),
-          'text': 'Confirmed',
-        };
-      case 'processing':
-        return {
-          'backgroundColor': const Color(0xFFF3E8FF),
-          'color': const Color(0xFF7C3AED),
-          'text': 'Processing',
-        };
-      case 'shipped':
-        return {
-          'backgroundColor': const Color(0xFFE0E7FF),
-          'color': const Color(0xFF4338CA),
-          'text': 'Shipped',
-        };
-      case 'delivered':
-        return {
-          'backgroundColor': const Color(0xFFDCFCE7),
-          'color': const Color(0xFF166534),
-          'text': 'Delivered',
-        };
-      case 'cancelled':
-        return {
-          'backgroundColor': const Color(0xFFFEE2E2),
-          'color': const Color(0xFFB91C1C),
-          'text': 'Cancelled',
-        };
-      default:
-        return {
-          'backgroundColor': Colors.grey[100]!,
-          'color': Colors.grey[800]!,
-          'text': status,
-        };
-    }
-  }
-
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -595,12 +564,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: _statusFilters.map((status) {
-                  final config =
-                      _getStatusConfig(status == 'all' ? 'all' : status);
                   final isSelected = _selectedStatus == status;
+                  final label =
+                      status == 'all' ? 'All Orders' : _capitalize(status);
+
                   return FilterChip(
                     label: Text(
-                      status == 'all' ? 'All Orders' : config['text'],
+                      label,
                       style: TextStyle(
                         color: isSelected ? Colors.white : textPrimary,
                         fontSize: 13,
@@ -614,12 +584,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       Navigator.pop(context);
                     },
                     backgroundColor: Colors.white,
-                    selectedColor: config['backgroundColor'],
-                    checkmarkColor: isSelected ? config['color'] : null,
+                    selectedColor: primaryGreen,
+                    checkmarkColor: Colors.white,
                     side: BorderSide(
-                      color: isSelected
-                          ? config['backgroundColor']!
-                          : Colors.grey[300]!,
+                      color: isSelected ? primaryGreen : Colors.grey[300]!,
                       width: 1,
                     ),
                   );
@@ -640,12 +608,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    backgroundColor: Colors.grey[50],
+                    backgroundColor: lightGreen,
                   ),
                   child: Text(
                     'Clear Filter',
                     style: TextStyle(
-                      color: textPrimary,
+                      color: primaryGreen,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

@@ -1,9 +1,12 @@
 import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../customer/checkout/checkout_screen.dart';
 import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/philippine_address_service.dart';
 import '../orders/orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -27,6 +30,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Color cardColor = Colors.white;
   final Color textPrimary = const Color(0xFF1A1A1A);
   final Color textSecondary = const Color(0xFF64748B);
+  String _addressText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _addressText = widget.customer?.address ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,18 +136,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: CircleAvatar(
               radius: 48,
-              backgroundColor: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                ),
-                child: Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.white,
-                ),
-              ),
+              backgroundColor: Colors.white,
+              backgroundImage: (Provider.of<AuthService>(context)
+                              .currentUser
+                              ?.photoURL !=
+                          null &&
+                      Provider.of<AuthService>(context)
+                          .currentUser!
+                          .photoURL!
+                          .isNotEmpty)
+                  ? NetworkImage(
+                      Provider.of<AuthService>(context).currentUser!.photoURL!)
+                  : null,
+              child: (Provider.of<AuthService>(context).currentUser?.photoURL ??
+                          '')
+                      .isEmpty
+                  ? Text(
+                      (widget.user.display_name?.isNotEmpty == true
+                              ? widget.user.display_name!
+                              : widget.user.email.split('@').first)
+                          .trim()
+                          .split(' ')
+                          .where((p) => p.isNotEmpty)
+                          .map((p) => p[0].toUpperCase())
+                          .take(2)
+                          .join(),
+                      style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
+                    )
+                  : null,
             ),
           ),
           const SizedBox(width: 20),
@@ -226,9 +255,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildDivider(),
             _buildMenuItem(
               icon: Icons.location_on_outlined,
-              title: 'Addresses',
-              subtitle: 'Manage delivery addresses',
-              onTap: () => _showGuestMessage(context, 'Address Management'),
+              title: 'Address',
+              subtitle: _addressText.isNotEmpty
+                  ? _addressText
+                  : 'Add your delivery address',
+              onTap: _showEditAddressSheet,
             ),
             _buildDivider(),
             _buildMenuItem(
@@ -592,6 +623,381 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         );
+      },
+    );
+  }
+
+  void _showEditAddressSheet() {
+    final TextEditingController houseController = TextEditingController();
+    bool saving = false;
+
+    List<Map<String, dynamic>> regions = [];
+    List<Map<String, dynamic>> provinces = [];
+    List<Map<String, dynamic>> cities = [];
+    List<Map<String, dynamic>> barangays = [];
+
+    Map<String, dynamic>? selectedRegion;
+    Map<String, dynamic>? selectedProvince;
+    Map<String, dynamic>? selectedCity;
+    Map<String, dynamic>? selectedBarangay;
+
+    bool loadingRegions = true;
+    bool loadingProvinces = false;
+    bool loadingCities = false;
+    bool loadingBarangays = false;
+    bool initialized = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(builder: (ctx, setModalState) {
+          if (!initialized) {
+            initialized = true;
+            Future.microtask(() async {
+              try {
+                final r = await PhilippineAddressService.getRegions();
+                setModalState(() {
+                  regions = r;
+                  loadingRegions = false;
+                });
+              } catch (_) {
+                setModalState(() => loadingRegions = false);
+              }
+            });
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Edit Address',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedRegion,
+                  decoration: const InputDecoration(
+                    labelText: 'Region',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: loadingRegions
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Loading regions...'),
+                          ),
+                        ]
+                      : regions
+                          .map((region) => DropdownMenuItem(
+                                value: region,
+                                child: Text(
+                                    region['regionName'] ?? region['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingRegions
+                      ? null
+                      : (value) async {
+                          setModalState(() {
+                            selectedRegion = value;
+                            selectedProvince = null;
+                            selectedCity = null;
+                            selectedBarangay = null;
+                            provinces = [];
+                            cities = [];
+                            barangays = [];
+                            loadingProvinces = true;
+                          });
+                          if (value != null) {
+                            try {
+                              final p =
+                                  await PhilippineAddressService.getProvinces(
+                                      value['code']);
+                              setModalState(() {
+                                provinces = p;
+                                loadingProvinces = false;
+                              });
+                            } catch (_) {
+                              setModalState(() => loadingProvinces = false);
+                            }
+                          } else {
+                            setModalState(() => loadingProvinces = false);
+                          }
+                        },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedProvince,
+                  decoration: const InputDecoration(
+                    labelText: 'Province',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: provinces.isEmpty && !loadingProvinces
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a region first'),
+                          ),
+                        ]
+                      : provinces
+                          .map((province) => DropdownMenuItem(
+                                value: province,
+                                child: Text(province['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingProvinces
+                      ? null
+                      : (value) async {
+                          setModalState(() {
+                            selectedProvince = value;
+                            selectedCity = null;
+                            selectedBarangay = null;
+                            cities = [];
+                            barangays = [];
+                            loadingCities = true;
+                          });
+                          if (value != null) {
+                            try {
+                              final c = await PhilippineAddressService
+                                  .getCitiesMunicipalities(value['code']);
+                              setModalState(() {
+                                cities = c;
+                                loadingCities = false;
+                              });
+                            } catch (_) {
+                              setModalState(() => loadingCities = false);
+                            }
+                          } else {
+                            setModalState(() => loadingCities = false);
+                          }
+                        },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedCity,
+                  decoration: const InputDecoration(
+                    labelText: 'City/Municipality',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: cities.isEmpty && !loadingCities
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a province first'),
+                          ),
+                        ]
+                      : cities
+                          .map((city) => DropdownMenuItem(
+                                value: city,
+                                child: Text(city['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingCities
+                      ? null
+                      : (value) async {
+                          setModalState(() {
+                            selectedCity = value;
+                            selectedBarangay = null;
+                            barangays = [];
+                            loadingBarangays = true;
+                          });
+                          if (value != null) {
+                            try {
+                              final b =
+                                  await PhilippineAddressService.getBarangays(
+                                      value['code']);
+                              setModalState(() {
+                                barangays = b;
+                                loadingBarangays = false;
+                              });
+                            } catch (_) {
+                              setModalState(() => loadingBarangays = false);
+                            }
+                          } else {
+                            setModalState(() => loadingBarangays = false);
+                          }
+                        },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedBarangay,
+                  decoration: const InputDecoration(
+                    labelText: 'Barangay (Optional)',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: barangays.isEmpty && !loadingBarangays
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a city/municipality first'),
+                          ),
+                        ]
+                      : barangays
+                          .map((brgy) => DropdownMenuItem(
+                                value: brgy,
+                                child: Text(brgy['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingBarangays
+                      ? null
+                      : (value) {
+                          setModalState(() {
+                            selectedBarangay = value;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: houseController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'House/Unit and Street',
+                    hintText: 'e.g., Unit 3B, 123 Sample St',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final house = houseController.text.trim();
+                            if (selectedRegion == null ||
+                                selectedProvince == null ||
+                                selectedCity == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please select your region, province, and city/municipality')),
+                              );
+                              return;
+                            }
+                            if (house.isEmpty || house.length < 3) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please enter house/unit and street')),
+                              );
+                              return;
+                            }
+                            setModalState(() => saving = true);
+                            try {
+                              final parts = <String>[];
+                              parts.add(house);
+                              if (selectedBarangay != null)
+                                parts.add(selectedBarangay!['name']);
+                              parts.add(selectedCity!['name']);
+                              parts.add(selectedProvince!['name']);
+                              parts.add(selectedRegion!['regionName'] ??
+                                  selectedRegion!['name']);
+                              final finalAddress = parts.join(', ');
+
+                              final auth = Provider.of<AuthService>(context,
+                                  listen: false);
+                              final user = auth.currentUser;
+                              if (user == null) {
+                                throw 'Not logged in';
+                              }
+
+                              final fs = FirebaseFirestore.instance;
+                              final query = await fs
+                                  .collection('customers')
+                                  .where('user_id', isEqualTo: user.uid)
+                                  .limit(1)
+                                  .get();
+                              if (query.docs.isNotEmpty) {
+                                await fs
+                                    .collection('customers')
+                                    .doc(query.docs.first.id)
+                                    .update({'address': finalAddress});
+                              } else {
+                                await fs.collection('customers').add({
+                                  'id': '',
+                                  'user_id': user.uid,
+                                  'firstname': '',
+                                  'middlename': '',
+                                  'lastname': '',
+                                  'address': finalAddress,
+                                  'contact': user.email ?? '',
+                                  'created_at': DateTime.now(),
+                                });
+                              }
+
+                              setState(() {
+                                _addressText = finalAddress;
+                              });
+
+                              if (mounted) Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Address updated')),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Failed to update address: $e')),
+                              );
+                            } finally {
+                              if (mounted) setModalState(() => saving = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Text('Save Address'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
       },
     );
   }
