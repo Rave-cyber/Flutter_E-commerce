@@ -3,6 +3,8 @@ import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/admin_layout.dart';
+import '../../../widgets/product_selection_modal.dart';
+import '../../../widgets/product_variant_selection_modal.dart';
 import '/models/stock_out_model.dart';
 import '/models/product_variant_model.dart';
 import '/services/admin/stock_out_service.dart';
@@ -19,7 +21,7 @@ class AdminStockOutForm extends StatefulWidget {
 class _AdminStockOutFormState extends State<AdminStockOutForm> {
   final _formKey = GlobalKey<FormState>();
   final StockOutService _stockOutService = StockOutService();
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   ProductModel? _selectedProduct;
   ProductVariantModel? _selectedVariant;
@@ -61,6 +63,10 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       _products = await ProductService().fetchProductsOnce();
       _allVariants = await ProductService().fetchAllVariants();
@@ -77,8 +83,6 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
           _loadProductVariants(_selectedProduct!);
         }
       }
-
-      setState(() {});
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -88,6 +92,10 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
           ),
         );
       }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -100,6 +108,49 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
     if (_selectedVariant != null &&
         _selectedVariant!.product_id != product.id) {
       _selectedVariant = null;
+    }
+  }
+
+  void _showProductSelectionModal() async {
+    if (_isLoading) return;
+
+    final selectedProduct = await showDialog<ProductModel>(
+      context: context,
+      builder: (context) => ProductSelectionModal(
+        products: _products,
+        allVariants: _allVariants,
+        selectedProduct: _selectedProduct,
+      ),
+    );
+
+    if (selectedProduct != null) {
+      setState(() {
+        _selectedProduct = selectedProduct;
+        if (selectedProduct != null) {
+          _loadProductVariants(selectedProduct);
+        } else {
+          _productVariants = [];
+          _selectedVariant = null;
+        }
+      });
+    }
+  }
+
+  void _showProductVariantSelectionModal() async {
+    if (_isLoading || _productVariants.isEmpty) return;
+
+    final selectedVariant = await showDialog<ProductVariantModel>(
+      context: context,
+      builder: (context) => ProductVariantSelectionModal(
+        variants: _productVariants,
+        selectedVariant: _selectedVariant,
+      ),
+    );
+
+    if (selectedVariant != null) {
+      setState(() {
+        _selectedVariant = selectedVariant;
+      });
     }
   }
 
@@ -331,6 +382,14 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return AdminLayout(
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return AdminLayout(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -360,53 +419,91 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
               key: _formKey,
               child: Column(
                 children: [
-                  /// PRODUCT DROPDOWN
-                  DropdownButtonFormField<ProductModel>(
-                      value: _selectedProduct,
-                      decoration: const InputDecoration(
-                        labelText: 'Product *',
-                        border: OutlineInputBorder(),
+                  /// PRODUCT SELECTION BUTTON (Replaces dropdown)
+                  InkWell(
+                    onTap: _showProductSelectionModal,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                      items: _products
-                          .map((p) => DropdownMenuItem(
-                                value: p,
-                                child: Text(p.name),
-                              ))
-                          .toList(),
-                      validator: (val) =>
-                          val == null ? 'Please select a product' : null,
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedProduct = val;
-                          if (val != null) {
-                            _loadProductVariants(val);
-                          } else {
-                            _productVariants = [];
-                            _selectedVariant = null;
-                          }
-                        });
-                      }),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Product *',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _selectedProduct?.name ?? 'Select a product',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _selectedProduct != null
+                                        ? Colors.black
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
-                  /// PRODUCT VARIANT DROPDOWN - Only show if product has variants
+                  /// PRODUCT VARIANT SELECTION BUTTON (Replaces dropdown)
                   if (_productVariants.isNotEmpty) ...[
-                    DropdownButtonFormField<ProductVariantModel>(
-                      value: _selectedVariant,
-                      decoration: const InputDecoration(
-                        labelText: 'Product Variant',
-                        border: OutlineInputBorder(),
+                    InkWell(
+                      onTap: _showProductVariantSelectionModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Product Variant',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _selectedVariant?.name ??
+                                        'Select a variant',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: _selectedVariant != null
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
                       ),
-                      items: _productVariants
-                          .map((v) => DropdownMenuItem(
-                                value: v,
-                                child: Text(v.name),
-                              ))
-                          .toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedVariant = val;
-                        });
-                      },
                     ),
                     const SizedBox(height: 16),
                   ],
