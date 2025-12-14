@@ -233,7 +233,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
             ),
             const SizedBox(height: 16),
 
-            // PRODUCT LIST
+            // PRODUCT LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<List<ProductModel>>(
                 stream: _productService.getProducts(),
@@ -279,6 +279,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
 
                   return Column(
                     children: [
+                      // PRODUCT LIST
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedProducts.length,
@@ -296,30 +297,35 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
 
-                      // PAGINATION CONTROLS
-                      ProductPaginationWidget(
-                        currentPage: _currentPage,
-                        onPreviousPage: _prevPage,
-                        onNextPage: () => _nextPage(products.length),
+                      // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // PAGINATION CONTROLS - Left end
+                          ProductPaginationWidget(
+                            currentPage: _currentPage,
+                            onPreviousPage: _prevPage,
+                            onNextPage: () => _nextPage(products.length),
+                          ),
+
+                          // ADD PRODUCT BUTTON - Right end
+                          FloatingActionButtonWidget(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminProductForm()),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   );
                 },
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // FLOATING BUTTON
-            FloatingActionButtonWidget(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminProductForm()),
-                );
-              },
             ),
           ],
         ),
