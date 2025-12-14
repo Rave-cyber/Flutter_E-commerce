@@ -4,6 +4,11 @@ import '../../../layouts/admin_layout.dart';
 import '/models/stock_out_model.dart';
 import '/services/admin/stock_out_service.dart';
 import 'package:firebase/models/stock_in_out_model.dart';
+import '../../../widgets/stock_search_widget.dart';
+import '../../../widgets/stock_filter_widget.dart';
+import '../../../widgets/stock_out_card_widget.dart';
+import '../../../widgets/stock_pagination_widget.dart';
+import '../../../widgets/floating_action_button_widget.dart';
 
 class AdminStockOutIndex extends StatefulWidget {
   const AdminStockOutIndex({Key? key}) : super(key: key);
@@ -48,6 +53,28 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+  int _getTotalPages(List<StockOutModel> list) {
+    // Apply filters (currently no specific filters for stock-outs)
+    List<StockOutModel> filtered = list;
+
+    // Apply search
+    if (_searchController.text.isNotEmpty) {
+      final text = _searchController.text.toLowerCase();
+      filtered = filtered.where((item) {
+        return (item.product_id?.toLowerCase().contains(text) ?? false) ||
+            (item.product_variant_id?.toLowerCase().contains(text) ?? false) ||
+            (item.reason.toLowerCase().contains(text));
+      }).toList();
+    }
+
+    // Calculate total pages
+    if (filtered.isEmpty) {
+      return 1;
+    }
+
+    return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
+  }
+
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -57,6 +84,76 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
   void _prevPage() {
     if (_currentPage > 1) {
       setState(() => _currentPage--);
+    }
+  }
+
+  Future<void> _handleMenuSelection(
+      String value, StockOutModel stockOut) async {
+    switch (value) {
+      case 'fifo_details':
+        _showFIFODetails(stockOut);
+        break;
+      case 'edit':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminStockOutForm(stockOut: stockOut),
+          ),
+        );
+        break;
+      case 'delete':
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Confirm Delete'),
+            content: const Text(
+              'Are you sure you want to delete this stock-out record?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  elevation: 2,
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          await _stockOutService.deleteStockOut(stockOut.id);
+        }
+        break;
+    }
+  }
+
+  void _onFilterChanged(String? value) {
+    if (value != null) {
+      setState(() {
+        _filterStatus = value;
+        _currentPage = 1;
+      });
+    }
+  }
+
+  void _onItemsPerPageChanged(int? value) {
+    if (value != null) {
+      setState(() {
+        _itemsPerPage = value;
+        _currentPage = 1;
+      });
     }
   }
 
@@ -146,43 +243,24 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
         child: Column(
           children: [
             // SEARCH FIELD
-            TextField(
+            StockSearchWidget(
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search Stock-Out (Product, Variant, Reason)',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() => _currentPage = 1),
+              onChanged: () => setState(() {
+                _currentPage = 1;
+              }),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // FILTER DROPDOWN
-            Row(
-              children: [
-                const Text('Filter: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _filterStatus,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'recent', child: Text('Recent')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _filterStatus = val;
-                        _currentPage = 1;
-                      });
-                    }
-                  },
-                ),
-              ],
+            // FILTER AND PER PAGE DROPDOWN
+            StockFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: _onFilterChanged,
+              onItemsPerPageChanged: _onItemsPerPageChanged,
             ),
+            const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
-
-            // STOCK-OUT LIST
+            // STOCK-OUT LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<List<StockOutModel>>(
                 stream: _stockOutService.getStockOuts(),
@@ -192,146 +270,92 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                        child: Text('No stock-out records found.'));
+                    return Center(
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inventory_2_outlined,
+                                  size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No stock-out records found.',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
                   final stockOutList = snapshot.data!;
                   final paginatedList =
                       _applyFilterSearchPagination(stockOutList);
+                  final totalPages = _getTotalPages(stockOutList);
 
                   return Column(
                     children: [
+                      // STOCK-OUT LIST
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedList.length,
                           itemBuilder: (context, index) {
-                            final item = paginatedList[index];
+                            final stockOut = paginatedList[index];
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: Colors.redAccent,
-                                ),
-                                title: Text(
-                                  item.product_variant_id != null
-                                      ? 'Variant: ${item.product_variant_id!.substring(0, 8).toUpperCase()}'
-                                      : 'Product: ${item.product_id ?? "No Product Assigned"}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  'Quantity: ${item.quantity}\n'
-                                  'Reason: ${item.reason}\n'
-                                  'Date: ${item.created_at?.toString().substring(0, 19) ?? "N/A"}',
-                                ),
-                                isThreeLine: true,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    /// FIFO DETAILS
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.list_alt,
-                                        color: Colors.blue,
-                                      ),
-                                      onPressed: () => _showFIFODetails(item),
-                                      tooltip: 'Show FIFO Deduction Details',
-                                    ),
-
-                                    /// EDIT
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AdminStockOutForm(
-                                                stockOut: item),
-                                          ),
-                                        );
-                                      },
-                                    ),
-
-                                    /// DELETE
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Confirm Delete'),
-                                            content: const Text(
-                                                'Are you sure you want to delete this stock-out record?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-
-                                        if (confirm == true) {
-                                          await _stockOutService
-                                              .deleteStockOut(item.id);
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            return StockOutCardWidget(
+                              stockOut: stockOut,
+                              onMenuSelected: (value) =>
+                                  _handleMenuSelection(value, stockOut),
+                              onTap: () => _showFIFODetails(stockOut),
+                              onViewFifoDetails: () =>
+                                  _showFIFODetails(stockOut),
                             );
                           },
                         ),
                       ),
 
-                      // PAGINATION CONTROLS
+                      const SizedBox(height: 16),
+
+                      // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _prevPage,
+                          // PAGINATION CONTROLS - Left end
+                          StockPaginationWidget(
+                            currentPage: _currentPage,
+                            totalPages: totalPages,
+                            onPreviousPage: _prevPage,
+                            onNextPage: () => _nextPage(stockOutList.length),
                           ),
-                          Text('Page $_currentPage'),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(stockOutList.length),
+
+                          // ADD STOCK-OUT BUTTON - Right end
+                          FloatingActionButtonWidget(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminStockOutForm()),
+                              );
+                            },
+                            tooltip: 'Add Stock-Out',
                           ),
                         ],
                       ),
                     ],
                   );
                 },
-              ),
-            ),
-
-            // FLOATING BUTTON
-            Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminStockOutForm(),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.add),
-                tooltip: 'Add Stock-Out',
               ),
             ),
           ],
