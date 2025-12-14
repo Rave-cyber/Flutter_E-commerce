@@ -288,94 +288,142 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF2C8610);
+    final lightBg = const Color(0xFFF0F9EE).withOpacity(0.3);
     return AdminLayout(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            // Compact Header
-            Row(
-              children: [
-                const Icon(Icons.analytics, size: 24, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: const Text(
-                    'Inventory Reports',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+      child: Container(
+        color: lightBg,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Header card (consistent with SalesReport)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 15,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    // Get all data for PDF export
-                    final products = await _productService.getProducts().first;
-                    final stockIns = await _stockInService.getStockIns().first;
-                    final stockOuts =
-                        await _stockOutService.getStockOuts().first;
-
-                    final totalProducts = products.length;
-                    final totalStockIn =
-                        stockIns.fold(0, (sum, item) => sum + item.quantity);
-                    final totalStockOut =
-                        stockOuts.fold(0, (sum, item) => sum + item.quantity);
-                    final currentStock = totalStockIn - totalStockOut;
-                    final totalValue = stockIns.fold(
-                        0.0, (sum, item) => sum + (item.quantity * item.price));
-                    final lowStockCount = products
-                        .where((p) => (p.stock_quantity ?? 0) <= 10)
-                        .length;
-                    final outOfStockCount = products
-                        .where((p) => (p.stock_quantity ?? 0) == 0)
-                        .length;
-
-                    await _exportInventoryReport(
-                      products: products,
-                      stockIns: stockIns,
-                      stockOuts: stockOuts,
-                      totalProducts: totalProducts,
-                      currentStock: currentStock,
-                      totalStockIn: totalStockIn,
-                      totalStockOut: totalStockOut,
-                      totalValue: totalValue,
-                      lowStockCount: lowStockCount,
-                      outOfStockCount: outOfStockCount,
-                    );
-                  },
-                  icon: const Icon(Icons.download, size: 16),
-                  label:
-                      const Text('Export PDF', style: TextStyle(fontSize: 12)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.analytics,
+                          color: primaryColor, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Inventory Reports',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Monitor inventory levels and movements',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final products =
+                            await _productService.getProducts().first;
+                        final stockIns =
+                            await _stockInService.getStockIns().first;
+                        final stockOuts =
+                            await _stockOutService.getStockOuts().first;
+                        final totalProducts = products.length;
+                        final totalStockIn = stockIns.fold(
+                            0, (sum, item) => sum + item.quantity);
+                        final totalStockOut = stockOuts.fold(
+                            0, (sum, item) => sum + item.quantity);
+                        final currentStock = totalStockIn - totalStockOut;
+                        final totalValue = stockIns.fold(0.0,
+                            (sum, item) => sum + (item.quantity * item.price));
+                        final lowStockCount = products
+                            .where((p) => (p.stock_quantity ?? 0) <= 10)
+                            .length;
+                        final outOfStockCount = products
+                            .where((p) => (p.stock_quantity ?? 0) == 0)
+                            .length;
+                        await _exportInventoryReport(
+                          products: products,
+                          stockIns: stockIns,
+                          stockOuts: stockOuts,
+                          totalProducts: totalProducts,
+                          currentStock: currentStock,
+                          totalStockIn: totalStockIn,
+                          totalStockOut: totalStockOut,
+                          totalValue: totalValue,
+                          lowStockCount: lowStockCount,
+                          outOfStockCount: outOfStockCount,
+                        );
+                      },
+                      icon: const Icon(Icons.picture_as_pdf, size: 18),
+                      label: const Text('Export PDF'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        elevation: 2,
+                        shadowColor: primaryColor.withOpacity(0.3),
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: () => setState(() {}),
-                  tooltip: 'Refresh Reports',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+              ),
+              const SizedBox(height: 16),
 
-            // Compact Filters
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
+              // Filters card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Filters',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -383,25 +431,21 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                             controller: _searchController,
                             decoration: const InputDecoration(
                               labelText: 'Search',
-                              prefixIcon: Icon(Icons.search, size: 16),
+                              prefixIcon: Icon(Icons.search, size: 18),
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 6),
                               isDense: true,
                             ),
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                             controller: _dateRangeController,
                             decoration: const InputDecoration(
                               labelText: 'Date Range',
-                              prefixIcon: Icon(Icons.date_range, size: 16),
+                              prefixIcon: Icon(Icons.date_range, size: 18),
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 6),
                               isDense: true,
                             ),
                             readOnly: true,
@@ -410,78 +454,77 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 3,
-                      children: [
-                        _buildFilterDropdown(
-                          'Brand',
-                          _selectedBrand,
-                          ['all', 'brand1', 'brand2'],
-                          (value) => setState(() => _selectedBrand = value!),
-                        ),
-                        _buildFilterDropdown(
-                          'Category',
-                          _selectedCategory,
-                          ['all', 'category1', 'category2'],
-                          (value) => setState(() => _selectedCategory = value!),
-                        ),
-                        _buildFilterDropdown(
-                          'Stock Level',
-                          _stockLevelFilter,
-                          ['all', 'normal', 'low', 'out'],
-                          (value) => setState(() => _stockLevelFilter = value!),
-                        ),
-                        _buildFilterDropdown(
-                          'Warehouse',
-                          _selectedWarehouse,
-                          ['all', 'warehouse1', 'warehouse2'],
-                          (value) =>
-                              setState(() => _selectedWarehouse = value!),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterDropdown(
+                              'Brand',
+                              _selectedBrand,
+                              ['all', 'brand1', 'brand2'],
+                              (v) => setState(() => _selectedBrand = v!)),
+                          const SizedBox(width: 8),
+                          _buildFilterDropdown(
+                              'Category',
+                              _selectedCategory,
+                              ['all', 'category1', 'category2'],
+                              (v) => setState(() => _selectedCategory = v!)),
+                          const SizedBox(width: 8),
+                          _buildFilterDropdown(
+                              'Stock Level',
+                              _stockLevelFilter,
+                              ['all', 'normal', 'low', 'out'],
+                              (v) => setState(() => _stockLevelFilter = v!)),
+                          const SizedBox(width: 8),
+                          _buildFilterDropdown(
+                              'Warehouse',
+                              _selectedWarehouse,
+                              ['all', 'warehouse1', 'warehouse2'],
+                              (v) => setState(() => _selectedWarehouse = v!)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-            // Compact Tab Bar
-            SizedBox(
-              width: double.infinity,
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                indicatorSize: TabBarIndicatorSize.tab,
-                tabs: const [
-                  Tab(text: 'Overview', height: 32),
-                  Tab(text: 'Stock', height: 32),
-                  Tab(text: 'Movement', height: 32),
-                  Tab(text: 'Alerts', height: 32),
-                  Tab(text: 'FIFO', height: 32),
-                  Tab(text: 'Value', height: 32),
-                ],
+              // Tabs
+              SizedBox(
+                width: double.infinity,
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  tabs: const [
+                    Tab(text: 'Overview', height: 32),
+                    Tab(text: 'Stock', height: 32),
+                    Tab(text: 'Movement', height: 32),
+                    Tab(text: 'Alerts', height: 32),
+                    Tab(text: 'FIFO', height: 32),
+                    Tab(text: 'Value', height: 32),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
 
-            // Tab Views
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(),
-                  _buildCurrentStockTab(),
-                  _buildStockMovementTab(),
-                  _buildLowStockTab(),
-                  _buildFIFOStatusTab(),
-                  _buildValuationTab(),
-                ],
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOverviewTab(),
+                    _buildCurrentStockTab(),
+                    _buildStockMovementTab(),
+                    _buildLowStockTab(),
+                    _buildFIFOStatusTab(),
+                    _buildValuationTab(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -490,14 +533,15 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
   Widget _buildFilterDropdown(String label, String value, List<String> items,
       Function(String?) onChanged) {
     return SizedBox(
-      width: 90,
+      width: 140,
       child: DropdownButtonFormField<String>(
+        isExpanded: true,
         value: value,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           isDense: true,
         ),
         items: items.map((item) {
@@ -506,7 +550,7 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
             child: Text(
               item == 'all' ? 'All' : item.replaceAll('_', ' ').toUpperCase(),
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10),
+              style: const TextStyle(fontSize: 12),
             ),
           );
         }).toList(),
