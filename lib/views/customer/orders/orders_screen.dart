@@ -6,31 +6,54 @@ import 'package:firebase/firestore_service.dart';
 import 'package:firebase/views/customer/orders/order_detail_screen.dart';
 import 'package:intl/intl.dart';
 
-class OrdersScreen extends StatelessWidget {
+class OrdersScreen extends StatefulWidget {
   const OrdersScreen({Key? key}) : super(key: key);
 
   @override
+  State<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends State<OrdersScreen> {
+  // Using #2C8610 green as specified
+  final Color primaryGreen = const Color(0xFF2C8610);
+  final Color backgroundColor = const Color(0xFFF8FAFC);
+  final Color textPrimary = const Color(0xFF1A1A1A);
+  final Color textSecondary = const Color(0xFF64748B);
+
+  String _selectedStatus = 'all';
+  final List<String> _statusFilters = [
+    'all',
+    'pending',
+    'confirmed',
+    'processing',
+    'shipped',
+    'delivered',
+    'cancelled'
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    final theme = _AppTheme();
     final user = Provider.of<AuthService>(context).currentUser;
 
     if (user == null) {
-      return _buildAuthRequiredScreen(context, theme);
+      return _buildAuthRequiredScreen(context);
     }
 
-    return _buildOrdersScreen(context, theme, user);
+    return _buildOrdersScreen(context, user);
   }
 
-  Scaffold _buildAuthRequiredScreen(BuildContext context, _AppTheme theme) {
+  Scaffold _buildAuthRequiredScreen(BuildContext context) {
     return Scaffold(
-      backgroundColor: theme.backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: Text(
+          'My Orders',
+          style: TextStyle(color: textPrimary),
+        ),
         backgroundColor: Colors.white,
-        elevation: 1,
-        foregroundColor: theme.primaryGreen,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.primaryGreen),
+          icon: Icon(Icons.arrow_back, color: primaryGreen),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -41,17 +64,17 @@ class OrdersScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.login,
-                size: 80,
-                color: theme.primaryGreen.withOpacity(0.7),
+                Icons.shopping_bag_outlined,
+                size: 64,
+                color: primaryGreen.withOpacity(0.7),
               ),
               const SizedBox(height: 24),
               Text(
                 'Sign In Required',
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: theme.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -59,8 +82,8 @@ class OrdersScreen extends StatelessWidget {
                 'Please sign in to view your order history',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
-                  color: theme.textSecondary,
+                  fontSize: 14,
+                  color: textSecondary,
                   height: 1.5,
                 ),
               ),
@@ -71,23 +94,25 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  Scaffold _buildOrdersScreen(BuildContext context, _AppTheme theme, user) {
+  Scaffold _buildOrdersScreen(BuildContext context, user) {
     return Scaffold(
-      backgroundColor: theme.backgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Order History'),
+        title: Text(
+          'Order History',
+          style: TextStyle(color: textPrimary),
+        ),
         backgroundColor: Colors.white,
-        elevation: 1,
-        foregroundColor: theme.primaryGreen,
+        elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.primaryGreen),
+          icon: Icon(Icons.arrow_back, color: primaryGreen),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.filter_list, color: theme.primaryGreen),
+            onPressed: () => _showFilterBottomSheet(context),
+            icon: Icon(Icons.filter_list, color: primaryGreen),
           ),
         ],
       ),
@@ -96,27 +121,80 @@ class OrdersScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-                child: CircularProgressIndicator(color: theme.primaryGreen));
+                child: CircularProgressIndicator(color: primaryGreen));
           }
 
           if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error, theme, context);
+            return _buildErrorState(snapshot.error, context);
           }
 
-          final orders = snapshot.data ?? [];
+          final allOrders = snapshot.data ?? [];
+          final filteredOrders = _selectedStatus == 'all'
+              ? allOrders
+              : allOrders
+                  .where((order) =>
+                      (order['status'] ?? '').toString().toLowerCase() ==
+                      _selectedStatus)
+                  .toList();
 
-          if (orders.isEmpty) {
-            return _buildEmptyState(theme, context);
+          if (filteredOrders.isEmpty) {
+            return _buildEmptyState(context, allOrders.isEmpty);
           }
 
-          return _buildOrdersList(orders, theme, context);
+          return Column(
+            children: [
+              _buildFilterChips(),
+              _buildOrdersList(filteredOrders, context),
+            ],
+          );
         },
       ),
     );
   }
 
-  Widget _buildErrorState(
-      dynamic error, _AppTheme theme, BuildContext context) {
+  Widget _buildFilterChips() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _statusFilters.length,
+        itemBuilder: (context, index) {
+          final status = _statusFilters[index];
+          final isSelected = _selectedStatus == status;
+          final config = _getStatusConfig(status == 'all' ? 'all' : status);
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(
+                status == 'all' ? 'All' : config['text'],
+                style: TextStyle(
+                  color: isSelected ? Colors.white : textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedStatus = selected ? status : 'all';
+                });
+              },
+              backgroundColor: Colors.white,
+              selectedColor: config['backgroundColor'],
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorState(dynamic error, BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -125,24 +203,24 @@ class OrdersScreen extends StatelessWidget {
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
-              color: Colors.red,
+              size: 48,
+              color: Colors.red[300],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               'Unable to Load Orders',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: theme.textPrimary,
+                color: textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               'Please check your connection',
               style: TextStyle(
                 fontSize: 14,
-                color: theme.textSecondary,
+                color: textSecondary,
               ),
             ),
           ],
@@ -151,7 +229,7 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(_AppTheme theme, BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, bool noOrders) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -159,96 +237,92 @@ class OrdersScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.shopping_bag_outlined,
-              size: 80,
-              color: theme.primaryGreen.withOpacity(0.7),
+              Icons.inbox_outlined,
+              size: 64,
+              color: primaryGreen.withOpacity(0.5),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
-              'No Orders Yet',
+              noOrders ? 'No Orders Yet' : 'No Matching Orders',
               style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: theme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              'Your orders will appear here',
+              noOrders
+                  ? 'Your orders will appear here'
+                  : 'Try changing your filter',
               style: TextStyle(
-                fontSize: 16,
-                color: theme.textSecondary,
+                fontSize: 14,
+                color: textSecondary,
               ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryGreen,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            if (noOrders) ...[
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Start Shopping',
+                  style: TextStyle(fontSize: 14),
                 ),
               ),
-              child: const Text(
-                'Start Shopping',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-            ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOrdersList(List<Map<String, dynamic>> orders, _AppTheme theme,
-      BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${orders.length} Order${orders.length > 1 ? 's' : ''}',
-            style: TextStyle(
-              fontSize: 14,
-              color: theme.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView.separated(
-              itemCount: orders.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, index) =>
-                  _buildOrderCard(orders[index], theme, context),
-            ),
-          ),
-        ],
+  Widget _buildOrdersList(
+      List<Map<String, dynamic>> orders, BuildContext context) {
+    return Expanded(
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: orders.length,
+        itemBuilder: (context, index) =>
+            _buildOrderCard(orders[index], context),
       ),
     );
   }
 
-  Widget _buildOrderCard(
-      Map<String, dynamic> order, _AppTheme theme, BuildContext context) {
+  Widget _buildOrderCard(Map<String, dynamic> order, BuildContext context) {
     final orderId = order['id'] ?? '';
     final status = order['status'] ?? 'pending';
     final total = (order['total'] ?? 0.0).toDouble();
     final items = order['items'] as List<dynamic>? ?? [];
-    final paymentMethod = order['paymentMethod'] ?? 'gcash';
     final createdAt = order['createdAt'] as Timestamp?;
-
     final dateText = createdAt != null
         ? DateFormat('MMM dd, yyyy').format(createdAt.toDate())
-        : 'Date not available';
+        : '';
 
-    return Card(
-      shape: RoundedRectangleBorder(
+    final statusConfig = _getStatusConfig(status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      elevation: 2,
       child: InkWell(
         onTap: () => Navigator.push(
           context,
@@ -261,105 +335,88 @@ class OrdersScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header with order number and date
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Order #${orderId.substring(0, 8).toUpperCase()}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  Text(
+                    'Order #${orderId.substring(0, 8).toUpperCase()}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  Text(
+                    dateText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Order items preview
+              if (items.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildItemPreview(items.first),
+                    if (items.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '+ ${items.length - 1} more item${items.length - 1 > 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: primaryGreen,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                      ),
+                  ],
+                ),
+              const SizedBox(height: 16),
+
+              // Footer with status and total
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusConfig['backgroundColor'],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getStatusIcon(status),
+                          size: 12,
+                          color: statusConfig['color'],
+                        ),
+                        const SizedBox(width: 4),
                         Text(
-                          dateText,
+                          statusConfig['text'],
                           style: TextStyle(
-                            fontSize: 13,
-                            color: theme.textSecondary,
+                            color: statusConfig['color'],
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  _buildStatusChip(status),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Items preview
-              if (items.isNotEmpty) ...[
-                Text(
-                  '${items.length} item${items.length > 1 ? 's' : ''}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildItemPreview(items.first),
-                if (items.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      '+ ${items.length - 1} more item${items.length - 1 > 1 ? 's' : ''}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.primaryGreen,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    '\$${total.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: primaryGreen,
                     ),
-                  ),
-                const SizedBox(height: 16),
-              ],
-
-              // Footer
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        '\$${total.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: theme.primaryGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(
-                        _getPaymentIcon(paymentMethod),
-                        size: 16,
-                        color: theme.textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _formatPaymentMethod(paymentMethod),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.textSecondary,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -375,20 +432,20 @@ class OrdersScreen extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 50,
-          height: 50,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             image: itemMap['productImage']?.toString().isNotEmpty == true
                 ? DecorationImage(
                     image: NetworkImage(itemMap['productImage']),
                     fit: BoxFit.cover,
                   )
                 : null,
-            color: Colors.grey[200],
+            color: Colors.grey[100],
           ),
           child: itemMap['productImage'] == null
-              ? Icon(Icons.image, color: Colors.grey[400], size: 20)
+              ? Icon(Icons.image, color: Colors.grey[300], size: 16)
               : null,
         ),
         const SizedBox(width: 12),
@@ -398,19 +455,20 @@ class OrdersScreen extends StatelessWidget {
             children: [
               Text(
                 itemMap['productName'] ?? 'Unknown Product',
-                style: const TextStyle(
-                  fontSize: 14,
+                style: TextStyle(
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
+                  color: textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
-                'Qty: ${itemMap['quantity'] ?? 1} × \$${(itemMap['price'] ?? 0.0).toStringAsFixed(2)}',
+                'Qty: ${itemMap['quantity'] ?? 1}',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+                  fontSize: 11,
+                  color: textSecondary,
                 ),
               ),
             ],
@@ -420,102 +478,183 @@ class OrdersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    final config = _getStatusConfig(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: config['backgroundColor'],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        config['text'],
-        style: TextStyle(
-          color: config['color'],
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   Map<String, dynamic> _getStatusConfig(String status) {
     switch (status.toLowerCase()) {
+      case 'all':
+        return {
+          'backgroundColor': const Color(0xFFF1F5F9),
+          'color': const Color(0xFF64748B),
+          'text': 'All',
+        };
       case 'pending':
         return {
-          'backgroundColor': Colors.orange.withOpacity(0.1),
-          'color': Colors.orange[700]!,
+          'backgroundColor': const Color(0xFFFFF7ED),
+          'color': const Color(0xFF9A3412),
           'text': 'Pending',
         };
       case 'confirmed':
         return {
-          'backgroundColor': Colors.blue.withOpacity(0.1),
-          'color': Colors.blue[700]!,
+          'backgroundColor': const Color(0xFFE0F2FE),
+          'color': const Color(0xFF0369A1),
           'text': 'Confirmed',
         };
       case 'processing':
         return {
-          'backgroundColor': Colors.purple.withOpacity(0.1),
-          'color': Colors.purple[700]!,
+          'backgroundColor': const Color(0xFFF3E8FF),
+          'color': const Color(0xFF7C3AED),
           'text': 'Processing',
         };
       case 'shipped':
         return {
-          'backgroundColor': Colors.indigo.withOpacity(0.1),
-          'color': Colors.indigo[700]!,
+          'backgroundColor': const Color(0xFFE0E7FF),
+          'color': const Color(0xFF4338CA),
           'text': 'Shipped',
         };
       case 'delivered':
         return {
-          'backgroundColor': Colors.green.withOpacity(0.1),
-          'color': Colors.green[700]!,
+          'backgroundColor': const Color(0xFFDCFCE7),
+          'color': const Color(0xFF166534),
           'text': 'Delivered',
         };
       case 'cancelled':
         return {
-          'backgroundColor': Colors.red.withOpacity(0.1),
-          'color': Colors.red[700]!,
+          'backgroundColor': const Color(0xFFFEE2E2),
+          'color': const Color(0xFFB91C1C),
           'text': 'Cancelled',
         };
       default:
         return {
-          'backgroundColor': Colors.grey.withOpacity(0.1),
-          'color': Colors.grey[700]!,
+          'backgroundColor': Colors.grey[100]!,
+          'color': Colors.grey[800]!,
           'text': status,
         };
     }
   }
 
-  IconData _getPaymentIcon(String paymentMethod) {
-    switch (paymentMethod.toLowerCase()) {
-      case 'gcash':
-        return Icons.account_balance_wallet;
-      case 'bankcard':
-        return Icons.credit_card;
-      case 'grabpay':
-        return Icons.payment;
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Icons.access_time;
+      case 'confirmed':
+        return Icons.check_circle;
+      case 'processing':
+        return Icons.autorenew;
+      case 'shipped':
+        return Icons.local_shipping;
+      case 'delivered':
+        return Icons.done_all;
+      case 'cancelled':
+        return Icons.cancel;
       default:
-        return Icons.payment;
+        return Icons.info;
     }
   }
 
-  String _formatPaymentMethod(String paymentMethod) {
-    switch (paymentMethod.toLowerCase()) {
-      case 'gcash':
-        return 'GCash';
-      case 'bankcard':
-        return 'Bank Card';
-      case 'grabpay':
-        return 'GrabPay';
-      default:
-        return paymentMethod;
-    }
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Filter Orders',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Select status to filter orders',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _statusFilters.map((status) {
+                  final config =
+                      _getStatusConfig(status == 'all' ? 'all' : status);
+                  final isSelected = _selectedStatus == status;
+                  return FilterChip(
+                    label: Text(
+                      status == 'all' ? 'All Orders' : config['text'],
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : textPrimary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedStatus = selected ? status : 'all';
+                      });
+                      Navigator.pop(context);
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: config['backgroundColor'],
+                    checkmarkColor: isSelected ? config['color'] : null,
+                    side: BorderSide(
+                      color: isSelected
+                          ? config['backgroundColor']!
+                          : Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedStatus = 'all';
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    backgroundColor: Colors.grey[50],
+                  ),
+                  child: Text(
+                    'Clear Filter',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
-}
-
-class _AppTheme {
-  final primaryGreen = const Color(0xFF2C8610);
-  final backgroundColor = const Color(0xFFF8FAFC);
-  final textPrimary = const Color(0xFF1A1A1A);
-  final textSecondary = const Color(0xFF64748B);
 }

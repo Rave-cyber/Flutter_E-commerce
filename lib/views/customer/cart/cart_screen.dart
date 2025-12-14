@@ -1,4 +1,3 @@
-// views/cart/cart_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
@@ -16,12 +15,16 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  // Consistent color scheme with orders screen
   final Color primaryGreen = const Color(0xFF2C8610);
+  final Color backgroundColor = const Color(0xFFF9FAFB);
+  final Color textPrimary = const Color(0xFF111827);
+  final Color textSecondary = const Color(0xFF6B7280);
+
   bool _isLoading = false;
   final Map<String, bool> _selectedItems = {};
   bool _selectAll = false;
 
-  // Stream to hold cart items, initialized once to prevent reloading on setState
   Stream<QuerySnapshot>? _cartStream;
   String? _currentUserId;
 
@@ -29,7 +32,6 @@ class _CartScreenState extends State<CartScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final user = Provider.of<AuthService>(context).currentUser;
-    // Only recreate stream if user changes
     if (user != null && (_cartStream == null || user.uid != _currentUserId)) {
       _currentUserId = user.uid;
       _cartStream = FirebaseFirestore.instance
@@ -42,7 +44,6 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   void dispose() {
-    // Clear selection state when screen is disposed
     _selectedItems.clear();
     super.dispose();
   }
@@ -56,14 +57,16 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('My Cart'),
+        title: Text(
+          'My Cart',
+          style: TextStyle(color: textPrimary),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: primaryGreen),
-        foregroundColor: primaryGreen,
+        iconTheme: IconThemeData(color: textPrimary),
         actions: [
-          // Select All button
           StreamBuilder<QuerySnapshot>(
             stream: _cartStream,
             builder: (context, snapshot) {
@@ -85,66 +88,21 @@ class _CartScreenState extends State<CartScreen> {
         stream: _cartStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: primaryGreen),
+            );
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return _buildErrorState();
           }
 
           final cartItems = snapshot.data?.docs ?? [];
 
           if (cartItems.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Lottie.asset(
-                    'assets/animations/Empty Cart.json',
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.shopping_cart_outlined,
-                          size: 80, color: Colors.grey[400]);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Your cart is empty',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Looks like you haven\'t added anything yet',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('Start Shopping'),
-                  ),
-                ],
-              ),
-            );
+            return _buildEmptyState();
           }
 
-          // Use a StatefulWidget for the list to maintain selection state
           return _CartListContent(
             cartItems: cartItems,
             selectedItems: _selectedItems,
@@ -159,13 +117,108 @@ class _CartScreenState extends State<CartScreen> {
             isLoading: _isLoading,
             user: user,
             primaryGreen: primaryGreen,
+            backgroundColor: backgroundColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
           );
         },
       ),
     );
   }
 
-  // Selection methods
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red[300],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Unable to Load Cart',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please check your connection',
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/animations/Empty Cart.json',
+              width: 180,
+              height: 180,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 80,
+                  color: textSecondary.withOpacity(0.5),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Your cart is empty',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Looks like you haven\'t added anything yet',
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryGreen,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Start Shopping'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _toggleItemSelection(String itemId, bool selected) {
     setState(() {
       _selectedItems[itemId] = selected;
@@ -198,16 +251,6 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  int _getSelectedCount() {
-    return _selectedItems.values.where((isSelected) => isSelected).length;
-  }
-
-  List<QueryDocumentSnapshot> _getSelectedItems(
-      List<QueryDocumentSnapshot> cartItems) {
-    return cartItems.where((item) => _selectedItems[item.id] == true).toList();
-  }
-
-  // Cart operations
   Future<void> _updateQuantity(String itemId, int newQuantity) async {
     if (newQuantity < 1) return;
 
@@ -241,7 +284,6 @@ class _CartScreenState extends State<CartScreen> {
           .doc(itemId)
           .delete();
 
-      // Remove from selection map
       _selectedItems.remove(itemId);
       _updateSelectAllState();
 
@@ -259,7 +301,6 @@ class _CartScreenState extends State<CartScreen> {
       _isLoading = true;
     });
 
-    // Navigate to checkout with selected items
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) {
       setState(() {
@@ -302,7 +343,6 @@ class _CartScreenState extends State<CartScreen> {
       _isLoading = true;
     });
 
-    // Navigate to checkout with all items
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) {
       setState(() {
@@ -342,13 +382,13 @@ class _CartScreenState extends State<CartScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        backgroundColor: primaryGreen,
         duration: const Duration(seconds: 2),
       ),
     );
   }
 }
 
-// Separate StatefulWidget for the list content to prevent rebuilds
 class _CartListContent extends StatefulWidget {
   final List<QueryDocumentSnapshot> cartItems;
   final Map<String, bool> selectedItems;
@@ -363,6 +403,9 @@ class _CartListContent extends StatefulWidget {
   final bool isLoading;
   final User user;
   final Color primaryGreen;
+  final Color backgroundColor;
+  final Color textPrimary;
+  final Color textSecondary;
 
   const _CartListContent({
     required this.cartItems,
@@ -378,6 +421,9 @@ class _CartListContent extends StatefulWidget {
     required this.isLoading,
     required this.user,
     required this.primaryGreen,
+    required this.backgroundColor,
+    required this.textPrimary,
+    required this.textSecondary,
   });
 
   @override
@@ -385,7 +431,6 @@ class _CartListContent extends StatefulWidget {
 }
 
 class __CartListContentState extends State<_CartListContent> {
-  // Local copy of selected items to manage independently
   late Map<String, bool> _localSelectedItems;
 
   @override
@@ -399,7 +444,6 @@ class __CartListContentState extends State<_CartListContent> {
   void didUpdateWidget(_CartListContent oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Only update local selection when cart items change (not when just selecting)
     if (!_listsAreEqual(oldWidget.cartItems, widget.cartItems)) {
       _initializeSelection();
     }
@@ -415,12 +459,10 @@ class __CartListContentState extends State<_CartListContent> {
   }
 
   void _initializeSelection() {
-    // Initialize selection for new items
     for (final item in widget.cartItems) {
       _localSelectedItems.putIfAbsent(item.id, () => false);
     }
 
-    // Remove items that are no longer in cart
     _localSelectedItems.removeWhere(
         (key, value) => !widget.cartItems.any((item) => item.id == key));
   }
@@ -464,69 +506,11 @@ class __CartListContentState extends State<_CartListContent> {
   @override
   Widget build(BuildContext context) {
     final selectedCount = _getSelectedCount();
-
-    return Column(
-      children: [
-        // Selected items count
-        if (selectedCount > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: widget.primaryGreen.withOpacity(0.1),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: widget.primaryGreen, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  '$selectedCount item${selectedCount > 1 ? 's' : ''} selected',
-                  style: TextStyle(
-                    color: widget.primaryGreen,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: _clearSelection,
-                  child: Text(
-                    'Clear',
-                    style: TextStyle(color: widget.primaryGreen),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: widget.cartItems.length,
-            itemBuilder: (context, index) {
-              final item = widget.cartItems[index];
-              final data = item.data() as Map<String, dynamic>;
-              return _CartItem(
-                itemId: item.id,
-                data: data,
-                isSelected: _localSelectedItems[item.id] ?? false,
-                toggleSelection: _toggleItemSelection,
-                updateQuantity: widget.updateQuantity,
-                removeFromCart: widget.removeFromCart,
-                primaryGreen: widget.primaryGreen,
-              );
-            },
-          ),
-        ),
-        _buildCheckoutSection(),
-      ],
-    );
-  }
-
-  Widget _buildCheckoutSection() {
     final selectedItems = _getSelectedItems();
-    final hasSelectedItems = selectedItems.isNotEmpty;
 
     double subtotal = 0;
     double selectedSubtotal = 0;
 
-    // Calculate totals
     for (final item in widget.cartItems) {
       final data = item.data() as Map<String, dynamic>;
       final price = (data['price'] ?? 0.0).toDouble();
@@ -543,87 +527,137 @@ class __CartListContentState extends State<_CartListContent> {
     const shipping = 5.99;
     final total = subtotal + shipping;
     final selectedTotal =
-        hasSelectedItems ? (selectedSubtotal + shipping) : 0.0;
+        selectedCount > 0 ? (selectedSubtotal + shipping) : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(0, -2),
-            blurRadius: 4,
-            color: Colors.black.withOpacity(0.1),
+    return Column(
+      children: [
+        if (selectedCount > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: widget.primaryGreen.withOpacity(0.08),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: widget.primaryGreen, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  '$selectedCount item${selectedCount > 1 ? 's' : ''} selected',
+                  style: TextStyle(
+                    color: widget.primaryGreen,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: _clearSelection,
+                  style: TextButton.styleFrom(
+                    foregroundColor: widget.primaryGreen,
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                  ),
+                  child: const Text('Clear'),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildPriceRow('Selected Items Subtotal',
-              hasSelectedItems ? selectedSubtotal : 0),
-          _buildPriceRow('Shipping', hasSelectedItems ? shipping : 0),
-          const Divider(),
-          _buildPriceRow('Selected Total', hasSelectedItems ? selectedTotal : 0,
-              isTotal: true),
-          const SizedBox(height: 8),
-          if (!hasSelectedItems && widget.cartItems.isNotEmpty)
-            Text(
-              'Select items to checkout individually',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: widget.cartItems.length,
+            itemBuilder: (context, index) {
+              final item = widget.cartItems[index];
+              final data = item.data() as Map<String, dynamic>;
+              return _CartItem(
+                itemId: item.id,
+                data: data,
+                isSelected: _localSelectedItems[item.id] ?? false,
+                toggleSelection: _toggleItemSelection,
+                updateQuantity: widget.updateQuantity,
+                removeFromCart: widget.removeFromCart,
+                primaryGreen: widget.primaryGreen,
+                textPrimary: widget.textPrimary,
+                textSecondary: widget.textSecondary,
+              );
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: Colors.grey[200]!,
+                width: 1,
               ),
             ),
-          const SizedBox(height: 16),
-          Row(
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: hasSelectedItems && !widget.isLoading
-                      ? () => widget.checkoutSelected(selectedItems)
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: hasSelectedItems
-                        ? widget.primaryGreen
-                        : Colors.grey[400],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              if (selectedCount > 0) ...[
+                _buildPriceRow('Selected Items', selectedSubtotal),
+                _buildPriceRow('Shipping', shipping),
+                const Divider(),
+                _buildPriceRow('Selected Total', selectedTotal, isTotal: true),
+                const SizedBox(height: 4),
+                Text(
+                  'Excluding selected items from total calculation',
+                  style: TextStyle(
+                    color: widget.textSecondary,
+                    fontSize: 11,
                   ),
-                  child: widget.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          'Checkout Selected (${selectedItems.length})',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selectedCount > 0 && !widget.isLoading
+                        ? () => widget.checkoutSelected(selectedItems)
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: widget.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Checkout Selected ($selectedCount)',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              SizedBox(
+                width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: widget.isLoading
-                      ? null
-                      : () => widget.checkoutAll(widget.cartItems),
+                  onPressed: !widget.isLoading
+                      ? () => widget.checkoutAll(widget.cartItems)
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    elevation: 0,
                   ),
                   child: widget.isLoading
                       ? const SizedBox(
@@ -636,41 +670,41 @@ class __CartListContentState extends State<_CartListContent> {
                           ),
                         )
                       : const Text(
-                          'Checkout All',
+                          'Checkout All Items',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildPriceRow(String label, double amount, {bool isTotal = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isTotal ? widget.primaryGreen : Colors.black,
+              fontSize: isTotal ? 15 : 14,
+              fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
+              color: isTotal ? widget.primaryGreen : widget.textPrimary,
             ),
           ),
           Text(
             '\$${amount.toStringAsFixed(2)}',
             style: TextStyle(
-              fontSize: isTotal ? 18 : 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isTotal ? widget.primaryGreen : Colors.black,
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
+              color: isTotal ? widget.primaryGreen : widget.textPrimary,
             ),
           ),
         ],
@@ -679,7 +713,6 @@ class __CartListContentState extends State<_CartListContent> {
   }
 }
 
-// Separate StatefulWidget for each cart item to prevent rebuilds
 class _CartItem extends StatefulWidget {
   final String itemId;
   final Map<String, dynamic> data;
@@ -688,6 +721,8 @@ class _CartItem extends StatefulWidget {
   final Function(String, int) updateQuantity;
   final Function(String) removeFromCart;
   final Color primaryGreen;
+  final Color textPrimary;
+  final Color textSecondary;
 
   const _CartItem({
     required this.itemId,
@@ -697,6 +732,8 @@ class _CartItem extends StatefulWidget {
     required this.updateQuantity,
     required this.removeFromCart,
     required this.primaryGreen,
+    required this.textPrimary,
+    required this.textSecondary,
   });
 
   @override
@@ -710,41 +747,56 @@ class __CartItemState extends State<_CartItem> {
     final price = (widget.data['price'] ?? 0.0).toDouble();
     final total = price * quantity;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Checkbox(
-              value: widget.isSelected,
-              onChanged: (value) =>
-                  widget.toggleSelection(widget.itemId, value ?? false),
-              activeColor: widget.primaryGreen,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                image: widget.data['productImage'] != null &&
-                        widget.data['productImage'].isNotEmpty
-                    ? DecorationImage(
-                        image: NetworkImage(widget.data['productImage']),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                color: Colors.grey[200],
-              ),
-              child: widget.data['productImage'] == null ||
-                      widget.data['productImage'].isEmpty
-                  ? const Icon(Icons.image, color: Colors.grey, size: 24)
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Checkbox(
+            value: widget.isSelected,
+            onChanged: (value) =>
+                widget.toggleSelection(widget.itemId, value ?? false),
+            activeColor: widget.primaryGreen,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              image: widget.data['productImage'] != null &&
+                      widget.data['productImage'].isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(widget.data['productImage']),
+                      fit: BoxFit.cover,
+                    )
                   : null,
+              color: Colors.grey[100],
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            child: widget.data['productImage'] == null ||
+                    widget.data['productImage'].isEmpty
+                ? Icon(
+                    Icons.image,
+                    color: widget.textSecondary.withOpacity(0.3),
+                    size: 20,
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -754,9 +806,10 @@ class __CartItemState extends State<_CartItem> {
                       Expanded(
                         child: Text(
                           widget.data['productName'] ?? 'Unknown Product',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
                             fontSize: 14,
+                            color: widget.textPrimary,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -765,9 +818,10 @@ class __CartItemState extends State<_CartItem> {
                       const SizedBox(width: 8),
                       Text(
                         '\$${total.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
+                          color: widget.primaryGreen,
                         ),
                       ),
                     ],
@@ -777,10 +831,10 @@ class __CartItemState extends State<_CartItem> {
                     '\$${price.toStringAsFixed(2)} each',
                     style: TextStyle(
                       fontSize: 12,
-                      color: widget.primaryGreen,
+                      color: widget.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Container(
@@ -791,43 +845,44 @@ class __CartItemState extends State<_CartItem> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 28,
-                              height: 28,
+                            SizedBox(
+                              width: 32,
+                              height: 32,
                               child: IconButton(
-                                icon: const Icon(Icons.remove, size: 14),
+                                icon: const Icon(Icons.remove, size: 16),
                                 onPressed: () => widget.updateQuantity(
                                     widget.itemId, quantity - 1),
                                 color: quantity <= 1
-                                    ? Colors.grey
+                                    ? widget.textSecondary
                                     : widget.primaryGreen,
                                 padding: EdgeInsets.zero,
-                                iconSize: 14,
+                                iconSize: 16,
                               ),
                             ),
                             Container(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8),
-                              constraints: const BoxConstraints(minWidth: 20),
+                              constraints: const BoxConstraints(minWidth: 24),
                               child: Text(
                                 quantity.toString(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w500,
+                                  color: widget.textPrimary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                            Container(
-                              width: 28,
-                              height: 28,
+                            SizedBox(
+                              width: 32,
+                              height: 32,
                               child: IconButton(
-                                icon: const Icon(Icons.add, size: 14),
+                                icon: const Icon(Icons.add, size: 16),
                                 onPressed: () => widget.updateQuantity(
                                     widget.itemId, quantity + 1),
                                 color: widget.primaryGreen,
                                 padding: EdgeInsets.zero,
-                                iconSize: 14,
+                                iconSize: 16,
                               ),
                             ),
                           ],
@@ -835,12 +890,16 @@ class __CartItemState extends State<_CartItem> {
                       ),
                       const Spacer(),
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 18),
+                          icon: Icon(Icons.delete_outline, size: 18),
                           onPressed: () => widget.removeFromCart(widget.itemId),
-                          color: Colors.red,
+                          color: Colors.red[400],
                           padding: EdgeInsets.zero,
                         ),
                       ),
@@ -849,8 +908,8 @@ class __CartItemState extends State<_CartItem> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
