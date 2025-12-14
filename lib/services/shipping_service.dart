@@ -11,8 +11,6 @@ class ShippingService {
   // Base shipping rates
   static const double baseRate = 5.99; // Base rate for first 5km
   static const double additionalPerKm = 2.50; // Rate per km after first 5km
-  static const double freeShippingThreshold =
-      100.00; // Free shipping for orders over this amount
 
   /// Calculate shipping fee based on address and order total
   Future<ShippingCalculation> calculateShipping({
@@ -95,11 +93,81 @@ class ShippingService {
     String? barangay,
     String? fullAddress,
   }) async {
-    // For now, return Manila coordinates as default
-    // In a real implementation, you would use a geocoding service
-    // like Google Maps Geocoding API or similar
+    // Try to parse address components from the full address
+    if (fullAddress != null && fullAddress.isNotEmpty) {
+      final address = fullAddress.toLowerCase();
 
-    // Default to Manila coordinates
+      // Manila Metro areas
+      if (address.contains('manila') ||
+          address.contains('metro manila') ||
+          address.contains('ncr') ||
+          address.contains('city of manila')) {
+        return Coordinates(latitude: 14.5995, longitude: 120.9842);
+      }
+
+      // Quezon City
+      if (address.contains('quezon city') || address.contains('qc')) {
+        return Coordinates(latitude: 14.6760, longitude: 121.0437);
+      }
+
+      // Makati
+      if (address.contains('makati')) {
+        return Coordinates(latitude: 14.5547, longitude: 121.0244);
+      }
+
+      // Cebu City
+      if (address.contains('cebu city') || address.contains('cebu')) {
+        return Coordinates(latitude: 10.3155, longitude: 123.8851);
+      }
+
+      // Davao City
+      if (address.contains('davao city') || address.contains('davao')) {
+        return Coordinates(latitude: 7.1907, longitude: 125.4553);
+      }
+
+      // Baguio
+      if (address.contains('baguio')) {
+        return Coordinates(latitude: 16.4023, longitude: 120.5960);
+      }
+
+      // Iloilo City
+      if (address.contains('iloilo city') || address.contains('iloilo')) {
+        return Coordinates(latitude: 10.6947, longitude: 122.5644);
+      }
+
+      // General Philippines regions - rough coordinates
+      if (address.contains('luzon')) {
+        return Coordinates(latitude: 15.0, longitude: 121.0);
+      }
+      if (address.contains('visayas')) {
+        return Coordinates(latitude: 11.0, longitude: 123.5);
+      }
+      if (address.contains('mindanao')) {
+        return Coordinates(latitude: 8.0, longitude: 125.0);
+      }
+
+      // Additional major cities
+      if (address.contains('clark') || address.contains('pampanga')) {
+        return Coordinates(latitude: 15.1851, longitude: 120.5596);
+      }
+      if (address.contains('subic') || address.contains('zambales')) {
+        return Coordinates(latitude: 14.8747, longitude: 120.3464);
+      }
+      if (address.contains('laguna')) {
+        return Coordinates(latitude: 14.2681, longitude: 121.3633);
+      }
+      if (address.contains('batangas')) {
+        return Coordinates(latitude: 13.7568, longitude: 121.0584);
+      }
+      if (address.contains('cavite')) {
+        return Coordinates(latitude: 14.4792, longitude: 120.8974);
+      }
+      if (address.contains('rizal')) {
+        return Coordinates(latitude: 14.7055, longitude: 121.1413);
+      }
+    }
+
+    // Default to Manila coordinates if no match found
     return Coordinates(latitude: 14.5995, longitude: 120.9842);
   }
 
@@ -128,9 +196,9 @@ class ShippingService {
 
   /// Calculate shipping fee based on distance and order total
   double _calculateShippingFee(double distance, double orderTotal) {
-    // Free shipping for orders over threshold
-    if (orderTotal >= freeShippingThreshold) {
-      return 0.0;
+    // Ensure we have a valid distance
+    if (distance <= 0 || distance.isNaN || distance.isInfinite) {
+      return baseRate; // Fallback to base rate for invalid distances
     }
 
     // Base rate for first 5km
