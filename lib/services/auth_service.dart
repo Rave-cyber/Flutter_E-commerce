@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 import '../models/customer_model.dart';
 
@@ -115,5 +116,75 @@ class AuthService {
   // ------------------------------
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  // ------------------------------
+  // Sign in with Google
+  // ------------------------------
+  Future<UserModel?> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User cancelled sign-in
+        return null;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      // Check if user exists in Firestore
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userDoc.exists) {
+        return UserModel.fromMap(userDoc.data()!);
+      } else {
+        // Create new user with default role 'customer'
+        final newUser = UserModel(
+          id: userCredential.user!.uid,
+          email: userCredential.user!.email!,
+          role: 'customer',
+          display_name: userCredential.user!.displayName,
+          is_archived: false,
+          created_at: DateTime.now(),
+        );
+
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(newUser.toMap());
+
+        // Create customer profile
+        final nameParts =
+            userCredential.user!.displayName?.split(' ') ?? ['', '', ''];
+        final customer = CustomerModel(
+          id: '', // Will be set by Firestore
+          user_id: userCredential.user!.uid,
+          firstname: nameParts.length > 0 ? nameParts[0] : '',
+          middlename: nameParts.length > 2 ? nameParts[1] : '',
+          lastname: nameParts.length > 1 ? nameParts.last : '',
+          address: '',
+          contact: userCredential.user!.email!,
+          created_at: DateTime.now(),
+        );
+
+        await _firestore.collection('customers').add(customer.toMap());
+
+        return newUser;
+      }
+    } catch (e) {
+      throw Exception('Google sign-in failed: $e');
+    }
   }
 }
