@@ -1131,13 +1131,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.green,
             ),
           ),
-          backgroundColor: Colors.green.shade600,
+          backgroundColor: Colors.green.shade50,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: Colors.green.shade800),
             onPressed: () => Navigator.pop(context),
           ),
         ),
