@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/firestore_service.dart';
 import 'package:firebase/models/order_model.dart';
-import 'package:firebase/views/customer/checkout/order_confirmation_screen.dart';
+import 'package:firebase/services/shipping_service.dart';
+import 'order_confirmation_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -35,6 +36,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isLoading = false;
   String? _customerId;
 
+  // Shipping calculation variables
+  double _shippingFee = 0.0;
+  double _distance = 0.0;
+  int _estimatedDays = 3;
+  bool _isCalculatingShipping = false;
+  final ShippingService _shippingService = ShippingService();
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +57,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _customerId = customer.id;
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
+      });
+
+      // Calculate shipping fee based on customer address
+      _calculateShippingFee(customer.address, _subtotal);
+    }
+  }
+
+  Future<void> _calculateShippingFee(String address, double orderTotal) async {
+    if (address.isEmpty) return;
+
+    setState(() {
+      _isCalculatingShipping = true;
+    });
+
+    try {
+      final calculation = await _shippingService.calculateShipping(
+        fullAddress: address,
+        orderTotal: orderTotal,
+      );
+
+      setState(() {
+        _shippingFee = calculation.shippingFee;
+        _distance = calculation.distance;
+        _estimatedDays = calculation.estimatedDays;
+      });
+    } catch (e) {
+      // Fallback to default shipping fee
+      setState(() {
+        _shippingFee = 5.99;
+        _distance = 0.0;
+        _estimatedDays = 3;
+      });
+    } finally {
+      setState(() {
+        _isCalculatingShipping = false;
       });
     }
   }
@@ -66,8 +109,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  double get _shipping => 5.99;
-  double get _total => _subtotal + _shipping;
+  double get _total => _subtotal + _shippingFee;
 
   @override
   Widget build(BuildContext context) {
@@ -543,7 +585,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           // Price Breakdown
           _buildSummaryRow('Item Total', '\$${_subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildSummaryRow('Shipping Fee', '\$${_shipping.toStringAsFixed(2)}'),
+          _buildSummaryRow(
+              'Shipping Fee',
+              _isCalculatingShipping
+                  ? 'Calculating...'
+                  : '\$${_shippingFee.toStringAsFixed(2)}'),
+          if (_distance > 0) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Text(
+                'Distance: ${_distance.toStringAsFixed(1)}km',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
 
           const Divider(),
@@ -587,10 +646,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   size: 16,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Estimated delivery: 2-3 business days',
-                    style: TextStyle(
+                    _isCalculatingShipping
+                        ? 'Calculating delivery...'
+                        : 'Estimated delivery: $_estimatedDays business day${_estimatedDays > 1 ? 's' : ''}',
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF666666),
                     ),
@@ -761,7 +822,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         customerId: _customerId!,
         items: orderItems,
         subtotal: _subtotal,
-        shipping: _shipping,
+        shipping: _shippingFee,
         total: _total,
         paymentMethod: _selectedPaymentMethod.name,
         shippingAddress: _shippingAddressController.text.trim(),
