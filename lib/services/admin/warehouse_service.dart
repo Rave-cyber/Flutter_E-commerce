@@ -36,6 +36,8 @@ class WarehouseService {
     final updated = WarehouseModel(
       id: warehouse.id,
       name: warehouse.name,
+      latitude: warehouse.latitude,
+      longitude: warehouse.longitude,
       is_archived: !warehouse.is_archived,
       created_at: warehouse.created_at,
       updated_at: DateTime.now(),
