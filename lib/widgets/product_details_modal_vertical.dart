@@ -114,6 +114,42 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
         );
   }
 
+  void _showImageFullScreen(String imageUrl, String imageLabel) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: Text(
+              imageLabel,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.5,
+              maxScale: 3.0,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.image_not_supported,
+                    size: 100,
+                    color: Colors.grey,
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -220,39 +256,65 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image - Centered and Larger
+          // Product Image - Clickable
           Center(
-            child: Material(
-              elevation: 4,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey[50],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: widget.product.image.isNotEmpty
-                      ? Image.network(
-                          widget.product.image,
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.image_not_supported,
-                              size: 60,
-                              color: Colors.grey,
-                            );
-                          },
-                        )
-                      : const Icon(
-                          Icons.image_not_supported,
-                          size: 60,
-                          color: Colors.grey,
-                        ),
+            child: GestureDetector(
+              onTap: widget.product.image.isNotEmpty
+                  ? () => _showImageFullScreen(
+                      widget.product.image, widget.product.name)
+                  : null,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey[50],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: widget.product.image.isNotEmpty
+                        ? Stack(
+                            children: [
+                              Image.network(
+                                widget.product.image,
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.image_not_supported,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  );
+                                },
+                              ),
+                              Positioned(
+                                right: 8,
+                                bottom: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.zoom_in,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Icon(
+                            Icons.image_not_supported,
+                            size: 60,
+                            color: Colors.grey,
+                          ),
+                  ),
                 ),
               ),
             ),
@@ -361,7 +423,6 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
     required IconData icon,
     required String label,
     required String value,
-    Color? iconColor,
   }) {
     return Container(
       width: double.infinity,
@@ -376,7 +437,7 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
           Icon(
             icon,
             size: 20,
-            color: iconColor ?? Colors.grey[600],
+            color: Colors.grey[600],
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -410,19 +471,6 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
 
   Widget _buildStockInfo() {
     final stockQuantity = widget.product.stock_quantity ?? 0;
-    Color stockColor;
-    IconData stockIcon;
-
-    if (stockQuantity > 10) {
-      stockColor = Colors.green.shade600;
-      stockIcon = Icons.inventory_2;
-    } else if (stockQuantity > 0) {
-      stockColor = Colors.orange.shade600;
-      stockIcon = Icons.warning;
-    } else {
-      stockColor = Colors.red.shade600;
-      stockIcon = Icons.error;
-    }
 
     return Container(
       width: double.infinity,
@@ -434,10 +482,10 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
       ),
       child: Row(
         children: [
-          Icon(
-            stockIcon,
+          const Icon(
+            Icons.inventory_2,
             size: 20,
-            color: stockColor,
+            color: Colors.grey,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -455,10 +503,10 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
                 const SizedBox(height: 2),
                 Text(
                   '$stockQuantity units',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: stockColor,
+                    color: Colors.black87,
                   ),
                 ),
               ],
@@ -526,39 +574,64 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Variant Image - Centered
+          // Variant Image - Clickable
           Center(
-            child: Material(
-              elevation: 2,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[50],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: variant.image.isNotEmpty
-                      ? Image.network(
-                          variant.image,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.image_not_supported,
-                              size: 40,
-                              color: Colors.grey,
-                            );
-                          },
-                        )
-                      : const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
+            child: GestureDetector(
+              onTap: variant.image.isNotEmpty
+                  ? () => _showImageFullScreen(variant.image, variant.name)
+                  : null,
+              child: Material(
+                elevation: 2,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[50],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: variant.image.isNotEmpty
+                        ? Stack(
+                            children: [
+                              Image.network(
+                                variant.image,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(
+                                    Icons.image_not_supported,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  );
+                                },
+                              ),
+                              Positioned(
+                                right: 4,
+                                bottom: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.zoom_in,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                  ),
                 ),
               ),
             ),
@@ -579,35 +652,68 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
             ),
           ),
 
+          const SizedBox(height: 12),
+
+          // All Variant Information
+          _buildVariantInfoRow(
+            icon: Icons.tag,
+            label: 'SKU',
+            value: variant.sku ?? 'Not specified',
+          ),
+
           const SizedBox(height: 8),
 
-          // Variant SKU
-          if (variant.sku != null)
-            _buildVariantInfoRow(
-              icon: Icons.tag,
-              label: 'SKU',
-              value: variant.sku!,
-            ),
-
-          const SizedBox(height: 8),
-
-          // Variant Pricing
           _buildVariantInfoRow(
             icon: Icons.attach_money,
-            label: 'Price',
+            label: 'Base Price',
+            value: '₱${_formatPrice(variant.base_price)}',
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildVariantInfoRow(
+            icon: Icons.sell,
+            label: 'Sale Price',
             value: '₱${_formatPrice(variant.sale_price)}',
           ),
 
           const SizedBox(height: 8),
 
-          // Variant Stock
-          _buildVariantStockRow(variant),
+          _buildVariantInfoRow(
+            icon: Icons.inventory_2,
+            label: 'Stock',
+            value: '${variant.stock ?? 0} units',
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildVariantInfoRow(
+            icon: variant.is_archived ? Icons.archive : Icons.check_circle,
+            label: 'Status',
+            value: variant.is_archived ? 'Archived' : 'Active',
+          ),
 
           // Variant Attributes
           if (variantAttributes.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildVariantAttributes(variantAttributes),
           ],
+
+          // Created and Updated dates
+          const SizedBox(height: 8),
+          _buildVariantInfoRow(
+            icon: Icons.calendar_today,
+            label: 'Created',
+            value: _formatDate(variant.created_at),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildVariantInfoRow(
+            icon: Icons.update,
+            label: 'Updated',
+            value: _formatDate(variant.updated_at),
+          ),
         ],
       ),
     );
@@ -656,69 +762,14 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
     );
   }
 
-  Widget _buildVariantStockRow(ProductVariantModel variant) {
-    final stockQuantity = variant.stock ?? 0;
-    Color stockColor;
-    IconData stockIcon;
-
-    if (stockQuantity > 10) {
-      stockColor = Colors.green.shade600;
-      stockIcon = Icons.inventory_2;
-    } else if (stockQuantity > 0) {
-      stockColor = Colors.orange.shade600;
-      stockIcon = Icons.warning;
-    } else {
-      stockColor = Colors.red.shade600;
-      stockIcon = Icons.error;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: stockColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: stockColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            stockIcon,
-            size: 16,
-            color: stockColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Stock: ',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              '$stockQuantity units',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: stockColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildVariantAttributes(List<Map<String, dynamic>> variantAttributes) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,14 +779,14 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
               Icon(
                 Icons.label,
                 size: 16,
-                color: Colors.blue.shade600,
+                color: Colors.grey[600],
               ),
               const SizedBox(width: 8),
               Text(
                 'Attributes:',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.blue.shade600,
+                  color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -755,7 +806,7 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
                       '${attribute.name}: ${value.name}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[700],
+                        color: Colors.black87,
                       ),
                     ),
                   ),
@@ -766,6 +817,10 @@ class _ProductDetailsModalState extends State<ProductDetailsModal> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildNoVariantsSection() {
