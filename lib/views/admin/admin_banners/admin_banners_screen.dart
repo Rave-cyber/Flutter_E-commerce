@@ -30,6 +30,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
   final _orderController = TextEditingController();
 
   bool _isUploading = false;
+  String? _selectedCategory; // Defined here
   final ImagePicker _picker = ImagePicker();
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
     'drwoht0pd',
@@ -44,12 +45,14 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
       _imageController.text = banner['image'] ?? '';
       _buttonTextController.text = banner['buttonText'] ?? '';
       _orderController.text = (banner['order'] ?? 0).toString();
+      _selectedCategory = banner['categoryId']; // Load existing category
     } else {
       _titleController.clear();
       _subtitleController.clear();
       _imageController.clear();
       _buttonTextController.clear();
       _orderController.text = '0';
+      _selectedCategory = null; // Reset
     }
 
     showDialog(
@@ -73,6 +76,38 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                     decoration: const InputDecoration(labelText: 'Subtitle'),
                     validator: (v) => v!.isEmpty ? 'Required' : null,
                   ),
+                  // Dynamic Category Dropdown
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: FirestoreService.getAllCategories(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const LinearProgressIndicator();
+                      }
+                      final categories = snapshot.data!;
+                      return DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        decoration:
+                            const InputDecoration(labelText: 'Category (Link)'),
+                        hint: const Text('Select a category to link'),
+                        items: categories.map((cat) {
+                          return DropdownMenuItem<String>(
+                            value: cat['id'],
+                            child: Text(cat['name'] ?? 'Unnamed'),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setDialogState(() {
+                            _selectedCategory = newValue;
+                          });
+                        },
+                        // Optional: Allow null if they don't want to link?
+                        // User asked "can we direct", implies optional or required. keeping optional for flexibility or required if user insists.
+                        // For now, let's make it optional.
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16), // Add some spacing
                   Row(
                     children: [
                       Expanded(
@@ -185,6 +220,8 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                           'buttonText': _buttonTextController.text,
                           'order': int.tryParse(_orderController.text) ?? 0,
                           'isActive': true,
+                          'categoryId':
+                              _selectedCategory, // Save selected category
                         };
 
                         try {

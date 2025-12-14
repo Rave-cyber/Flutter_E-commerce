@@ -9,10 +9,12 @@ import '../product/product_detail_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
   final UserModel user;
+  final String? initialCategoryId;
 
   const CategoriesScreen({
     Key? key,
     required this.user,
+    this.initialCategoryId,
   }) : super(key: key);
 
   @override
@@ -21,6 +23,7 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   String _selectedCategory = 'All';
+
   final Color primaryGreen = const Color(0xFF2C8610);
   late CustomerCategoryService _categoryService;
   List<CategoryModel> _categories = [];
@@ -29,6 +32,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialCategoryId != null) {
+      _selectedCategory = widget.initialCategoryId!;
+    }
     _categoryService = CustomerCategoryService();
     _loadCategories();
   }
