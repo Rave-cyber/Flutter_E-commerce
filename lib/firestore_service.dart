@@ -616,4 +616,106 @@ class FirestoreService {
       throw e;
     }
   }
+
+  // Get orders for delivery staff (confirmed and processing statuses)
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders() {
+    return _firestore
+        .collection('orders')
+        .where('status', whereIn: ['confirmed', 'processing'])
+        .snapshots()
+        .map((snapshot) {
+          final orders = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'id': doc.id,
+              ...data,
+            };
+          }).toList();
+
+          // Sort by createdAt in memory (descending - newest first)
+          orders.sort((a, b) {
+            final aTime = a['createdAt'] as Timestamp?;
+            final bTime = b['createdAt'] as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+          return orders;
+        })
+        .handleError((error) {
+          print('Error fetching delivery staff orders: $error');
+          return Stream.value(<Map<String, dynamic>>[]);
+        });
+  }
+
+  // Get shipped orders for delivery staff deliveries
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffDeliveries() {
+    return _firestore
+        .collection('orders')
+        .where('status', isEqualTo: 'shipped')
+        .snapshots()
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+
+      // Sort by createdAt in memory (descending - newest first)
+      orders.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return orders;
+    }).handleError((error) {
+      print('Error fetching delivery staff deliveries: $error');
+      return Stream.value(<Map<String, dynamic>>[]);
+    });
+  }
+
+  // Update order status to shipped
+  static Future<void> markOrderAsShipped(
+      String orderId, String deliveryStaffId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': 'shipped',
+        'deliveryStaffId': deliveryStaffId,
+        'shippedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error marking order as shipped: $e');
+      throw e;
+    }
+  }
+
+  // Update order status to delivered with proof
+  static Future<void> markOrderAsDelivered(
+      String orderId,
+      String deliveryStaffId,
+      String proofImageUrl,
+      String? deliveryNotes) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': 'delivered',
+        'deliveryStaffId': deliveryStaffId,
+        'deliveredAt': FieldValue.serverTimestamp(),
+        'deliveryProofImage': proofImageUrl,
+        'deliveryNotes': deliveryNotes,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error marking order as delivered: $e');
+      throw e;
+    }
+  }
 }
