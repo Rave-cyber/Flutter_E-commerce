@@ -3,6 +3,11 @@ import '../../../layouts/admin_layout.dart';
 import '/models/warehouse_model.dart';
 import '/services/admin/warehouse_service.dart';
 import '/views/admin/admin_warehouses/form.dart';
+import '../../../widgets/warehouse_search_widget.dart';
+import '../../../widgets/warehouse_filter_widget.dart';
+import '../../../widgets/warehouse_card_widget.dart';
+import '../../../widgets/warehouse_pagination_widget.dart';
+import '../../../widgets/floating_action_button_widget.dart';
 
 class AdminWarehousesIndex extends StatefulWidget {
   const AdminWarehousesIndex({Key? key}) : super(key: key);
@@ -13,8 +18,8 @@ class AdminWarehousesIndex extends StatefulWidget {
 
 class _AdminWarehousesIndexState extends State<AdminWarehousesIndex> {
   final WarehouseService _warehouseService = WarehouseService();
-  final TextEditingController _searchController = TextEditingController();
 
+  final TextEditingController _searchController = TextEditingController();
   String _filterStatus = 'active';
   int _itemsPerPage = 10;
   int _currentPage = 1;
@@ -51,6 +56,31 @@ class _AdminWarehousesIndexState extends State<AdminWarehousesIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+  int _getTotalPages(List<WarehouseModel> warehouses) {
+    // Apply filters
+    List<WarehouseModel> filtered = warehouses.where((w) {
+      if (_filterStatus == 'active') return !w.is_archived;
+      if (_filterStatus == 'archived') return w.is_archived;
+      return true;
+    }).toList();
+
+    // Apply search
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered
+          .where((w) => w.name
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()))
+          .toList();
+    }
+
+    // Calculate total pages
+    if (filtered.isEmpty) {
+      return 1;
+    }
+
+    return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
+  }
+
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -63,6 +93,108 @@ class _AdminWarehousesIndexState extends State<AdminWarehousesIndex> {
     }
   }
 
+  Future<void> _handleMenuSelection(
+      String value, WarehouseModel warehouse) async {
+    switch (value) {
+      case 'edit':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminWarehouseForm(warehouse: warehouse),
+          ),
+        );
+        break;
+      case 'archive':
+      case 'unarchive':
+        final action = warehouse.is_archived ? 'unarchive' : 'archive';
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text('Confirm $action'),
+            content: Text(
+              'Are you sure you want to $action "${warehouse.name}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                ),
+                child: Text(
+                  action[0].toUpperCase() + action.substring(1),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          await _warehouseService.toggleArchive(warehouse);
+        }
+        break;
+      case 'delete':
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Confirm Delete'),
+            content: Text(
+              'Are you sure you want to delete "${warehouse.name}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  elevation: 2,
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          await _warehouseService.deleteWarehouse(warehouse.id);
+        }
+        break;
+    }
+  }
+
+  void _onFilterChanged(String? value) {
+    if (value != null) {
+      setState(() {
+        _filterStatus = value;
+        _currentPage = 1;
+      });
+    }
+  }
+
+  void _onItemsPerPageChanged(int? value) {
+    if (value != null) {
+      setState(() {
+        _itemsPerPage = value;
+        _currentPage = 1;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -71,45 +203,24 @@ class _AdminWarehousesIndexState extends State<AdminWarehousesIndex> {
         child: Column(
           children: [
             // SEARCH FIELD
-            TextField(
+            WarehouseSearchWidget(
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search Warehouses',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() => _currentPage = 1),
+              onChanged: () => setState(() {
+                _currentPage = 1;
+              }),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // FILTER DROPDOWN
-            Row(
-              children: [
-                const Text('Filter: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _filterStatus,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'active', child: Text('Active')),
-                    DropdownMenuItem(
-                        value: 'archived', child: Text('Archived')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _filterStatus = val;
-                        _currentPage = 1;
-                      });
-                    }
-                  },
-                ),
-              ],
+            // FILTER AND PER PAGE DROPDOWN
+            WarehouseFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: _onFilterChanged,
+              onItemsPerPageChanged: _onItemsPerPageChanged,
             ),
+            const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
-
-            // WAREHOUSE LIST
+            // WAREHOUSE LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<List<WarehouseModel>>(
                 stream: _warehouseService.getWarehouses(),
@@ -119,173 +230,88 @@ class _AdminWarehousesIndexState extends State<AdminWarehousesIndex> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No warehouses found.'));
+                    return Center(
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.warehouse_outlined,
+                                  size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No warehouses found.',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
                   final warehouses = snapshot.data!;
                   final paginatedWarehouses =
                       _applyFilterSearchPagination(warehouses);
+                  final totalPages = _getTotalPages(warehouses);
 
                   return Column(
                     children: [
+                      // WAREHOUSE LIST
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedWarehouses.length,
                           itemBuilder: (context, index) {
                             final warehouse = paginatedWarehouses[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                title: Text(
-                                  warehouse.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: warehouse.is_archived
-                                        ? Colors.grey
-                                        : Colors.black,
-                                  ),
-                                ),
-                                subtitle: Text(warehouse.is_archived
-                                    ? 'Archived'
-                                    : 'Active'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // ARCHIVE / UNARCHIVE
-                                    IconButton(
-                                      icon: Icon(
-                                        warehouse.is_archived
-                                            ? Icons.unarchive
-                                            : Icons.archive,
-                                        color: Colors.orange,
-                                      ),
-                                      onPressed: () async {
-                                        final action = warehouse.is_archived
-                                            ? 'unarchive'
-                                            : 'archive';
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: Text('Confirm $action'),
-                                            content: Text(
-                                              'Are you sure you want to $action "${warehouse.name}"?',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: Text(
-                                                  action[0].toUpperCase() +
-                                                      action.substring(1),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
 
-                                        if (confirm == true) {
-                                          await _warehouseService
-                                              .toggleArchive(warehouse);
-                                        }
-                                      },
-                                    ),
-
-                                    // EDIT
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AdminWarehouseForm(
-                                              warehouse: warehouse,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-
-                                    // DELETE
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Confirm Delete'),
-                                            content: Text(
-                                                'Delete warehouse "${warehouse.name}"?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-
-                                        if (confirm == true) {
-                                          await _warehouseService
-                                              .deleteWarehouse(warehouse.id);
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            return WarehouseCardWidget(
+                              warehouse: warehouse,
+                              onMenuSelected: (value) =>
+                                  _handleMenuSelection(value, warehouse),
                             );
                           },
                         ),
                       ),
 
-                      // PAGINATION CONTROLS
+                      const SizedBox(height: 16),
+
+                      // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _prevPage,
+                          // PAGINATION CONTROLS - Left end
+                          WarehousePaginationWidget(
+                            currentPage: _currentPage,
+                            totalPages: totalPages,
+                            onPreviousPage: _prevPage,
+                            onNextPage: () => _nextPage(warehouses.length),
                           ),
-                          Text('Page $_currentPage'),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(warehouses.length),
+
+                          // ADD WAREHOUSE BUTTON - Right end
+                          FloatingActionButtonWidget(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AdminWarehouseForm()),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ],
                   );
                 },
-              ),
-            ),
-
-            // ADD BUTTON
-            Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminWarehouseForm(),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.add),
-                tooltip: 'Add Warehouse',
               ),
             ),
           ],
