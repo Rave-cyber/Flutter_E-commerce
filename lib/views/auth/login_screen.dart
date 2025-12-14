@@ -3,6 +3,8 @@ import 'package:firebase/views/admin/admin_dashboard/index.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/local_cart_service.dart';
+
 import '../../models/user_model.dart';
 import '../../models/customer_model.dart';
 import '../delivery_staff/delivery_staff_dashboard/index.dart';
@@ -43,6 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // Load UserModel
       final UserModel? user = await authService.getCurrentUserData();
       if (user == null) throw 'User data not found';
+
+      // Merge guest cart if any
+      await LocalCartService.mergeGuestCart(user.id);
 
       if (!mounted) return;
 

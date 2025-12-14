@@ -9,12 +9,12 @@ import '../product/product_detail_screen.dart';
 import '../search/search_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  final UserModel user;
+  final UserModel? user;
   final String? initialCategoryId;
 
   const CategoriesScreen({
     Key? key,
-    required this.user,
+    this.user,
     this.initialCategoryId,
   }) : super(key: key);
 

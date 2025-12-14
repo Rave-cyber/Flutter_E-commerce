@@ -8,8 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
-import 'services/admin_seeder.dart';
-import 'services/super_admin_seeder.dart';
+
 import 'views/splash/splash_screen.dart';
 import 'views/home/home_screen.dart';
 
@@ -18,9 +17,10 @@ void main() async {
   await Firebase.initializeApp();
 
   // Seed admin user on app start
-  await AdminSeeder.seedAdmin();
-  // Seed super admin user on app start
-  await SuperAdminSeeder.seedSuperAdmin();
+  // Note: These are commented out to prevent auto-login on every restart.
+  // Enable them only when you need to re-seed the admin accounts, then disable again.
+  // await AdminSeeder.seedAdmin();
+  // await SuperAdminSeeder.seedSuperAdmin();
 
   runApp(const MyApp());
 }

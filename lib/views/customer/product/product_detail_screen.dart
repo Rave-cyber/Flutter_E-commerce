@@ -2,6 +2,8 @@
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
+import 'package:firebase/views/auth/login_screen.dart';
+
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
 import 'package:firebase/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/services/local_cart_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -210,10 +213,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _addToCart() async {
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
 
-    if (user == null) {
-      _showSnackBar('Please login to add to cart', Colors.orange);
-      return;
-    }
+    // if (user == null) {
+    //   _showSnackBar('Please login to add to cart', Colors.orange);
+    //   return;
+    // }
+    // ALLOW GUEST ADD TO CART
 
     if (widget.product.id == null) {
       _showSnackBar('Product error', Colors.red);
@@ -256,14 +260,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         productId = variant.id; // Use variant ID for cart
       }
 
-      await FirestoreService.addToCart(
-        userId: user.uid,
-        productId: productId,
-        productName: productName,
-        productImage: productImage,
-        price: price,
-        quantity: 1, // Default quantity to 1
-      );
+      if (user != null) {
+        await FirestoreService.addToCart(
+          userId: user.uid,
+          productId: productId,
+          productName: productName,
+          productImage: productImage,
+          price: price,
+          quantity: 1, // Default quantity to 1
+        );
+      } else {
+        // Guest Cart
+        await LocalCartService.addToCart({
+          'productId': productId,
+          'productName': productName,
+          'productImage': productImage,
+          'price': price,
+          'quantity': 1,
+        });
+      }
 
       if (mounted) {
         _showSnackBar('Added to cart!', primaryGreen);
@@ -285,8 +300,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
 
     if (user == null) {
-      _showSnackBar('Please login to buy', Colors.orange);
-      return;
+      // For Buy Now, we should probably redirect to Login immediately because Checkout requires login
+      // User said "when purchase direct to the log in"
+      // So _buyNow IS a purchase intent.
+      // We can add to cart then redirect to Login?
+      // Or just redirect.
+      // Let's Add to Local Cart then Redirect to Login?
+      // Actually, let's keep it simple: Redirect to Login/Checkout.
+      // But we need to add the item first so they don't lose it.
     }
 
     if (widget.product.id == null) {
@@ -331,35 +352,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
 
       // Add to cart first
-      await FirestoreService.addToCart(
-        userId: user.uid,
-        productId: productId,
-        productName: productName,
-        productImage: productImage,
-        price: price,
-        quantity: 1,
-      );
+      // Add to cart first
+      if (user != null) {
+        await FirestoreService.addToCart(
+          userId: user.uid,
+          productId: productId,
+          productName: productName,
+          productImage: productImage,
+          price: price,
+          quantity: 1,
+        );
+      } else {
+        await LocalCartService.addToCart({
+          'productId': productId,
+          'productName': productName,
+          'productImage': productImage,
+          'price': price,
+          'quantity': 1,
+        });
+      }
 
       // Navigate directly to checkout
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CheckoutScreen(
-              cartItems: [
-                {
-                  'productId': productId,
-                  'productName': productName,
-                  'productImage': productImage,
-                  'price': price,
-                  'quantity': 1,
-                }
-              ],
-              isSelectedItems: false,
-              selectedItemIds: [productId],
-            ),
-          ),
-        );
+        // Navigate directly to checkout
+        if (mounted) {
+          if (user != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CheckoutScreen(
+                  cartItems: [
+                    {
+                      'productId': productId,
+                      'productName': productName,
+                      'productImage': productImage,
+                      'price': price,
+                      'quantity': 1,
+                    }
+                  ],
+                  isSelectedItems: false,
+                  selectedItemIds: [productId],
+                ),
+              ),
+            );
+          } else {
+            // If guest, go to Login
+            _showSnackBar('Please login to continue checkout', Colors.orange);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const LoginScreen()), // Use fully qualified if needed or add import
+            ).then((_) {
+              // Maybe verify login?
+            });
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

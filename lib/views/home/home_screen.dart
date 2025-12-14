@@ -19,12 +19,12 @@ import '../customer/profile/profile_screen.dart';
 import '../customer/search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final UserModel user;
+  final UserModel? user; // Nullable for Guest Mode
   final CustomerModel? customer;
 
   const HomeScreen({
     Key? key,
-    required this.user,
+    this.user, // Optional
     this.customer,
   }) : super(key: key);
 
@@ -50,10 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _initializeScreens() {
     final screens = [
-      _buildHomeContent(), // Home content
-      CategoriesScreen(user: widget.user),
-      FavoritesScreen(user: widget.user),
-      ProfileScreen(user: widget.user, customer: widget.customer),
+      _buildHomeContent(),
+      CategoriesScreen(user: widget.user), // Now accepts nullable
+      // For Favorites and Profile, require login.
+      widget.user != null
+          ? FavoritesScreen(user: widget.user!)
+          : const Center(child: Text('Please Login to view Favorites')),
+      widget.user != null
+          ? ProfileScreen(user: widget.user!, customer: widget.customer)
+          : const Center(child: Text('Please Login to view Profile')),
     ];
 
     _navService.initializeScreens(screens);
@@ -93,56 +98,59 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           // Orders with Badge
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: FirestoreService.getUserOrders(widget.user.id),
-            builder: (context, snapshot) {
-              final orderCount = snapshot.data?.length ?? 0;
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.receipt_long, color: primaryGreen),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const OrdersScreen(),
-                        ),
-                      );
-                    },
-                    tooltip: 'Order History',
-                  ),
-                  if (orderCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '$orderCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+          if (widget.user != null)
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: FirestoreService.getUserOrders(widget.user!.id),
+              builder: (context, snapshot) {
+                final orderCount = snapshot.data?.length ?? 0;
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.receipt_long, color: primaryGreen),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OrdersScreen(),
                           ),
-                          textAlign: TextAlign.center,
+                        );
+                      },
+                      tooltip: 'Order History',
+                    ),
+                    if (orderCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '$orderCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
+                  ],
+                );
+              },
+            ),
           // Cart with Badge
           StreamBuilder<QuerySnapshot>(
-            stream: FirestoreService.getCartStream(widget.user.id),
+            stream: widget.user != null
+                ? FirestoreService.getCartStream(widget.user!.id)
+                : const Stream.empty(), // Guest cart empty
             builder: (context, snapshot) {
               final cartCount = snapshot.data?.docs.length ?? 0;
               return Stack(
