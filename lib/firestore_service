@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/models/user_model.dart';
-import 'package:firebase/services/admin/stock_out_service.dart';
-import 'package:firebase/models/stock_out_model.dart';
 import 'models/product.dart'; // Import the correct model
+import 'models/stock_out_model.dart';
+import 'services/admin/stock_out_service.dart';
 
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -557,73 +557,9 @@ class FirestoreService {
     }
   }
 
-  // Helper method to handle stock-out logic for shipped orders
-  static Future<void> _handleStockOutForShippedOrder(String orderId) async {
-    // 1. Fetch Order Items
-    final orderDoc = await _firestore.collection('orders').doc(orderId).get();
-    if (!orderDoc.exists) throw Exception('Order not found');
-
-    final data = orderDoc.data();
-    final items = (data?['items'] as List<dynamic>?) ?? [];
-
-    // 2. Create Stock-Out records for each item
-    final stockOutService = StockOutService();
-
-    for (final item in items) {
-      final itemMap = item as Map<String, dynamic>;
-      final String itemId = itemMap['productId'];
-      final int quantity = itemMap['quantity'];
-
-      String? productId;
-      String? variantId;
-
-      // Check if itemId matches a Product
-      final productDoc =
-          await _firestore.collection('products').doc(itemId).get();
-      if (productDoc.exists) {
-        productId = itemId;
-      } else {
-        // Check if itemId matches a Variant
-        final variantDoc =
-            await _firestore.collection('product_variants').doc(itemId).get();
-        if (variantDoc.exists) {
-          variantId = itemId;
-          productId = variantDoc.data()?['product_id'];
-        }
-      }
-
-      if (productId != null) {
-        // Generate a unique ID for the stock-out record
-        // Use a suffix to ensure uniqueness if multiple items are processed quickly
-        final stockOutId = DateTime.now().millisecondsSinceEpoch.toString() +
-            '_' +
-            (variantId ?? productId).substring(0, 4);
-
-        final stockOut = StockOutModel(
-          id: stockOutId,
-          product_id: productId,
-          product_variant_id: variantId,
-          quantity: quantity,
-          reason: 'Order Shipped: #${orderId.substring(0, 8).toUpperCase()}',
-          created_at: DateTime.now(),
-          updated_at: DateTime.now(),
-        );
-
-        await stockOutService.createStockOut(stockOut);
-      } else {
-        print(
-            'Warning: Product/Variant not found for ID $itemId during stock-out.');
-      }
-    }
-  }
-
   // Update order status (for admin)
   static Future<void> updateOrderStatus(String orderId, String status) async {
     try {
-      if (status == 'shipped') {
-        await _handleStockOutForShippedOrder(orderId);
-      }
-
       await _firestore.collection('orders').doc(orderId).update({
         'status': status,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -748,20 +684,73 @@ class FirestoreService {
     });
   }
 
-  // Update order status to shipped
+  // Update order status to shipped (ENHANCED WITH STOCK-OUT CREATION)
   static Future<void> markOrderAsShipped(
       String orderId, String deliveryStaffId) async {
     try {
-      await _handleStockOutForShippedOrder(orderId);
-
+      print('🚚 [DELIVERY STAFF] Marking order $orderId as shipped');
+      
+      // Get the order details first
+      final order = await getOrderById(orderId);
+      if (order == null) {
+        throw Exception('Order not found');
+      }
+      
+      // Update order status
       await _firestore.collection('orders').doc(orderId).update({
         'status': 'shipped',
         'deliveryStaffId': deliveryStaffId,
         'shippedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      
+      print('✅ [DELIVERY STAFF] Order status updated to shipped');
+      
+      // Create stock-out records for shipped orders
+      final items = order['items'] as List<dynamic>? ?? [];
+      if (items.isNotEmpty) {
+        print('📦 [DELIVERY STAFF] Creating stock-out records for shipped order');
+        
+        // Create stock-out service instance
+        final stockOutService = StockOutService();
+        
+        for (final item in items) {
+          final itemData = item as Map<String, dynamic>;
+          final productId = itemData['productId'] ?? '';
+          final variantId = itemData['variantId'];
+          final quantity = itemData['quantity'] ?? 1;
+
+          if (productId.isNotEmpty) {
+            // Create stock-out record ID
+            final stockOutId =
+                'DELIVERY_${orderId}_${variantId ?? productId}_${DateTime.now().millisecondsSinceEpoch}';
+
+            print('🆔 [DELIVERY STAFF] Creating stock-out: $stockOutId');
+
+            // Create stock-out model
+            final stockOut = StockOutModel(
+              id: stockOutId,
+              product_id: variantId == null ? productId : null,
+              product_variant_id: variantId,
+              quantity: quantity,
+              reason: 'Order Shipment - Order #$orderId (Delivery Staff)',
+              created_at: DateTime.now(),
+              updated_at: DateTime.now(),
+            );
+
+            // Create stock-out record
+            await stockOutService.createStockOut(stockOut);
+            print('✅ [DELIVERY STAFF] Stock-out created: $stockOutId');
+          }
+        }
+        
+        print('🎉 [DELIVERY STAFF] All stock-outs created successfully');
+      } else {
+        print('⚠️  [DELIVERY STAFF] No items in order, skipping stock-out creation');
+      }
+      
     } catch (e) {
-      print('Error marking order as shipped: $e');
+      print('❌ [DELIVERY STAFF] Error marking order as shipped: $e');
       throw e;
     }
   }
