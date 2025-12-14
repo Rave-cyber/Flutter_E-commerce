@@ -2,6 +2,7 @@ import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
+import 'package:firebase/views/customer/search/search_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -70,126 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-<<<<<<< HEAD
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Dimdi Home',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: primaryGreen,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: primaryGreen),
-            onPressed: () {},
-          ),
-          // Orders with Badge
-          if (widget.user != null)
-            StreamBuilder<List<Map<String, dynamic>>>(
-              stream: FirestoreService.getUserOrders(widget.user!.id),
-              builder: (context, snapshot) {
-                final orderCount = snapshot.data?.length ?? 0;
-                return Stack(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.receipt_long, color: primaryGreen),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OrdersScreen(),
-                          ),
-                        );
-                      },
-                      tooltip: 'Order History',
-                    ),
-                    if (orderCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '$orderCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          // Cart with Badge
-          StreamBuilder<QuerySnapshot>(
-            stream: widget.user != null
-                ? FirestoreService.getCartStream(widget.user!.id)
-                : const Stream.empty(), // Guest cart empty
-            builder: (context, snapshot) {
-              final cartCount = snapshot.data?.docs.length ?? 0;
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.shopping_cart, color: primaryGreen),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CartScreen()),
-                      );
-                    },
-                    tooltip: 'Shopping Cart',
-                  ),
-                  if (cartCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '$cartCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-=======
       appBar: _buildAppBar(),
->>>>>>> 45f3899 (Customer 95% guro)
       body: _navService.currentScreen,
       bottomNavigationBar: AnimatedBottomNavBar(
         currentIndex: _navService.currentIndex,
