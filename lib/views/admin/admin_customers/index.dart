@@ -6,7 +6,6 @@ import '../../../widgets/customer_search_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/product_filter_widget.dart';
 import '../../../widgets/customer_card_widget.dart';
-import '../../../widgets/floating_action_button_widget.dart';
 import '../../../widgets/customer_details_modal.dart';
 
 class AdminCustomersIndex extends StatefulWidget {
@@ -352,25 +351,14 @@ class _AdminCustomersIndexState extends State<AdminCustomersIndex> {
 
                       const SizedBox(height: 16),
 
-                      // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // PAGINATION CONTROLS - Left end
-                          ProductPaginationWidget(
-                            currentPage: _currentPage,
-                            totalPages: totalPages,
-                            onPreviousPage: _prevPage,
-                            onNextPage: () => _nextPage(customers.length),
-                          ),
-
-                          // ADD CUSTOMER BUTTON - Right end
-                          FloatingActionButtonWidget(
-                            onPressed: () {
-                              // TODO: Navigate to add customer form
-                            },
-                          ),
-                        ],
+                      // BOTTOM CONTROLS - Centered Pagination (removed Add button)
+                      Center(
+                        child: ProductPaginationWidget(
+                          currentPage: _currentPage,
+                          totalPages: totalPages,
+                          onPreviousPage: _prevPage,
+                          onNextPage: () => _nextPage(customers.length),
+                        ),
                       ),
                     ],
                   );
