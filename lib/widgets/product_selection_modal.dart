@@ -242,15 +242,44 @@ class _ProductSelectionModalState extends State<ProductSelectionModal> {
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(16),
-                                    leading: CircleAvatar(
-                                      backgroundColor: Colors.green.shade50,
-                                      child: Icon(
-                                        hasVariants
-                                            ? Icons.check_circle
-                                            : Icons.remove_circle,
-                                        color: hasVariants
-                                            ? Colors.green
-                                            : Colors.grey,
+                                    leading: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: product.image.isNotEmpty
+                                            ? Image.network(
+                                                product.image,
+                                                width: 50,
+                                                height: 50,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  return Icon(
+                                                    hasVariants
+                                                        ? Icons.check_circle
+                                                        : Icons.remove_circle,
+                                                    color: hasVariants
+                                                        ? Colors.green
+                                                        : Colors.grey,
+                                                    size: 24,
+                                                  );
+                                                },
+                                              )
+                                            : Icon(
+                                                hasVariants
+                                                    ? Icons.check_circle
+                                                    : Icons.remove_circle,
+                                                color: hasVariants
+                                                    ? Colors.green
+                                                    : Colors.grey,
+                                                size: 24,
+                                              ),
                                       ),
                                     ),
                                     title: Text(
@@ -269,6 +298,15 @@ class _ProductSelectionModalState extends State<ProductSelectionModal> {
                                             '₱${product.base_price.toStringAsFixed(2)} - ₱${product.sale_price.toStringAsFixed(2)}'),
                                         Text(
                                             'Stock: ${product.stock_quantity ?? 0}'),
+                                        if (hasVariants)
+                                          Text(
+                                            'Has variants',
+                                            style: TextStyle(
+                                              color: Colors.green.shade600,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                     trailing: ElevatedButton(

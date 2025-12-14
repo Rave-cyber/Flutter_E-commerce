@@ -234,11 +234,36 @@ class _ProductVariantSelectionModalState
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(16),
-                                    leading: CircleAvatar(
-                                      backgroundColor: Colors.blue.shade50,
-                                      child: Icon(
-                                        Icons.category,
-                                        color: Colors.blue,
+                                    leading: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: variant.image.isNotEmpty
+                                            ? Image.network(
+                                                variant.image,
+                                                width: 50,
+                                                height: 50,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error,
+                                                    stackTrace) {
+                                                  return Icon(
+                                                    Icons.category,
+                                                    color: Colors.blue,
+                                                    size: 24,
+                                                  );
+                                                },
+                                              )
+                                            : Icon(
+                                                Icons.category,
+                                                color: Colors.blue,
+                                                size: 24,
+                                              ),
                                       ),
                                     ),
                                     title: Text(
