@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 import '../../../layouts/admin_layout.dart';
 import '../../../models/product.dart';
 import '../../../models/product_variant_model.dart';
@@ -91,6 +95,197 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
     return Colors.green;
   }
 
+  // PDF Export functionality
+  Future<void> _exportInventoryReport({
+    List<ProductModel>? products,
+    List<StockInModel>? stockIns,
+    List<StockOutModel>? stockOuts,
+    int? totalProducts,
+    int? currentStock,
+    int? totalStockIn,
+    int? totalStockOut,
+    double? totalValue,
+    int? lowStockCount,
+    int? outOfStockCount,
+  }) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Text('Inventory Report',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 24)),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                    'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+                    style:
+                        pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
+              ],
+            ),
+            pw.SizedBox(height: 20),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400),
+                borderRadius: pw.BorderRadius.circular(5),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                children: [
+                  pw.Column(children: [
+                    pw.Text('Total Products',
+                        style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('$totalProducts',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 18,
+                            color: PdfColors.blue700)),
+                  ]),
+                  pw.Column(children: [
+                    pw.Text('Current Stock', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('$currentStock',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 18,
+                            color: PdfColors.green700)),
+                  ]),
+                  pw.Column(children: [
+                    pw.Text('Total Value', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text(formatCurrency(totalValue ?? 0.0),
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 18,
+                            color: PdfColors.purple700)),
+                  ]),
+                  pw.Column(children: [
+                    pw.Text('Low Stock', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('$lowStockCount',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 18,
+                            color: PdfColors.orange700)),
+                  ]),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 30),
+            pw.Text('Stock Movement Summary',
+                style:
+                    pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+            pw.SizedBox(height: 10),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400),
+                borderRadius: pw.BorderRadius.circular(5),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                children: [
+                  pw.Column(children: [
+                    pw.Text('Stock In', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('$totalStockIn',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 16,
+                            color: PdfColors.green700)),
+                  ]),
+                  pw.Column(children: [
+                    pw.Text('Stock Out', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('$totalStockOut',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 16,
+                            color: PdfColors.red700)),
+                  ]),
+                  pw.Column(children: [
+                    pw.Text('Net Movement', style: pw.TextStyle(fontSize: 12)),
+                    pw.Text('${(totalStockIn ?? 0) - (totalStockOut ?? 0)}',
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 16,
+                            color: PdfColors.blue700)),
+                  ]),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 30),
+            pw.Text('Current Stock Details',
+                style:
+                    pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Product', 'Stock', 'Price', 'Status', 'Value'],
+              data: (products ?? []).map((product) {
+                final stock = product.stock_quantity ?? 0;
+                final status = getStockLevelStatus(stock, 10);
+                final value = stock * product.sale_price;
+                return [
+                  product.name,
+                  stock.toString(),
+                  formatCurrency(product.sale_price),
+                  status,
+                  formatCurrency(value),
+                ];
+              }).toList(),
+              border: pw.TableBorder.all(color: PdfColors.grey300),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey100),
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.center,
+                2: pw.Alignment.centerRight,
+                3: pw.Alignment.center,
+                4: pw.Alignment.centerRight,
+              },
+            ),
+            if ((outOfStockCount ?? 0) > 0) ...[
+              pw.SizedBox(height: 30),
+              pw.Text('Out of Stock Alert',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 16)),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                  '⚠️ $outOfStockCount products are out of stock and require immediate attention.',
+                  style: pw.TextStyle(
+                      fontSize: 12,
+                      color: PdfColors.red700,
+                      fontWeight: pw.FontWeight.bold)),
+            ],
+            if ((lowStockCount ?? 0) > 0) ...[
+              pw.SizedBox(height: 15),
+              pw.Text('Low Stock Alert',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 16)),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                  '⚠️ $lowStockCount products have low stock levels and may need replenishment soon.',
+                  style: pw.TextStyle(
+                      fontSize: 12,
+                      color: PdfColors.orange700,
+                      fontWeight: pw.FontWeight.bold)),
+            ],
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'Inventory_Report_${DateFormat('yyyyMMdd').format(DateTime.now())}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -108,6 +303,53 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                     'Inventory Reports',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    // Get all data for PDF export
+                    final products = await _productService.getProducts().first;
+                    final stockIns = await _stockInService.getStockIns().first;
+                    final stockOuts =
+                        await _stockOutService.getStockOuts().first;
+
+                    final totalProducts = products.length;
+                    final totalStockIn =
+                        stockIns.fold(0, (sum, item) => sum + item.quantity);
+                    final totalStockOut =
+                        stockOuts.fold(0, (sum, item) => sum + item.quantity);
+                    final currentStock = totalStockIn - totalStockOut;
+                    final totalValue = stockIns.fold(
+                        0.0, (sum, item) => sum + (item.quantity * item.price));
+                    final lowStockCount = products
+                        .where((p) => (p.stock_quantity ?? 0) <= 10)
+                        .length;
+                    final outOfStockCount = products
+                        .where((p) => (p.stock_quantity ?? 0) == 0)
+                        .length;
+
+                    await _exportInventoryReport(
+                      products: products,
+                      stockIns: stockIns,
+                      stockOuts: stockOuts,
+                      totalProducts: totalProducts,
+                      currentStock: currentStock,
+                      totalStockIn: totalStockIn,
+                      totalStockOut: totalStockOut,
+                      totalValue: totalValue,
+                      lowStockCount: lowStockCount,
+                      outOfStockCount: outOfStockCount,
+                    );
+                  },
+                  icon: const Icon(Icons.download, size: 16),
+                  label:
+                      const Text('Export PDF', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
                   ),
                 ),
                 IconButton(
