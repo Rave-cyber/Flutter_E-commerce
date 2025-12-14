@@ -23,11 +23,13 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   String _selectedCategory = 'All';
+  String? _selectedBrandId;
+  RangeValues _currentPriceRange = const RangeValues(0, 5000);
 
   final Color primaryGreen = const Color(0xFF2C8610);
   late CustomerCategoryService _categoryService;
   List<CategoryModel> _categories = [];
-  List<ProductModel> _currentProducts = [];
+  List<Map<String, dynamic>> _brands = [];
 
   @override
   void initState() {
@@ -37,6 +39,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
     _categoryService = CustomerCategoryService();
     _loadCategories();
+    _loadBrands();
+  }
+
+  Future<void> _loadBrands() async {
+    FirestoreService.getAllBrands().listen((brands) {
+      if (mounted) {
+        setState(() {
+          _brands = brands;
+        });
+      }
+    });
   }
 
   Future<void> _loadCategories() async {
@@ -50,6 +63,141 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Filters',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedBrandId = null;
+                            _currentPriceRange = const RangeValues(0, 5000);
+                          });
+                          setModalState(() {});
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Clear All',
+                          style: TextStyle(color: Colors.red[400]),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Brand',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 40,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _brands.length,
+                      itemBuilder: (context, index) {
+                        final brand = _brands[index];
+                        final isSelected = _selectedBrandId == brand['id'];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(brand['name'] ?? ''),
+                            selected: isSelected,
+                            selectedColor: primaryGreen,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
+                            onSelected: (selected) {
+                              setModalState(() {
+                                _selectedBrandId =
+                                    selected ? brand['id'] : null;
+                              });
+                              setState(() {}); // Update main screen as well
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Price Range',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  RangeSlider(
+                    values: _currentPriceRange,
+                    min: 0,
+                    max: 5000,
+                    divisions: 50,
+                    activeColor: primaryGreen,
+                    labels: RangeLabels(
+                      '\$${_currentPriceRange.start.round()}',
+                      '\$${_currentPriceRange.end.round()}',
+                    ),
+                    onChanged: (values) {
+                      setModalState(() {
+                        _currentPriceRange = values;
+                      });
+                      setState(() {});
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('\$${_currentPriceRange.start.round()}'),
+                      Text('\$${_currentPriceRange.end.round()}'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryGreen,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text('Apply Filters'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,6 +205,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: primaryGreen),
         title: Text(
           'Categories',
           style: TextStyle(
@@ -67,12 +216,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ),
         actions: [
           IconButton(
+            icon: Icon(Icons.filter_list, color: primaryGreen),
+            onPressed: _showFilterModal,
+          ),
+          IconButton(
             icon: Icon(Icons.search, color: primaryGreen),
             onPressed: () {},
           ),
           IconButton(
             icon: Icon(Icons.refresh, color: primaryGreen),
-            onPressed: _loadCategories,
+            onPressed: () {
+              // Reset filters on refresh
+              setState(() {
+                _selectedBrandId = null;
+                _currentPriceRange = const RangeValues(0, 5000);
+              });
+              _loadCategories();
+            },
           ),
         ],
       ),
@@ -92,7 +252,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     // Add "All" option
     final allCategories = [
       CategoryModel(
-        id: 'all',
+        id: 'All',
         name: 'All',
         is_archived: false,
         created_at: null,
@@ -161,7 +321,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () => setState(() {}),
-                  child: Text('Retry'),
+                  child: Text('Retry', style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
                   ),
@@ -172,8 +332,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         }
 
         // Check data
-        final products = snapshot.data ?? [];
-        print('Products loaded: ${products.length}');
+        var products = snapshot.data ?? [];
+
+        // Apply Filters
+        if (_selectedBrandId != null) {
+          products =
+              products.where((p) => p.brand_id == _selectedBrandId).toList();
+        }
+
+        products = products
+            .where((p) =>
+                p.sale_price >= _currentPriceRange.start &&
+                p.sale_price <= _currentPriceRange.end)
+            .toList();
+
+        print('Products loaded: ${products.length} (Filtered)');
 
         if (products.isEmpty) {
           return Center(
@@ -199,9 +372,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   ),
                 ),
                 Text(
-                  _selectedCategory == 'All'
-                      ? 'in any category'
-                      : 'in this category',
+                  'Try adjusting your filters',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -211,10 +382,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
+                      _selectedBrandId = null;
+                      _currentPriceRange = const RangeValues(0, 5000);
                       _selectedCategory = 'All';
                     });
                   },
-                  child: Text('Show All Products'),
+                  child: Text('Reset Filters',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
                   ),

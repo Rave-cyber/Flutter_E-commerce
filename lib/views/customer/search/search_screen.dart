@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/models/product.dart';
 import 'package:firebase/views/customer/product/product_detail_screen.dart';
+import 'package:firebase/models/category_model.dart';
+import 'package:firebase/services/customer/category_service.dart';
+import 'package:firebase/views/customer/categories/categories_screen.dart';
 import 'package:flutter/material.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -368,7 +371,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ..._recentProducts.map(_buildProductItem).toList(),
         ],
 
-        // Categories (you can add this)
+        // Categories
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
           child: Text(
@@ -380,49 +383,54 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              _buildCategoryChip('Electronics', Icons.smartphone),
-              const SizedBox(width: 8),
-              _buildCategoryChip('Fashion', Icons.shopping_bag),
-              const SizedBox(width: 8),
-              _buildCategoryChip('Home', Icons.home),
-              const SizedBox(width: 8),
-              _buildCategoryChip('Beauty', Icons.face),
-            ],
-          ),
+        StreamBuilder<List<CategoryModel>>(
+          stream: CustomerCategoryService().getActiveCategories(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox();
+
+            final categories = snapshot.data!;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories.map((category) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CategoriesScreen(
+                            initialCategoryId: category.id,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryGreen,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        category.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          },
         ),
       ],
-    );
-  }
-
-  Widget _buildCategoryChip(String label, IconData icon) {
-    return Expanded(
-      child: Card(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () {
-            _controller.text = label;
-            _search(label);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                Icon(icon, color: primaryGreen),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -432,6 +440,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: primaryGreen),
         titleSpacing: 0,
         title: Container(
           margin: const EdgeInsets.only(right: 8),
