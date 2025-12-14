@@ -21,7 +21,6 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
   late TextEditingController _addressController;
   late TextEditingController _contactController;
 
-  bool _isArchived = false;
   bool _isSaving = false;
   int _currentStep = 0;
 
@@ -37,8 +36,6 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
     _lastnameController = TextEditingController(text: checker?.lastname ?? '');
     _addressController = TextEditingController(text: checker?.address ?? '');
     _contactController = TextEditingController(text: checker?.contact ?? '');
-
-    _isArchived = checker?.is_archived ?? false;
   }
 
   @override
@@ -54,7 +51,7 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
   // Stepper navigation methods
   void _nextStep() {
     if (_validateCurrentStep()) {
-      if (_currentStep < 2) {
+      if (_currentStep < 1) {
         setState(() => _currentStep++);
       }
     } else {
@@ -100,8 +97,6 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
             _lastnameController.text.isNotEmpty;
       case 1: // Contact Details step
         return _contactController.text.isNotEmpty;
-      case 2: // Settings step
-        return true;
       default:
         return true;
     }
@@ -298,61 +293,6 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
     );
   }
 
-  // Step 3: Settings
-  Widget _buildSettingsStep() {
-    return _buildSectionCard(
-      title: 'Settings',
-      child: Column(
-        children: [
-          // Container(
-          //   decoration: BoxDecoration(
-          //     color: Colors.grey.shade50,
-          //     borderRadius: BorderRadius.circular(12),
-          //     border: Border.all(color: Colors.grey.shade300),
-          //   ),
-          //   child: SwitchListTile(
-          //     title: const Text('Archived'),
-          //     subtitle: const Text('Hide this stock checker from active lists'),
-          //     value: _isArchived,
-          //     onChanged: (val) => setState(() => _isArchived = val),
-          //     shape: RoundedRectangleBorder(
-          //       borderRadius: BorderRadius.circular(12),
-          //     ),
-          //   ),
-          // ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green[600],
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Stock checkers can perform inventory verification and stock status updates.',
-                    style: TextStyle(
-                      color: Colors.green[800],
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _saveChecker() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -369,7 +309,7 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
         lastname: _lastnameController.text.trim(),
         address: _addressController.text.trim(),
         contact: _contactController.text.trim(),
-        is_archived: _isArchived,
+        is_archived: false,
         created_at: widget.checker?.created_at ?? DateTime.now(),
         updated_at: DateTime.now(),
       );
@@ -414,12 +354,6 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
         title: const Text('Contact Details'),
         content: _buildContactDetailsStep(),
         isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-      ),
-      Step(
-        title: const Text('Settings'),
-        content: _buildSettingsStep(),
-        isActive: _currentStep >= 2,
         state: StepState.indexed,
       ),
     ];

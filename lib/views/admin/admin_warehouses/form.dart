@@ -20,7 +20,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
   late TextEditingController _streetAddressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
-  bool _isArchived = false;
+
   bool _isSaving = false;
   int _currentStep = 0;
 
@@ -50,7 +50,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         TextEditingController(text: warehouse?.latitude.toString() ?? '');
     _longitudeController =
         TextEditingController(text: warehouse?.longitude.toString() ?? '');
-    _isArchived = warehouse?.is_archived ?? false;
+
     _loadRegions();
   }
 
@@ -708,7 +708,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         name: _nameController.text.trim(),
         latitude: double.parse(_latitudeController.text.trim()),
         longitude: double.parse(_longitudeController.text.trim()),
-        is_archived: _isArchived,
+        is_archived: false,
         created_at: widget.warehouse?.created_at ?? DateTime.now(),
         updated_at: DateTime.now(),
       );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
 import '/models/attribute_model.dart';
+import '/models/attribute_value_model.dart';
 import '/services/admin/attribute_service.dart';
 import '/views/admin/admin_attributes/form.dart';
 import '/widgets/product_search_widget.dart';
@@ -194,6 +195,174 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
     }
   }
 
+  void _showAttributeDetailsModal(AttributeModel attribute) async {
+    // Load attribute values
+    final attributeValues =
+        await _attributeService.getAttributeValues(attribute.id);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Attribute Details',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.grey[600]),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.green.shade200,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildDetailRow('Attribute Name', attribute.name),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Status',
+                  attribute.is_archived ? 'Archived' : 'Active',
+                  valueColor:
+                      attribute.is_archived ? Colors.grey : Colors.green,
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Created',
+                  _formatDateTime(attribute.created_at),
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  'Last Updated',
+                  _formatDateTime(attribute.updated_at),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Attribute Values',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.green.shade200,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (attributeValues.isEmpty)
+                  Text(
+                    'No values defined',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                else
+                  ...attributeValues.map((value) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.label_outlined,
+                              size: 16,
+                              color: Colors.green[600],
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                value.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: valueColor ?? Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return 'N/A';
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -307,6 +476,8 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(16),
+                                    onTap: () =>
+                                        _showAttributeDetailsModal(attribute),
                                     title: Text(
                                       attribute.name,
                                       style: TextStyle(

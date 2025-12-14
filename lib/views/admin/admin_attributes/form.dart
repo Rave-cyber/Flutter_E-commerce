@@ -253,7 +253,7 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
                   ),
                   prefixIcon: Icon(
                     Icons.tag,
-                    color: Colors.purple.shade600,
+                    color: Colors.green.shade600,
                     size: 20,
                   ),
                   filled: true,
@@ -269,7 +269,7 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: Colors.purple.shade400,
+                      color: Colors.green.shade400,
                       width: 2,
                     ),
                   ),
@@ -340,7 +340,7 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.purple.withOpacity(0.2),
+                  color: Colors.green.withOpacity(0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -349,10 +349,10 @@ class _AdminAttributeFormState extends State<AdminAttributeForm> {
             child: ElevatedButton.icon(
               onPressed: _addValueController,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+                backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 elevation: 4,
-                shadowColor: Colors.purple.withOpacity(0.5),
+                shadowColor: Colors.green.withOpacity(0.5),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -20,7 +20,6 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
   late TextEditingController _contactController;
   late TextEditingController _contactPersonController;
 
-  bool _isArchived = false;
   bool _isSaving = false;
   int _currentStep = 0;
 
@@ -35,8 +34,6 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
     _contactController = TextEditingController(text: supplier?.contact ?? '');
     _contactPersonController =
         TextEditingController(text: supplier?.contact_person ?? '');
-
-    _isArchived = supplier?.is_archived ?? false;
   }
 
   @override
@@ -274,7 +271,7 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
         address: _addressController.text.trim(),
         contact: _contactController.text.trim(),
         contact_person: _contactPersonController.text.trim(),
-        is_archived: _isArchived,
+        is_archived: false,
         created_at: widget.supplier?.created_at ?? DateTime.now(),
         updated_at: DateTime.now(),
       );
