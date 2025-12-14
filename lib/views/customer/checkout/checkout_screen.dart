@@ -37,6 +37,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       TextEditingController();
   bool _isLoading = false;
   String? _customerId;
+  String? _customerName;
 
   // Shipping calculation variables
   double _shippingFee = 0.0;
@@ -57,6 +58,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (customer != null) {
       setState(() {
         _customerId = customer.id;
+         _customerName = '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
       });
@@ -820,6 +822,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final orderId = await FirestoreService.createOrder(
         userId: user.uid,
         customerId: _customerId!,
+         customerName: _customerName ?? 'Customer', 
         items: orderItems,
         subtotal: _subtotal,
         shipping: _shippingFee,
