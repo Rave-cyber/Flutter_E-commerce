@@ -42,10 +42,11 @@ class _ProductSelectionModalState extends State<ProductSelectionModal> {
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
+      final searchQuery = _searchController.text.toLowerCase();
       filtered = filtered
-          .where((product) => product.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+          .where((product) =>
+              product.name.toLowerCase().contains(searchQuery) ||
+              (product.sku?.toLowerCase().contains(searchQuery) ?? false))
           .toList();
     }
 
@@ -67,10 +68,11 @@ class _ProductSelectionModalState extends State<ProductSelectionModal> {
 
     // Apply search
     if (_searchController.text.isNotEmpty) {
+      final searchQuery = _searchController.text.toLowerCase();
       filtered = filtered
-          .where((product) => product.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+          .where((product) =>
+              product.name.toLowerCase().contains(searchQuery) ||
+              (product.sku?.toLowerCase().contains(searchQuery) ?? false))
           .toList();
     }
 

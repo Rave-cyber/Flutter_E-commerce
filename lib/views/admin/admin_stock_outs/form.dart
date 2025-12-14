@@ -900,14 +900,17 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
                         ElevatedButton(
                           onPressed: details.onStepCancel,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
+                            backgroundColor: Colors.grey.shade600,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: const Text(
                             'Back',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       if (_currentStep > 0) const SizedBox(width: 16),

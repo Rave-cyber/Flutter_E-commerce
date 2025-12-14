@@ -36,10 +36,11 @@ class _ProductVariantSelectionModalState
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
+      final searchQuery = _searchController.text.toLowerCase();
       filtered = filtered
-          .where((variant) => variant.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+          .where((variant) =>
+              variant.name.toLowerCase().contains(searchQuery) ||
+              (variant.sku?.toLowerCase().contains(searchQuery) ?? false))
           .toList();
     }
 
@@ -60,10 +61,11 @@ class _ProductVariantSelectionModalState
 
     // Apply search
     if (_searchController.text.isNotEmpty) {
+      final searchQuery = _searchController.text.toLowerCase();
       filtered = filtered
-          .where((variant) => variant.name
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()))
+          .where((variant) =>
+              variant.name.toLowerCase().contains(searchQuery) ||
+              (variant.sku?.toLowerCase().contains(searchQuery) ?? false))
           .toList();
     }
 
