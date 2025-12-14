@@ -293,14 +293,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
             const SizedBox(height: 24),
 
-            // Key Metrics Cards
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 4 : 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
+            // Key Metrics Cards - Stacked Vertically
+            Column(
               children: [
                 _buildMetricCard(
                   'Total Revenue',
@@ -309,6 +303,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Colors.green,
                   '${totalOrders} orders',
                 ),
+                const SizedBox(height: 16),
                 _buildMetricCard(
                   'Total Orders',
                   totalOrders.toString(),
@@ -316,6 +311,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Colors.blue,
                   'Active period',
                 ),
+                const SizedBox(height: 16),
                 _buildMetricCard(
                   'New Customers',
                   totalCustomers.toString(),
@@ -323,6 +319,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Colors.orange,
                   'Registered',
                 ),
+                const SizedBox(height: 16),
                 _buildMetricCard(
                   'Low Stock Items',
                   lowStockProducts.toString(),
