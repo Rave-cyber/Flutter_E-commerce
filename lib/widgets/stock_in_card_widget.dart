@@ -25,7 +25,7 @@ class StockInCardWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 3,
-      shadowColor: Colors.blue.withOpacity(0.2),
+      shadowColor: Colors.green.withOpacity(0.2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -41,7 +41,7 @@ class StockInCardWidget extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 Colors.white,
-                isDepleted ? Colors.red.shade50 : Colors.blue.shade50,
+                isDepleted ? Colors.red.shade50 : Colors.green.shade50,
               ],
             ),
           ),
@@ -58,16 +58,16 @@ class StockInCardWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isDepleted
                           ? Colors.red.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.1),
+                          : Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDepleted ? Colors.red : Colors.blue,
+                        color: isDepleted ? Colors.red : Colors.green,
                         width: 2,
                       ),
                     ),
                     child: Icon(
                       isDepleted ? Icons.close : Icons.check_circle,
-                      color: isDepleted ? Colors.red : Colors.blue,
+                      color: isDepleted ? Colors.red : Colors.green,
                       size: 24,
                     ),
                   ),
@@ -96,7 +96,7 @@ class StockInCardWidget extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isDepleted ? Colors.red : Colors.blue,
+                                color: isDepleted ? Colors.red : Colors.green,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -204,13 +204,13 @@ class StockInCardWidget extends StatelessWidget {
                           'Remaining: ${stockIn.remaining_quantity} units',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: isDepleted ? Colors.red : Colors.blue,
+                            color: isDepleted ? Colors.red : Colors.green,
                             fontSize: 14,
                           ),
                         ),
                         Text(
                           'Deducted: $deductedQuantity units',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             color: Colors.orange,
                             fontSize: 14,
@@ -227,7 +227,7 @@ class StockInCardWidget extends StatelessWidget {
                           value: stockIn.remaining_quantity / stockIn.quantity,
                           backgroundColor: Colors.grey[300],
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isDepleted ? Colors.red : Colors.blue,
+                            isDepleted ? Colors.red : Colors.green,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -237,7 +237,7 @@ class StockInCardWidget extends StatelessWidget {
                               : '${((stockIn.remaining_quantity / stockIn.quantity) * 100).toInt()}% Left',
                           style: TextStyle(
                             fontSize: 10,
-                            color: isDepleted ? Colors.red : Colors.blue,
+                            color: isDepleted ? Colors.red : Colors.green,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

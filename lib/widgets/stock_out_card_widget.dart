@@ -20,7 +20,7 @@ class StockOutCardWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 3,
-      shadowColor: Colors.orange.withOpacity(0.2),
+      shadowColor: Colors.green.withOpacity(0.2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -36,7 +36,7 @@ class StockOutCardWidget extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 Colors.white,
-                Colors.orange.shade50,
+                Colors.green.shade50,
               ],
             ),
           ),
@@ -51,16 +51,16 @@ class StockOutCardWidget extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.orange,
+                        color: Colors.green,
                         width: 2,
                       ),
                     ),
                     child: const Icon(
                       Icons.inventory_2_outlined,
-                      color: Colors.orange,
+                      color: Colors.green,
                       size: 24,
                     ),
                   ),
@@ -85,7 +85,7 @@ class StockOutCardWidget extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.orange,
+                            color: Colors.green,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(

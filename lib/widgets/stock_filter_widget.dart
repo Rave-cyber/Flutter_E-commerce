@@ -18,14 +18,14 @@ class StockFilterWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       elevation: 3,
-      shadowColor: Colors.blue.withOpacity(0.2),
+      shadowColor: Colors.green.withOpacity(0.2),
       borderRadius: BorderRadius.circular(12),
       color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Icon(Icons.filter_list, color: Colors.blue[600]),
+            Icon(Icons.filter_list, color: Colors.green[600]),
             const SizedBox(width: 8),
             const Text(
               'Filter:',
@@ -38,7 +38,7 @@ class StockFilterWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: Colors.green[50],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButtonHideUnderline(
@@ -58,7 +58,7 @@ class StockFilterWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: Colors.green[50],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButtonHideUnderline(

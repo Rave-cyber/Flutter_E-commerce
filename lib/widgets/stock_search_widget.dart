@@ -14,13 +14,13 @@ class StockSearchWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       elevation: 4,
-      shadowColor: Colors.blue.withOpacity(0.3),
+      shadowColor: Colors.green.withOpacity(0.3),
       borderRadius: BorderRadius.circular(12),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           labelText: 'Search Stock Records',
-          prefixIcon: const Icon(Icons.search, color: Colors.blue),
+          prefixIcon: const Icon(Icons.search, color: Colors.green),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
@@ -33,7 +33,7 @@ class StockSearchWidget extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
+            borderSide: const BorderSide(color: Colors.green, width: 2),
           ),
         ),
         onChanged: (_) => onChanged?.call(),
