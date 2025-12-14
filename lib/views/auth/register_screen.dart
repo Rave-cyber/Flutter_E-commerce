@@ -45,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoadingProvinces = false;
   bool _isLoadingCities = false;
   bool _isLoadingBarangays = false;
+  int _currentStep = 0;
 
   @override
   void initState() {
@@ -264,6 +265,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await customerDoc.set(customer.toMap());
 
         // 🎉 Navigate to home screen with data
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -288,382 +290,416 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Join us and start shopping',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // FIRST NAME
-                TextFormField(
-                  controller: _firstnameController,
-                  decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Enter first name'
-                      : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // MIDDLE NAME
-                TextFormField(
-                  controller: _middlenameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Middle Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // LAST NAME
-                TextFormField(
-                  controller: _lastnameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter last name' : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // ADDRESS SECTION
-                const Text(
-                  'Complete Address',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // STREET ADDRESS
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street Address',
-                    prefixIcon: Icon(Icons.home),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Enter street address'
-                      : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // REGION DROPDOWN
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: _selectedRegion,
-                  decoration: const InputDecoration(
-                    labelText: 'Region',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _isLoadingRegions
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Loading regions...'),
-                          ),
-                        ]
-                      : _regions.map((region) {
-                          return DropdownMenuItem(
+  List<Step> _buildSteps() {
+    return [
+      Step(
+        title: const Text('Personal', style: TextStyle(fontSize: 12)),
+        isActive: _currentStep >= 0,
+        state: _currentStep > 0 ? StepState.complete : StepState.editing,
+        content: Column(
+          children: [
+            TextFormField(
+              controller: _firstnameController,
+              decoration: const InputDecoration(
+                labelText: 'First Name',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter first name' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _middlenameController,
+              decoration: const InputDecoration(
+                labelText: 'Middle Name (Optional)',
+                prefixIcon: Icon(Icons.person_outline),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _lastnameController,
+              decoration: const InputDecoration(
+                labelText: 'Last Name',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter last name' : null,
+            ),
+          ],
+        ),
+      ),
+      Step(
+        title: const Text('Address', style: TextStyle(fontSize: 12)),
+        isActive: _currentStep >= 1,
+        state: _currentStep > 1 ? StepState.complete : StepState.editing,
+        content: Column(
+          children: [
+            TextFormField(
+              controller: _streetController,
+              decoration: const InputDecoration(
+                labelText: 'House/Street',
+                prefixIcon: Icon(Icons.home_outlined),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter house/street' : null,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedRegion,
+              decoration: const InputDecoration(
+                labelText: 'Region',
+                prefixIcon: Icon(Icons.location_on),
+                border: OutlineInputBorder(),
+              ),
+              items: _isLoadingRegions
+                  ? const [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('Loading regions...'),
+                      ),
+                    ]
+                  : _regions
+                      .map((region) => DropdownMenuItem(
                             value: region,
                             child: Text(region['regionName'] ?? region['name']),
-                          );
-                        }).toList(),
-                  onChanged: _isLoadingRegions ? null : _onRegionChanged,
-                  validator: (value) =>
-                      value == null ? 'Please select a region' : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // PROVINCE DROPDOWN
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: _selectedProvince,
-                  decoration: InputDecoration(
-                    labelText: 'Province',
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _isLoadingProvinces
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
-                  ),
-                  items: _provinces.isEmpty && !_isLoadingProvinces
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a region first'),
-                          ),
-                        ]
-                      : _provinces.map((province) {
-                          return DropdownMenuItem(
+                          ))
+                      .toList(),
+              onChanged: _isLoadingRegions ? null : _onRegionChanged,
+              validator: (value) =>
+                  value == null ? 'Please select a region' : null,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedProvince,
+              decoration: InputDecoration(
+                labelText: 'Province',
+                prefixIcon: const Icon(Icons.location_on),
+                border: const OutlineInputBorder(),
+                suffixIcon: _isLoadingProvinces
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+              ),
+              items: _provinces.isEmpty && !_isLoadingProvinces
+                  ? const [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('Select a region first'),
+                      ),
+                    ]
+                  : _provinces
+                      .map((province) => DropdownMenuItem(
                             value: province,
                             child: Text(province['name']),
-                          );
-                        }).toList(),
-                  onChanged: _isLoadingProvinces ? null : _onProvinceChanged,
-                  validator: (value) =>
-                      value == null ? 'Please select a province' : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // CITY/MUNICIPALITY DROPDOWN
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: _selectedCityMunicipality,
-                  decoration: InputDecoration(
-                    labelText: 'City/Municipality',
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _isLoadingCities
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
-                  ),
-                  items: _citiesMunicipalities.isEmpty && !_isLoadingCities
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a province first'),
-                          ),
-                        ]
-                      : _citiesMunicipalities.map((cityMunicipality) {
-                          return DropdownMenuItem(
+                          ))
+                      .toList(),
+              onChanged: _isLoadingProvinces ? null : _onProvinceChanged,
+              validator: (value) =>
+                  value == null ? 'Please select a province' : null,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedCityMunicipality,
+              decoration: InputDecoration(
+                labelText: 'City/Municipality',
+                prefixIcon: const Icon(Icons.location_on),
+                border: const OutlineInputBorder(),
+                suffixIcon: _isLoadingCities
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+              ),
+              items: _citiesMunicipalities.isEmpty && !_isLoadingCities
+                  ? const [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('Select a province first'),
+                      ),
+                    ]
+                  : _citiesMunicipalities
+                      .map((cityMunicipality) => DropdownMenuItem(
                             value: cityMunicipality,
                             child: Text(cityMunicipality['name']),
-                          );
-                        }).toList(),
-                  onChanged:
-                      _isLoadingCities ? null : _onCityMunicipalityChanged,
-                  validator: (value) => value == null
-                      ? 'Please select a city/municipality'
-                      : null,
+                          ))
+                      .toList(),
+              onChanged: _isLoadingCities ? null : _onCityMunicipalityChanged,
+              validator: (value) =>
+                  value == null ? 'Please select a city/municipality' : null,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedBarangay,
+              decoration: InputDecoration(
+                labelText: 'Barangay (Optional)',
+                prefixIcon: const Icon(Icons.location_on),
+                border: const OutlineInputBorder(),
+                suffixIcon: _isLoadingBarangays
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+              ),
+              items: _barangays.isEmpty && !_isLoadingBarangays
+                  ? const [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text('Select a city/municipality first'),
+                      ),
+                    ]
+                  : _barangays
+                      .map((barangay) => DropdownMenuItem(
+                            value: barangay,
+                            child: Text(barangay['name']),
+                          ))
+                      .toList(),
+              onChanged: _isLoadingBarangays
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedBarangay = value;
+                      });
+                    },
+            ),
+          ],
+        ),
+      ),
+      Step(
+        title: const Text('Account', style: TextStyle(fontSize: 12)),
+        isActive: _currentStep >= 2,
+        state: StepState.editing,
+        content: Column(
+          children: [
+            TextFormField(
+              controller: _contactController,
+              decoration: const InputDecoration(
+                labelText: 'Contact Number',
+                prefixIcon: Icon(Icons.phone),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Enter contact number'
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter your email';
+                }
+                if (!value.contains('@')) {
+                  return 'Enter a valid email';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter password';
+                }
+                if (value.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                  onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Confirm your password';
+                }
+                if (value != _passwordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
 
-                const SizedBox(height: 16),
+  bool _validateStep(int step) {
+    switch (step) {
+      case 0:
+        if ((_firstnameController.text.trim().isEmpty) ||
+            (_lastnameController.text.trim().isEmpty)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Enter your first and last name')),
+          );
+          return false;
+        }
+        return true;
+      case 1:
+        if (_streetController.text.trim().isEmpty ||
+            _selectedRegion == null ||
+            _selectedProvince == null ||
+            _selectedCityMunicipality == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Complete your address: street, region, province, city/municipality')),
+          );
+          return false;
+        }
+        return true;
+      case 2:
+        if (_contactController.text.trim().isEmpty ||
+            _emailController.text.trim().isEmpty ||
+            !_emailController.text.contains('@') ||
+            _passwordController.text.trim().length < 6 ||
+            _confirmPasswordController.text.trim() !=
+                _passwordController.text.trim()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Complete account details properly')),
+          );
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  }
 
-                // BARANGAY DROPDOWN
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: _selectedBarangay,
-                  decoration: InputDecoration(
-                    labelText: 'Barangay (Optional)',
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _isLoadingBarangays
+  @override
+  Widget build(BuildContext context) {
+    final steps = _buildSteps();
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Create Account'),
+        centerTitle: true,
+        elevation: 0.5,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+      ),
+      body: Form(
+        key: _formKey,
+        child: Stepper(
+          type: StepperType.vertical,
+          currentStep: _currentStep,
+          steps: steps,
+          onStepContinue: () async {
+            if (_currentStep < steps.length - 1) {
+              if (_validateStep(_currentStep)) {
+                setState(() => _currentStep += 1);
+              }
+            } else {
+              if (_validateStep(_currentStep)) {
+                await _register();
+              }
+            }
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) setState(() => _currentStep -= 1);
+          },
+          controlsBuilder: (context, details) {
+            final isLast = _currentStep == steps.length - 1;
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(
+                children: [
+                  if (_currentStep > 0)
+                    OutlinedButton(
+                      onPressed: details.onStepCancel,
+                      child: const Text('Back'),
+                    ),
+                  const Spacer(),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : details.onStepContinue,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(130, 44),
+                    ),
+                    child: _isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation(Colors.white)),
                           )
-                        : null,
+                        : Text(isLast ? 'Create Account' : 'Next'),
                   ),
-                  items: _barangays.isEmpty && !_isLoadingBarangays
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a city/municipality first'),
-                          ),
-                        ]
-                      : _barangays.map((barangay) {
-                          return DropdownMenuItem(
-                            value: barangay,
-                            child: Text(barangay['name']),
-                          );
-                        }).toList(),
-                  onChanged: _isLoadingBarangays
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _selectedBarangay = value;
-                          });
-                        },
-                ),
-
-                const SizedBox(height: 16),
-
-                // CONTACT
-                TextFormField(
-                  controller: _contactController,
-                  decoration: const InputDecoration(
-                    labelText: 'Contact Number',
-                    prefixIcon: Icon(Icons.phone),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Enter contact number'
-                      : null,
-                ),
-
-                const SizedBox(height: 16),
-
-                // EMAIL
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // PASSWORD
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // CONFIRM PASSWORD
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                      onPressed: () => setState(() =>
-                          _obscureConfirmPassword = !_obscureConfirmPassword),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _register,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          )
-                        : const Text(
-                            'Create Account',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already have an account?",
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                        );
-                      },
-                      child: const Text('Sign In'),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Already have an account?",
+                style: TextStyle(color: Colors.grey[600])),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              child: const Text('Sign In'),
             ),
-          ),
+          ],
         ),
       ),
     );
