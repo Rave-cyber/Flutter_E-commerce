@@ -1,14 +1,55 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../firestore_service.dart';
 
-class OrderDetailsModal extends StatelessWidget {
+class OrderDetailsModal extends StatefulWidget {
   final Map<String, dynamic> order;
 
   const OrderDetailsModal({
     Key? key,
     required this.order,
   }) : super(key: key);
+
+  @override
+  State<OrderDetailsModal> createState() => _OrderDetailsModalState();
+}
+
+class _OrderDetailsModalState extends State<OrderDetailsModal> {
+  Map<String, dynamic>? _deliveryStaffData;
+  bool _isLoadingDeliveryStaff = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeliveryStaffData();
+  }
+
+  Future<void> _loadDeliveryStaffData() async {
+    final deliveryStaffId = widget.order['deliveryStaffId'];
+    if (deliveryStaffId != null && widget.order['status'] == 'delivered') {
+      setState(() {
+        _isLoadingDeliveryStaff = true;
+      });
+
+      try {
+        final userData = await FirestoreService.getUserData(deliveryStaffId);
+        if (userData != null) {
+          setState(() {
+            _deliveryStaffData = userData.toMap();
+          });
+        }
+      } catch (e) {
+        print('Error loading delivery staff data: $e');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoadingDeliveryStaff = false;
+          });
+        }
+      }
+    }
+  }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
@@ -31,15 +72,19 @@ class OrderDetailsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = (order['items'] as List<dynamic>?) ?? [];
-    final totalAmount = order['total']?.toDouble() ?? 0.0;
-    final shipping = order['shipping']?.toDouble() ?? 0.0;
-    final subtotal = order['subtotal']?.toDouble() ?? 0.0;
-    final createdAt = order['createdAt'] as Timestamp?;
-    final updatedAt = order['updatedAt'] as Timestamp?;
-    final shippingAddress = order['shippingAddress'] ?? 'No address provided';
-    final contactNumber = order['contactNumber'] ?? 'No contact number';
-    final status = order['status'] ?? 'pending';
+    final items = (widget.order['items'] as List<dynamic>?) ?? [];
+    final totalAmount = widget.order['total']?.toDouble() ?? 0.0;
+    final shipping = widget.order['shipping']?.toDouble() ?? 0.0;
+    final subtotal = widget.order['subtotal']?.toDouble() ?? 0.0;
+    final createdAt = widget.order['createdAt'] as Timestamp?;
+    final updatedAt = widget.order['updatedAt'] as Timestamp?;
+    final deliveredAt = widget.order['deliveredAt'] as Timestamp?;
+    final shippingAddress =
+        widget.order['shippingAddress'] ?? 'No address provided';
+    final contactNumber = widget.order['contactNumber'] ?? 'No contact number';
+    final status = widget.order['status'] ?? 'pending';
+    final deliveryProofImage = widget.order['deliveryProofImage'];
+    final deliveryNotes = widget.order['deliveryNotes'];
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -83,7 +128,7 @@ class OrderDetailsModal extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Order #${order['id'].toString().substring(0, 8)}',
+                      'Order #${widget.order['id'].toString().substring(0, 8)}',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -247,10 +292,18 @@ class OrderDetailsModal extends StatelessWidget {
                       _buildInfoRow(
                         icon: Icons.payment,
                         label: 'Payment Method',
-                        value: (order['paymentMethod'] ?? 'COD').toUpperCase(),
+                        value: (widget.order['paymentMethod'] ?? 'COD')
+                            .toUpperCase(),
                       ),
                     ]),
                     const SizedBox(height: 20),
+
+                    // Delivery Information (only for delivered orders)
+                    if (status == 'delivered') ...[
+                      _buildSectionTitle('Delivery Information'),
+                      _buildDeliveryInfo(),
+                      const SizedBox(height: 20),
+                    ],
 
                     // Timestamps
                     _buildSectionTitle('Timeline'),
@@ -269,6 +322,14 @@ class OrderDetailsModal extends StatelessWidget {
                           value: _formatDate(updatedAt.toDate()),
                         ),
                       ],
+                      if (deliveredAt != null) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          icon: Icons.check_circle,
+                          label: 'Delivered Date',
+                          value: _formatDate(deliveredAt.toDate()),
+                        ),
+                      ],
                     ]),
                   ],
                 ),
@@ -278,6 +339,101 @@ class OrderDetailsModal extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildDeliveryInfo() {
+    final deliveryProofImage = widget.order['deliveryProofImage'];
+    final deliveryNotes = widget.order['deliveryNotes'];
+
+    return _buildInfoContainer([
+      // Delivery Staff Information
+      if (_isLoadingDeliveryStaff)
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: CircularProgressIndicator()),
+        )
+      else if (_deliveryStaffData != null) ...[
+        _buildInfoRow(
+          icon: Icons.person,
+          label: 'Delivery Staff',
+          value: _deliveryStaffData!['name'] ?? 'Unknown Staff',
+        ),
+        const SizedBox(height: 12),
+        _buildInfoRow(
+          icon: Icons.phone,
+          label: 'Contact',
+          value: _deliveryStaffData!['contactNumber'] ?? 'No contact',
+        ),
+        if (deliveryNotes != null && deliveryNotes.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            icon: Icons.note,
+            label: 'Delivery Notes',
+            value: deliveryNotes,
+          ),
+        ],
+      ] else ...[
+        // Fallback if no delivery staff data
+        _buildInfoRow(
+          icon: Icons.local_shipping,
+          label: 'Delivery Staff',
+          value: 'Assigned',
+        ),
+      ],
+
+      // Delivery Proof Image
+      if (deliveryProofImage != null && deliveryProofImage.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        const Text(
+          'Delivery Proof:',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          height: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              deliveryProofImage,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.image_not_supported,
+                      size: 48,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Image not available',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ]);
   }
 
   Widget _buildSectionTitle(String title) {

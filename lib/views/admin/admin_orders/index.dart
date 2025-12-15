@@ -393,8 +393,7 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
                                 order['id'],
                                 order['status'] ?? 'pending',
                               ),
-                              onViewDetails: () =>
-                                  _showOrderDetailsModal(order),
+                              onCardTap: () => _showOrderDetailsModal(order),
                             );
                           },
                         ),
@@ -436,13 +435,13 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
 class AdminOrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
   final VoidCallback onStatusChanged;
-  final VoidCallback onViewDetails;
+  final VoidCallback onCardTap;
 
   const AdminOrderCard({
     super.key,
     required this.order,
     required this.onStatusChanged,
-    required this.onViewDetails,
+    required this.onCardTap,
   });
 
   @override
@@ -453,157 +452,149 @@ class AdminOrderCard extends StatelessWidget {
     final paymentMethod = order['paymentMethod'] ?? 'gcash';
     final customerName = order['customerName'] ?? 'Unknown Customer';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Order header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Order #${order['id'].toString().substring(0, 8)}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color:
-                            _getStatusColor(order['status']).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        (order['status'] ?? 'pending').toUpperCase(),
-                        style: TextStyle(
-                          color: _getStatusColor(order['status']),
+    return GestureDetector(
+      onTap: onCardTap,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Order header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Order #${order['id'].toString().substring(0, 8)}',
+                        style: const TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color:
+                              _getStatusColor(order['status']).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          (order['status'] ?? 'pending').toUpperCase(),
+                          style: TextStyle(
+                            color: _getStatusColor(order['status']),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    '\$${totalAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-
-            // Order details
-            Row(
-              children: [
-                Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  customerName,
-                  style: TextStyle(color: Colors.grey[800]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.shopping_bag_outlined,
-                    size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  '${items.length} item(s)',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.payment_outlined, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  _formatPaymentMethod(paymentMethod),
-                  style: TextStyle(color: Colors.grey[800]),
-                ),
-              ],
-            ),
-
-            if (createdAt != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatDate(createdAt.toDate()),
-                    style: TextStyle(color: Colors.grey.shade600),
+                    child: Text(
+                      '₱${NumberFormat('#,###.00').format(totalAmount)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ],
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              const Divider(),
+              const SizedBox(height: 8),
 
-            // Admin action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onStatusChanged,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text(
-                      'Change Status',
-                      style: TextStyle(color: Colors.blue),
-                    ),
+              // Order details
+              Row(
+                children: [
+                  Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    customerName,
+                    style: TextStyle(color: Colors.grey[800]),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onViewDetails,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('View Details'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.shopping_bag_outlined,
+                      size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${items.length} item(s)',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.payment_outlined,
+                      size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatPaymentMethod(paymentMethod),
+                    style: TextStyle(color: Colors.grey[800]),
+                  ),
+                ],
+              ),
+
+              if (createdAt != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatDate(createdAt.toDate()),
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Admin action button - single green button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    onStatusChanged();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'Change Status',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
