@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../firestore_service.dart';
 import '../../../layouts/delivery_staff_layout.dart';
+import '../../../widgets/order_details_modal.dart';
 import '../../../widgets/order_filter_widget.dart';
 import '../../../widgets/order_pagination_widget.dart';
 import '../../../widgets/order_search_widget.dart';
@@ -66,6 +67,15 @@ class _DeliveryStaffOrdersScreenState extends State<DeliveryStaffOrdersScreen> {
       }).toList();
     }
     return filtered;
+  }
+
+  void _showOrderDetailsModal(Map<String, dynamic> order) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return OrderDetailsModal(order: order);
+      },
+    );
   }
 
   @override
@@ -163,7 +173,10 @@ class _DeliveryStaffOrdersScreenState extends State<DeliveryStaffOrdersScreen> {
                           itemCount: paginatedOrders.length,
                           itemBuilder: (context, index) {
                             final order = paginatedOrders[index];
-                            return OrderCard(order: order);
+                            return GestureDetector(
+                              onTap: () => _showOrderDetailsModal(order),
+                              child: OrderCard(order: order),
+                            );
                           },
                         ),
                       ),
@@ -216,6 +229,8 @@ class OrderCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -236,11 +251,21 @@ class OrderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Status: ${order['status']}',
-                      style: TextStyle(
-                        color: _getStatusColor(order['status']),
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color:
+                            _getStatusColor(order['status']).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        (order['status'] ?? 'pending').toUpperCase(),
+                        style: TextStyle(
+                          color: _getStatusColor(order['status']),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -266,22 +291,60 @@ class OrderCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 8),
 
             // Order details
-            Text(
-              'Items: ${items.length} item(s)',
-              style: const TextStyle(fontWeight: FontWeight.w500),
+            Row(
+              children: [
+                Icon(Icons.shopping_bag_outlined,
+                    size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  '${items.length} item(s)',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text('Address: $shippingAddress'),
-            const SizedBox(height: 2),
-            Text('Contact: $contactNumber'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    shippingAddress,
+                    style: TextStyle(color: Colors.grey[800]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.phone_outlined, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  contactNumber,
+                  style: TextStyle(color: Colors.grey[800]),
+                ),
+              ],
+            ),
 
             if (createdAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Order Date: ${_formatDate(createdAt.toDate())}',
-                style: TextStyle(color: Colors.grey.shade600),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatDate(createdAt.toDate()),
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
               ),
             ],
 
@@ -293,9 +356,12 @@ class OrderCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => _showPickupConfirmation(context, order),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text(
                   'Pick Up Order',
@@ -318,6 +384,10 @@ class OrderCard extends StatelessWidget {
         return Colors.blue;
       case 'processing':
         return Colors.orange;
+      case 'shipped':
+        return Colors.purple;
+      case 'delivered':
+        return Colors.green;
       default:
         return Colors.grey;
     }
@@ -333,6 +403,8 @@ class OrderCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Confirm Pickup'),
           content: Text(
               'Are you sure you want to pick up order #${order['id'].toString().substring(0, 8)}?\n\n'
@@ -350,6 +422,9 @@ class OrderCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Confirm Pickup'),
             ),

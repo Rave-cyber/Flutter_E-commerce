@@ -18,7 +18,7 @@ class OrderPaginationWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       elevation: 4,
-      shadowColor: Colors.orange.withOpacity(0.2),
+      shadowColor: Colors.green.withOpacity(0.2),
       borderRadius: BorderRadius.circular(30),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -39,11 +39,11 @@ class OrderPaginationWidget extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
+                    color: Colors.green[50],
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Icon(Icons.arrow_back_ios_new,
-                      size: 18, color: Colors.orange[700]),
+                      size: 18, color: Colors.green[700]),
                 ),
               ),
             ),
@@ -69,11 +69,11 @@ class OrderPaginationWidget extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
+                    color: Colors.green[50],
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Icon(Icons.arrow_forward_ios,
-                      size: 18, color: Colors.orange[700]),
+                      size: 18, color: Colors.green[700]),
                 ),
               ),
             ),
