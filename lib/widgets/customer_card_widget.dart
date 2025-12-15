@@ -197,22 +197,22 @@ class CustomerCardWidget extends StatelessWidget {
                       PopupMenuButton<String>(
                         onSelected: onMenuSelected,
                         itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'view',
-                            child: ListTile(
-                              leading: Icon(Icons.visibility),
-                              title: Text('View Details'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: ListTile(
-                              leading: Icon(Icons.edit),
-                              title: Text('Edit'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
+                          // const PopupMenuItem(
+                          //   value: 'view',
+                          //   child: ListTile(
+                          //     leading: Icon(Icons.visibility),
+                          //     title: Text('View Details'),
+                          //     contentPadding: EdgeInsets.zero,
+                          //   ),
+                          // ),
+                          // const PopupMenuItem(
+                          //   value: 'edit',
+                          //   child: ListTile(
+                          //     leading: Icon(Icons.edit),
+                          //     title: Text('Edit'),
+                          //     contentPadding: EdgeInsets.zero,
+                          //   ),
+                          // ),
                           PopupMenuItem(
                             value: isArchived ? 'unarchive' : 'archive',
                             child: ListTile(
@@ -223,15 +223,15 @@ class CustomerCardWidget extends StatelessWidget {
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: ListTile(
-                              leading: Icon(Icons.delete, color: Colors.black),
-                              title: Text('Delete',
-                                  style: TextStyle(color: Colors.black)),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
+                          // const PopupMenuItem(
+                          //   value: 'delete',
+                          //   child: ListTile(
+                          //     leading: Icon(Icons.delete, color: Colors.black),
+                          //     title: Text('Delete',
+                          //         style: TextStyle(color: Colors.black)),
+                          //     contentPadding: EdgeInsets.zero,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ],

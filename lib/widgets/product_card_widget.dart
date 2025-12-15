@@ -268,18 +268,18 @@ class ProductCardWidget extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete,
-                                      size: 20, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('Delete',
-                                      style: TextStyle(color: Colors.red)),
-                                ],
-                              ),
-                            ),
+                            // const PopupMenuItem(
+                            //   value: 'delete',
+                            //   child: Row(
+                            //     children: [
+                            //       Icon(Icons.delete,
+                            //           size: 20, color: Colors.red),
+                            //       SizedBox(width: 8),
+                            //       Text('Delete',
+                            //           style: TextStyle(color: Colors.red)),
+                            //     ],
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
