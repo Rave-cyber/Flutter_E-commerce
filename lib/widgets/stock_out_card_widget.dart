@@ -104,16 +104,16 @@ class StockOutCardWidget extends StatelessWidget {
                   PopupMenuButton<String>(
                     onSelected: onMenuSelected,
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'fifo_details',
-                        child: Row(
-                          children: [
-                            Icon(Icons.list_alt, size: 18),
-                            SizedBox(width: 8),
-                            Text('FIFO Details'),
-                          ],
-                        ),
-                      ),
+                      // const PopupMenuItem(
+                      //   value: 'fifo_details',
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(Icons.list_alt, size: 18),
+                      //       SizedBox(width: 8),
+                      //       Text('FIFO Details'),
+                      //     ],
+                      //   ),
+                      // ),
                       const PopupMenuItem(
                         value: 'edit',
                         child: Row(
@@ -124,16 +124,16 @@ class StockOutCardWidget extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 18),
-                            SizedBox(width: 8),
-                            Text('Delete'),
-                          ],
-                        ),
-                      ),
+                      // const PopupMenuItem(
+                      //   value: 'delete',
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(Icons.delete, size: 18),
+                      //       SizedBox(width: 8),
+                      //       Text('Delete'),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],
