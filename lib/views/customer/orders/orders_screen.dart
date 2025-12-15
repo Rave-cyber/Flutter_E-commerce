@@ -6,6 +6,7 @@ import 'package:firebase/firestore_service.dart';
 import 'package:firebase/views/customer/orders/order_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter/services.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({Key? key}) : super(key: key);
@@ -187,13 +188,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 backgroundColor: lightGreen,
                 selectedColor: primaryGreen,
                 side: BorderSide(
-                  color: isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
+                  color:
+                      isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 elevation: 0,
                 shadowColor: Colors.transparent,
               ),
@@ -331,6 +334,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     // Using consistent green theme for all statuses
     final statusText = _capitalize(status);
+    final isDelivered = status.toLowerCase() == 'delivered';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -432,13 +436,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ],
                     ),
                   ),
-                  Text(
-                    '\$${total.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: primaryGreen,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '\₱${total.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: primaryGreen,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
