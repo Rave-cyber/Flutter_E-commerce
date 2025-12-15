@@ -916,6 +916,7 @@ class FirestoreService {
     return _firestore
         .collection('orders')
         .where('status', isEqualTo: 'delivered')
+        .where('deliveryStaffId', isEqualTo: deliveryStaffId)
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) {
