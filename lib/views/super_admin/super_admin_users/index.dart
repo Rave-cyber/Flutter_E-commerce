@@ -297,7 +297,10 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 // We are querying the 'users' collection
-                stream: _authService.firestore.collection('users').snapshots(),
+                stream: _authService.firestore
+                    .collection('users')
+                    .orderBy('created_at', descending: true)
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
