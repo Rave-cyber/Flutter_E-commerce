@@ -4,7 +4,10 @@ import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/delivery_staff_model.dart';
 import 'package:firebase/models/user_model.dart';
 import '../../../layouts/super_admin_layout.dart';
+<<<<<<< HEAD
 import '../../../services/philippine_address_service.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class SuperAdminUsersForm extends StatefulWidget {
   final String? userId; // For editing if needed in future
@@ -39,6 +42,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _middleNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
+<<<<<<< HEAD
   final TextEditingController _contactController = TextEditingController();
 
   // Address fields (replacing simple address controller)
@@ -60,6 +64,11 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   bool _isLoadingCities = false;
   bool _isLoadingBarangays = false;
 
+=======
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _contactController = TextEditingController();
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   // Delivery Staff Specific Fields
   final TextEditingController _vehicleTypeController = TextEditingController();
   final TextEditingController _vehicleNumberController =
@@ -71,7 +80,10 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   void initState() {
     super.initState();
     _selectedRole = widget.initialRole;
+<<<<<<< HEAD
     _loadRegions();
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
@@ -82,14 +94,20 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
+<<<<<<< HEAD
     _contactController.dispose();
     _streetController.dispose();
+=======
+    _addressController.dispose();
+    _contactController.dispose();
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     _vehicleTypeController.dispose();
     _vehicleNumberController.dispose();
     _licenseNumberController.dispose();
     super.dispose();
   }
 
+<<<<<<< HEAD
   Future<void> _loadRegions() async {
     setState(() {
       _isLoadingRegions = true;
@@ -247,6 +265,12 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   void _nextStep() {
     if (_currentStep < 4) {
       // Max steps is 5 (0-4)
+=======
+  // Stepper navigation methods
+  void _nextStep() {
+    if (_currentStep < 3) {
+      // Max steps is 4 (0-3)
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       setState(() => _currentStep++);
     }
   }
@@ -260,9 +284,15 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   // Calculate which step is the last for current role
   int _getLastStepForRole() {
     if (_selectedRole == 'delivery_staff') {
+<<<<<<< HEAD
       return 4; // Last step is delivery details
     } else if (_selectedRole == 'customer') {
       return 3; // Last step is address info
+=======
+      return 3; // Last step is delivery details
+    } else if (_selectedRole == 'customer') {
+      return 2; // Last step is personal info
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } else {
       return 1; // Last step is credentials (admin)
     }
@@ -284,6 +314,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
         if (_selectedRole == 'admin') return true; // Admin skips this step
         return _firstNameController.text.isNotEmpty &&
             _lastNameController.text.isNotEmpty &&
+<<<<<<< HEAD
             _contactController.text.isNotEmpty;
       case 3:
         if (_selectedRole == 'admin') return true; // Admin skips this step
@@ -292,6 +323,11 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
             _selectedProvince != null &&
             _selectedCityMunicipality != null;
       case 4:
+=======
+            _contactController.text.isNotEmpty &&
+            _addressController.text.isNotEmpty;
+      case 3:
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         if (_selectedRole != 'delivery_staff')
           return true; // Only delivery staff needs this
         return _vehicleTypeController.text.isNotEmpty &&
@@ -311,9 +347,13 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
         return true;
       case 2: // Personal Info - skip for admin
         return _selectedRole != 'admin';
+<<<<<<< HEAD
       case 3: // Address Info - skip for admin
         return _selectedRole != 'admin';
       case 4: // Delivery Details - only for delivery_staff
+=======
+      case 3: // Delivery Details - only for delivery_staff
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         return _selectedRole == 'delivery_staff';
       default:
         return false;
@@ -347,7 +387,11 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
       final firstName = _firstNameController.text.trim();
       final middleName = _middleNameController.text.trim();
       final lastName = _lastNameController.text.trim();
+<<<<<<< HEAD
       final address = _buildFullAddress();
+=======
+      final address = _addressController.text.trim();
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       final contact = _contactController.text.trim();
 
       // Create User with Auth Service
@@ -419,6 +463,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   @override
   Widget build(BuildContext context) {
     return SuperAdminLayout(
+<<<<<<< HEAD
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -672,11 +717,214 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
               ],
             ),
           ),
+=======
+      title: 'Create User',
+      child: Form(
+        key: _formKey,
+        child: Stepper(
+          currentStep: _currentStep,
+          onStepContinue:
+              _currentStep == _getLastStepForRole() ? _submitForm : _nextStep,
+          onStepCancel: _previousStep,
+          onStepTapped: (step) {
+            // Only allow tapping on visible steps
+            if (_shouldShowStep(step)) {
+              setState(() => _currentStep = step);
+            }
+          },
+          controlsBuilder: (BuildContext context, ControlsDetails details) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (_currentStep > 0)
+                    ElevatedButton(
+                      onPressed: details.onStepCancel,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Back',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  if (_currentStep > 0) const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : details.onStepContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text(
+                            _currentStep == _getLastStepForRole()
+                                ? 'Create User'
+                                : 'Next',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+          steps: [
+            // Step 0: Account Role (always visible)
+            Step(
+              title: const Text('Account Role'),
+              content: _buildSectionCard(
+                title: 'Account Role',
+                child: _buildRoleDropdown(),
+              ),
+              isActive: _currentStep >= 0,
+              state: _currentStep >= 0
+                  ? (_validateCurrentStep()
+                      ? StepState.complete
+                      : StepState.indexed)
+                  : StepState.indexed,
+            ),
+
+            // Step 1: Login Credentials (always visible)
+            Step(
+              title: const Text('Login Credentials'),
+              content: _buildSectionCard(
+                title: 'Login Credentials',
+                child: Column(
+                  children: [
+                    _buildTextField(_emailController, 'Email',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress),
+                    const SizedBox(height: 16),
+                    _buildTextField(_passwordController, 'Password',
+                        icon: Icons.lock, obscureText: true),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.green),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              isActive: _currentStep >= 1,
+              state: _currentStep >= 1
+                  ? (_validateCurrentStep()
+                      ? StepState.complete
+                      : StepState.indexed)
+                  : StepState.indexed,
+            ),
+
+            // Step 2: Personal Information (hidden for admin)
+            Step(
+              title: const Text('Personal Information'),
+              content: _selectedRole != 'admin'
+                  ? _buildSectionCard(
+                      title: 'Personal Information',
+                      child: Column(
+                        children: [
+                          _buildTextField(_firstNameController, 'First Name',
+                              icon: Icons.person),
+                          const SizedBox(height: 16),
+                          _buildTextField(_middleNameController, 'Middle Name',
+                              icon: Icons.person_outline),
+                          const SizedBox(height: 16),
+                          _buildTextField(_lastNameController, 'Last Name',
+                              icon: Icons.person),
+                          const SizedBox(height: 16),
+                          _buildTextField(_contactController, 'Contact Number',
+                              icon: Icons.phone,
+                              keyboardType: TextInputType.phone),
+                          const SizedBox(height: 16),
+                          _buildTextField(_addressController, 'Address',
+                              icon: Icons.location_on, maxLines: 2),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(), // Empty content for admin
+              isActive: _currentStep >= 2 && _selectedRole != 'admin',
+              state: _currentStep >= 2 && _selectedRole != 'admin'
+                  ? (_validateCurrentStep()
+                      ? StepState.complete
+                      : StepState.indexed)
+                  : StepState.indexed,
+            ),
+
+            // Step 3: Delivery Staff Details (only for delivery_staff)
+            Step(
+              title: const Text('Delivery Staff Details'),
+              content: _selectedRole == 'delivery_staff'
+                  ? _buildSectionCard(
+                      title: 'Delivery Staff Details',
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                              _vehicleTypeController, 'Vehicle Type',
+                              icon: Icons.directions_car),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                              _vehicleNumberController, 'Vehicle Number',
+                              icon: Icons.confirmation_number),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                              _licenseNumberController, 'License Number',
+                              icon: Icons.card_membership),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(), // Empty content for others
+              isActive: _currentStep >= 3 && _selectedRole == 'delivery_staff',
+              state: _currentStep >= 3 && _selectedRole == 'delivery_staff'
+                  ? (_validateCurrentStep()
+                      ? StepState.complete
+                      : StepState.indexed)
+                  : StepState.indexed,
+            ),
+          ],
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildAdminPlaceholder(String message) {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -706,6 +954,8 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     );
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildSectionCard({required String title, required Widget child}) {
     return Container(
       decoration: BoxDecoration(
@@ -733,6 +983,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
               ),
             ),
           ),
+<<<<<<< HEAD
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -748,6 +999,9 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
               ),
             ),
           ),
+=======
+          const Divider(height: 1),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           Padding(
             padding: const EdgeInsets.all(20),
             child: child,
@@ -804,14 +1058,18 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     bool obscureText = false,
     TextInputType? keyboardType,
     int maxLines = 1,
+<<<<<<< HEAD
     bool required = false,
     String? Function(String?)? validator,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLines: maxLines,
+<<<<<<< HEAD
       validator: validator ??
           (value) {
             if (required && (value == null || value.isEmpty)) {
@@ -821,6 +1079,10 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
           },
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
+=======
+      decoration: InputDecoration(
+        labelText: label,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         prefixIcon: icon != null ? Icon(icon) : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -836,6 +1098,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
+<<<<<<< HEAD
     );
   }
 
@@ -1006,6 +1269,20 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
+=======
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        if (label == 'Email' && !value.contains('@')) {
+          return 'Please enter a valid email';
+        }
+        if (label == 'Password' && value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
+        return null;
+      },
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     );
   }
 }

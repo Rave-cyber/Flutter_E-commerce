@@ -5,6 +5,10 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
   printing
+<<<<<<< HEAD
+=======
+  url_launcher_linux
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

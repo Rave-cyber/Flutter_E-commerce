@@ -264,9 +264,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 fontSize: 16,
               ),
             ),
+<<<<<<< HEAD
             if (product.stock_quantity != null &&
                 product.stock_quantity! <= 5 &&
                 product.stock_quantity! > 0)
+=======
+            if (product.stock_quantity! < 5 && product.stock_quantity! > 0)
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               Text(
                 'Only ${product.stock_quantity} left',
                 style: const TextStyle(
@@ -395,6 +399,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: categories.map((category) {
+<<<<<<< HEAD
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -423,6 +428,29 @@ class _SearchScreenState extends State<SearchScreen> {
                           fontSize: 12,
                         ),
                       ),
+=======
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(category.name),
+                      selected: false,
+                      selectedColor: primaryGreen,
+                      backgroundColor: Colors.grey[200],
+                      labelStyle: TextStyle(
+                        color: primaryGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      onSelected: (selected) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoriesScreen(
+                              initialCategoryId: category.id,
+                            ),
+                          ),
+                        );
+                      },
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     ),
                   );
                 }).toList(),

@@ -67,10 +67,13 @@ class OrderModel {
   final String? contactNumber;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+<<<<<<< HEAD
   final String? deliveryProofImage;
   final String? deliveryNotes;
   final String? deliveryStaffId;
   final DateTime? deliveredAt;
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   OrderModel({
     required this.id,
@@ -86,10 +89,13 @@ class OrderModel {
     this.contactNumber,
     this.createdAt,
     this.updatedAt,
+<<<<<<< HEAD
     this.deliveryProofImage,
     this.deliveryNotes,
     this.deliveryStaffId,
     this.deliveredAt,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   });
 
   // Convert OrderModel to Map for Firestore
@@ -112,11 +118,14 @@ class OrderModel {
       'updatedAt': updatedAt != null
           ? Timestamp.fromDate(updatedAt!)
           : FieldValue.serverTimestamp(),
+<<<<<<< HEAD
       'deliveryProofImage': deliveryProofImage,
       'deliveryNotes': deliveryNotes,
       'deliveryStaffId': deliveryStaffId,
       'deliveredAt':
           deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     };
   }
 
@@ -145,6 +154,7 @@ class OrderModel {
       contactNumber: map['contactNumber'],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
+<<<<<<< HEAD
       deliveryProofImage: map['deliveryProofImage'],
       deliveryNotes: map['deliveryNotes'],
       deliveryStaffId: map['deliveryStaffId'],
@@ -152,3 +162,9 @@ class OrderModel {
     );
   }
 }
+=======
+    );
+  }
+}
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663

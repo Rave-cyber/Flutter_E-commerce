@@ -2,8 +2,11 @@ import 'package:firebase/models/product.dart';
 import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
+<<<<<<< HEAD
 import '../../../widgets/product_selection_modal.dart';
 import '../../../widgets/product_variant_selection_modal.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import '/models/stock_in_model.dart';
 import '/models/product_variant_model.dart';
 import '/models/supplier_model.dart';
@@ -36,10 +39,14 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _reasonController = TextEditingController();
+<<<<<<< HEAD
 
   bool _isLoading = true;
   bool _isSaving = false;
   int _currentStep = 0;
+=======
+  bool _isArchived = false;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   List<ProductModel> _products = [];
   List<ProductVariantModel> _allVariants = [];
@@ -58,14 +65,21 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
       _quantityController.text = widget.stockIn!.quantity.toString();
       _priceController.text = widget.stockIn!.price.toString();
       _reasonController.text = widget.stockIn!.reason;
+<<<<<<< HEAD
+=======
+      _isArchived = widget.stockIn!.is_archived;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     }
   }
 
   Future<void> _loadData() async {
+<<<<<<< HEAD
     setState(() {
       _isLoading = true;
     });
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     _suppliers = await SupplierService().fetchSuppliersOnce();
     _warehouses = await WarehouseService().fetchWarehousesOnce();
     _stockCheckers = await StockCheckerService().fetchStockCheckersOnce();
@@ -95,9 +109,13 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
       }
     }
 
+<<<<<<< HEAD
     setState(() {
       _isLoading = false;
     });
+=======
+    setState(() {});
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   void _loadProductVariants(ProductModel product) {
@@ -112,6 +130,7 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
     }
   }
 
+<<<<<<< HEAD
   // Stepper navigation methods
   void _nextStep() {
     if (_validateCurrentStep()) {
@@ -626,6 +645,11 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
 
     setState(() => _isSaving = true);
 
+=======
+  Future<void> _saveStockIn() async {
+    if (!_formKey.currentState!.validate()) return;
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     final id =
         widget.stockIn?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -640,11 +664,16 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
       remaining_quantity: int.tryParse(_quantityController.text) ?? 0,
       price: double.tryParse(_priceController.text) ?? 0.0,
       reason: _reasonController.text.trim(),
+<<<<<<< HEAD
       is_archived: false,
+=======
+      is_archived: _isArchived,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       created_at: widget.stockIn?.created_at ?? DateTime.now(),
       updated_at: DateTime.now(),
     );
 
+<<<<<<< HEAD
     try {
       if (widget.stockIn == null) {
         await _stockInService.createStockIn(stockIn);
@@ -672,10 +701,20 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+=======
+    if (widget.stockIn == null) {
+      await _stockInService.createStockIn(stockIn);
+    } else {
+      await _stockInService.updateStockIn(stockIn);
+    }
+
+    if (context.mounted) Navigator.pop(context);
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     if (_isLoading) {
       return AdminLayout(
         child: const Center(child: CircularProgressIndicator()),
@@ -806,6 +845,163 @@ class _AdminStockInFormState extends State<AdminStockInForm> {
               steps: steps,
             ),
           ),
+=======
+    return AdminLayout(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 8),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  /// PRODUCT DROPDOWN
+                  DropdownButtonFormField<ProductModel>(
+                      value: _selectedProduct,
+                      decoration: const InputDecoration(labelText: 'Product'),
+                      items: _products
+                          .map((p) => DropdownMenuItem(
+                                value: p,
+                                child: Text(p.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedProduct = val;
+                          if (val != null) {
+                            _loadProductVariants(val);
+                          } else {
+                            _productVariants = [];
+                            _selectedVariant = null;
+                          }
+                        });
+                      }),
+                  const SizedBox(height: 12),
+
+                  /// PRODUCT VARIANT DROPDOWN - Only show if product has variants
+                  if (_productVariants.isNotEmpty) ...[
+                    DropdownButtonFormField<ProductVariantModel>(
+                      value: _selectedVariant,
+                      decoration:
+                          const InputDecoration(labelText: 'Product Variant'),
+                      items: _productVariants
+                          .map((v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(v.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedVariant = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  /// SUPPLIER DROPDOWN
+                  DropdownButtonFormField<SupplierModel>(
+                    value: _selectedSupplier,
+                    decoration: const InputDecoration(labelText: 'Supplier'),
+                    items: _suppliers
+                        .map((s) => DropdownMenuItem(
+                              value: s,
+                              child: Text(s.name),
+                            ))
+                        .toList(),
+                    validator: (val) =>
+                        val == null ? 'Please select a supplier' : null,
+                    onChanged: (val) => setState(() => _selectedSupplier = val),
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// WAREHOUSE DROPDOWN
+                  DropdownButtonFormField<WarehouseModel>(
+                    value: _selectedWarehouse,
+                    decoration: const InputDecoration(labelText: 'Warehouse'),
+                    items: _warehouses
+                        .map((w) => DropdownMenuItem(
+                              value: w,
+                              child: Text(w.name),
+                            ))
+                        .toList(),
+                    validator: (val) =>
+                        val == null ? 'Please select a warehouse' : null,
+                    onChanged: (val) =>
+                        setState(() => _selectedWarehouse = val),
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// STOCK CHECKER DROPDOWN
+                  DropdownButtonFormField<StockCheckerModel>(
+                    value: _selectedStockChecker,
+                    decoration:
+                        const InputDecoration(labelText: 'Stock Checker'),
+                    items: _stockCheckers
+                        .map((sc) => DropdownMenuItem(
+                              value: sc,
+                              child: Text('${sc.firstname} ${sc.lastname}'),
+                            ))
+                        .toList(),
+                    validator: (val) =>
+                        val == null ? 'Please select a stock checker' : null,
+                    onChanged: (val) =>
+                        setState(() => _selectedStockChecker = val),
+                  ),
+
+                  /// QUANTITY
+                  TextFormField(
+                    controller: _quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// PRICE
+                  TextFormField(
+                    controller: _priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// REASON
+                  TextFormField(
+                    controller: _reasonController,
+                    decoration: const InputDecoration(labelText: 'Reason'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// ARCHIVED SWITCH
+                  SwitchListTile(
+                    title: const Text('Archived'),
+                    value: _isArchived,
+                    onChanged: (val) => setState(() => _isArchived = val),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: _saveStockIn,
+                    child: Text(widget.stockIn == null ? 'Create' : 'Update'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );

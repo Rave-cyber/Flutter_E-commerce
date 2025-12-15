@@ -3,8 +3,11 @@ import 'package:firebase/services/admin/product_sevice.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/admin_layout.dart';
+<<<<<<< HEAD
 import '../../../widgets/product_selection_modal.dart';
 import '../../../widgets/product_variant_selection_modal.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import '/models/stock_out_model.dart';
 import '/models/product_variant_model.dart';
 import '/services/admin/stock_out_service.dart';
@@ -21,9 +24,13 @@ class AdminStockOutForm extends StatefulWidget {
 class _AdminStockOutFormState extends State<AdminStockOutForm> {
   final _formKey = GlobalKey<FormState>();
   final StockOutService _stockOutService = StockOutService();
+<<<<<<< HEAD
   bool _isLoading = true;
   bool _isSaving = false;
   int _currentStep = 0;
+=======
+  bool _isLoading = false;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   ProductModel? _selectedProduct;
   ProductVariantModel? _selectedVariant;
@@ -44,6 +51,7 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       _quantityController.text = widget.stockOut!.quantity.toString();
       _reasonController.text = widget.stockOut!.reason;
     }
+<<<<<<< HEAD
 
     // Add listener to quantity controller for real-time validation
     _quantityController.addListener(_onQuantityChanged);
@@ -69,6 +77,11 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
       _isLoading = true;
     });
 
+=======
+  }
+
+  Future<void> _loadData() async {
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     try {
       _products = await ProductService().fetchProductsOnce();
       _allVariants = await ProductService().fetchAllVariants();
@@ -85,6 +98,11 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
           _loadProductVariants(_selectedProduct!);
         }
       }
+<<<<<<< HEAD
+=======
+
+      setState(() {});
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,10 +112,13 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
           ),
         );
       }
+<<<<<<< HEAD
     } finally {
       setState(() {
         _isLoading = false;
       });
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     }
   }
 
@@ -113,6 +134,7 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
     }
   }
 
+<<<<<<< HEAD
   // Stepper navigation methods
   void _nextStep() {
     if (_validateCurrentStep()) {
@@ -322,6 +344,108 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
     if (selectedVariant != null) {
       setState(() {
         _selectedVariant = selectedVariant;
+=======
+  Future<void> _saveStockOut() async {
+    // Validate form
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate required selections
+    if (_selectedProduct == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a product'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final id = widget.stockOut?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Validate stock availability for new stock-outs
+      if (widget.stockOut == null) {
+        final availableStock = await _checkStockAvailability();
+        final requestedQuantity = int.tryParse(_quantityController.text) ?? 0;
+
+        if (availableStock < requestedQuantity) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Insufficient stock. Available: $availableStock, Requested: $requestedQuantity'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      final stockOut = StockOutModel(
+        id: id,
+        product_id: _selectedProduct?.id,
+        product_variant_id: _selectedVariant?.id,
+        quantity: int.tryParse(_quantityController.text) ?? 0,
+        reason: _reasonController.text.trim(),
+        created_at: widget.stockOut?.created_at ?? DateTime.now(),
+        updated_at: DateTime.now(),
+      );
+
+      if (widget.stockOut == null) {
+        await _stockOutService.createStockOut(stockOut);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Stock-out created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        await _stockOutService.updateStockOut(stockOut);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Stock-out updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       });
     }
   }
@@ -357,6 +481,7 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
     }
   }
 
+<<<<<<< HEAD
   /// Validate stock availability
   Future<bool> _validateStockAvailability() async {
     final requestedQuantity = int.tryParse(_quantityController.text) ?? 0;
@@ -461,10 +586,159 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
                   Icon(
                     Icons.arrow_drop_down,
                     color: Colors.grey.shade600,
+=======
+  @override
+  Widget build(BuildContext context) {
+    return AdminLayout(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.stockOut == null
+                      ? 'Create Stock-Out'
+                      : 'Edit Stock-Out',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  /// PRODUCT DROPDOWN
+                  DropdownButtonFormField<ProductModel>(
+                      value: _selectedProduct,
+                      decoration: const InputDecoration(
+                        labelText: 'Product *',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _products
+                          .map((p) => DropdownMenuItem(
+                                value: p,
+                                child: Text(p.name),
+                              ))
+                          .toList(),
+                      validator: (val) =>
+                          val == null ? 'Please select a product' : null,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedProduct = val;
+                          if (val != null) {
+                            _loadProductVariants(val);
+                          } else {
+                            _productVariants = [];
+                            _selectedVariant = null;
+                          }
+                        });
+                      }),
+                  const SizedBox(height: 16),
+
+                  /// PRODUCT VARIANT DROPDOWN - Only show if product has variants
+                  if (_productVariants.isNotEmpty) ...[
+                    DropdownButtonFormField<ProductVariantModel>(
+                      value: _selectedVariant,
+                      decoration: const InputDecoration(
+                        labelText: 'Product Variant',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _productVariants
+                          .map((v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(v.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedVariant = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  /// QUANTITY
+                  TextFormField(
+                    controller: _quantityController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity *',
+                      hintText: 'Enter quantity to deduct',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.isEmpty) {
+                        return 'Quantity is required';
+                      }
+                      final quantity = int.tryParse(val);
+                      if (quantity == null || quantity <= 0) {
+                        return 'Enter a valid positive number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  /// REASON
+                  TextFormField(
+                    controller: _reasonController,
+                    decoration: const InputDecoration(
+                      labelText: 'Reason *',
+                      hintText: 'e.g., Sales, Damaged, Expired, etc.',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val == null || val.trim().isEmpty
+                        ? 'Reason is required'
+                        : null,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+
+                  /// SUBMIT BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _saveStockOut,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text(
+                              widget.stockOut == null
+                                  ? 'Create Stock-Out'
+                                  : 'Update Stock-Out',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                    ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ),
                 ],
               ),
             ),
+<<<<<<< HEAD
           ),
           const SizedBox(height: 16),
 
@@ -947,6 +1221,9 @@ class _AdminStockOutFormState extends State<AdminStockOutForm> {
               steps: steps,
             ),
           ),
+=======
+          ],
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );

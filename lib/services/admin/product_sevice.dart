@@ -161,6 +161,7 @@ class ProductService {
       final docRef = _variantCollection.doc(variant.id);
       final doc = await docRef.get();
 
+<<<<<<< HEAD
       // Ensure variant has a stock value
       final variantData = variant.toMap();
       if (!variantData.containsKey('stock')) variantData['stock'] = 0;
@@ -177,6 +178,17 @@ class ProductService {
 
       // Always update the main product stock after variant changes
       await _updateProductStock(variant.product_id);
+=======
+      if (doc.exists) {
+        // UPDATE
+        await docRef.update(variant.toMap());
+        print('Variant updated successfully!');
+      } else {
+        // CREATE
+        await docRef.set(variant.toMap());
+        print('Variant created successfully!');
+      }
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } catch (e) {
       throw Exception('Failed to create/update variant: $e');
     }
@@ -200,6 +212,7 @@ class ProductService {
   }
 
   /// DELETE a variant
+<<<<<<< HEAD
   Future<void> deleteVariant(String variantId, String productId) async {
     try {
       await _variantCollection.doc(variantId).delete();
@@ -207,11 +220,18 @@ class ProductService {
 
       // Update main product stock after deletion
       await _updateProductStock(productId);
+=======
+  Future<void> deleteVariant(String id) async {
+    try {
+      await _variantCollection.doc(id).delete();
+      print('Variant deleted successfully!');
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } catch (e) {
       throw Exception('Failed to delete variant: $e');
     }
   }
 
+<<<<<<< HEAD
   /// PRIVATE: Recalculate total stock for a product from its variants
   Future<void> _updateProductStock(String productId) async {
     try {
@@ -241,6 +261,8 @@ class ProductService {
     }
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   /// FETCH all attributes (non-archived)
   Future<List<AttributeModel>> fetchAttributes() async {
     try {

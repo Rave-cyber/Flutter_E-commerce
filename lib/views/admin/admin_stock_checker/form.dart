@@ -21,8 +21,12 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
   late TextEditingController _addressController;
   late TextEditingController _contactController;
 
+<<<<<<< HEAD
   bool _isSaving = false;
   int _currentStep = 0;
+=======
+  bool _isArchived = false;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   @override
   void initState() {
@@ -36,6 +40,7 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
     _lastnameController = TextEditingController(text: checker?.lastname ?? '');
     _addressController = TextEditingController(text: checker?.address ?? '');
     _contactController = TextEditingController(text: checker?.contact ?? '');
+<<<<<<< HEAD
   }
 
   @override
@@ -291,11 +296,16 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
         ],
       ),
     );
+=======
+
+    _isArchived = checker?.is_archived ?? false;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   Future<void> _saveChecker() async {
     if (!_formKey.currentState!.validate()) return;
 
+<<<<<<< HEAD
     setState(() => _isSaving = true);
 
     try {
@@ -339,10 +349,35 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+=======
+    final id =
+        widget.checker?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+
+    final checker = StockCheckerModel(
+      id: id,
+      firstname: _firstnameController.text.trim(),
+      middlename: _middlenameController.text.trim(),
+      lastname: _lastnameController.text.trim(),
+      address: _addressController.text.trim(),
+      contact: _contactController.text.trim(),
+      is_archived: _isArchived,
+      created_at: widget.checker?.created_at ?? DateTime.now(),
+      updated_at: DateTime.now(),
+    );
+
+    if (widget.checker == null) {
+      await _checkerService.createStockChecker(checker);
+    } else {
+      await _checkerService.updateStockChecker(checker);
+    }
+
+    if (context.mounted) Navigator.pop(context);
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     List<Step> steps = [
       Step(
         title: const Text('Personal Info'),
@@ -457,6 +492,85 @@ class _AdminStockCheckerFormState extends State<AdminStockCheckerForm> {
               steps: steps,
             ),
           ),
+=======
+    return AdminLayout(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // BACK BUTTON
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 8),
+
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // FIRSTNAME
+                  TextFormField(
+                    controller: _firstnameController,
+                    decoration: const InputDecoration(labelText: 'First Name'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // MIDDLENAME
+                  TextFormField(
+                    controller: _middlenameController,
+                    decoration: const InputDecoration(labelText: 'Middle Name'),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // LASTNAME
+                  TextFormField(
+                    controller: _lastnameController,
+                    decoration: const InputDecoration(labelText: 'Last Name'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ADDRESS
+                  TextFormField(
+                    controller: _addressController,
+                    decoration: const InputDecoration(labelText: 'Address'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // CONTACT
+                  TextFormField(
+                    controller: _contactController,
+                    decoration:
+                        const InputDecoration(labelText: 'Contact Number'),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  /// ARCHIVED SWITCH
+                  SwitchListTile(
+                    title: const Text('Archived'),
+                    value: _isArchived,
+                    onChanged: (val) => setState(() => _isArchived = val),
+                  ),
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: _saveChecker,
+                    child: Text(widget.checker == null ? 'Create' : 'Update'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );

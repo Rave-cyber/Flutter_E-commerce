@@ -1,13 +1,20 @@
+<<<<<<< HEAD
+=======
+import 'package:firebase/views/admin/admin_stock_checker/form.dart';
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
 import '/models/stock_checker_model.dart';
 import '/services/admin/stock_checker_service.dart';
+<<<<<<< HEAD
 import '/views/admin/admin_stock_checker/form.dart';
 import '../../../widgets/stock_checker_search_widget.dart';
 import '../../../widgets/stock_checker_filter_widget.dart';
 import '../../../widgets/stock_checker_card_widget.dart';
 import '../../../widgets/stock_checker_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class AdminStockCheckersIndex extends StatefulWidget {
   const AdminStockCheckersIndex({Key? key}) : super(key: key);
@@ -19,8 +26,13 @@ class AdminStockCheckersIndex extends StatefulWidget {
 
 class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
   final StockCheckerService _checkerService = StockCheckerService();
+<<<<<<< HEAD
 
   final TextEditingController _searchController = TextEditingController();
+=======
+  final TextEditingController _searchController = TextEditingController();
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   String _filterStatus = 'active';
   int _itemsPerPage = 10;
   int _currentPage = 1;
@@ -59,6 +71,7 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+<<<<<<< HEAD
   int _getTotalPages(List<StockCheckerModel> checkers) {
     // Apply filters
     List<StockCheckerModel> filtered = checkers.where((c) {
@@ -86,6 +99,8 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
     return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -93,6 +108,7 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
   }
 
   void _prevPage() {
+<<<<<<< HEAD
     if (_currentPage > 1) {
       setState(() => _currentPage--);
     }
@@ -198,17 +214,24 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
         _currentPage = 1;
       });
     }
+=======
+    if (_currentPage > 1) setState(() => _currentPage--);
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+<<<<<<< HEAD
       selectedRoute: '/admin/stock-checkers',
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // SEARCH FIELD
+<<<<<<< HEAD
             StockCheckerSearchWidget(
               controller: _searchController,
               onChanged: () => setState(() {
@@ -227,6 +250,46 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
             const SizedBox(height: 16),
 
             // STOCK CHECKER LIST WITH BOTTOM CONTROLS
+=======
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Search Stock Checker',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() => _currentPage = 1),
+            ),
+            const SizedBox(height: 12),
+
+            // FILTER DROPDOWN
+            Row(
+              children: [
+                const Text('Filter: '),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _filterStatus,
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('All')),
+                    DropdownMenuItem(value: 'active', child: Text('Active')),
+                    DropdownMenuItem(
+                        value: 'archived', child: Text('Archived')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _filterStatus = val;
+                        _currentPage = 1;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // STOCK CHECKER LIST
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
             Expanded(
               child: StreamBuilder<List<StockCheckerModel>>(
                 stream: _checkerService.getStockCheckers(),
@@ -236,6 +299,7 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
+<<<<<<< HEAD
                     return Center(
                       child: Material(
                         elevation: 4,
@@ -284,11 +348,147 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
                               checker: checker,
                               onMenuSelected: (value) =>
                                   _handleMenuSelection(value, checker),
+=======
+                    return const Center(
+                        child: Text('No stock checkers found.'));
+                  }
+
+                  final checkers = snapshot.data!;
+                  final paginated = _applyFilterSearchPagination(checkers);
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: paginated.length,
+                          itemBuilder: (context, index) {
+                            final checker = paginated[index];
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              child: ListTile(
+                                title: Text(
+                                  "${checker.firstname} ${checker.middlename} ${checker.lastname}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: checker.is_archived
+                                        ? Colors.grey
+                                        : Colors.black,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Address: ${checker.address}"),
+                                    Text("Contact: ${checker.contact}"),
+                                    Text(checker.is_archived
+                                        ? 'Archived'
+                                        : 'Active'),
+                                  ],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Archive / Unarchive
+                                    IconButton(
+                                      icon: Icon(
+                                        checker.is_archived
+                                            ? Icons.unarchive
+                                            : Icons.archive,
+                                        color: Colors.orange,
+                                      ),
+                                      onPressed: () async {
+                                        final action = checker.is_archived
+                                            ? 'unarchive'
+                                            : 'archive';
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            title: Text('Confirm $action'),
+                                            content: Text(
+                                                'Are you sure you want to $action "${checker.firstname} ${checker.lastname}"?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, false),
+                                                  child: const Text('Cancel')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, true),
+                                                  child: Text(
+                                                      action[0].toUpperCase() +
+                                                          action.substring(1))),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true) {
+                                          await _checkerService
+                                              .toggleArchive(checker);
+                                        }
+                                      },
+                                    ),
+
+                                    // Edit
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                AdminStockCheckerForm(
+                                                    checker: checker),
+                                          ),
+                                        );
+                                      },
+                                    ),
+
+                                    // Delete
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            title: const Text('Confirm Delete'),
+                                            content: Text(
+                                                'Are you sure you want to delete "${checker.firstname} ${checker.lastname}"?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, false),
+                                                  child: const Text('Cancel')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, true),
+                                                  child: const Text('Delete')),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true) {
+                                          await _checkerService
+                                              .deleteStockChecker(checker.id);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             );
                           },
                         ),
                       ),
 
+<<<<<<< HEAD
                       const SizedBox(height: 16),
 
                       // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
@@ -314,6 +514,19 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
                               );
                             },
                           ),
+=======
+                      // PAGINATION
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: _prevPage),
+                          Text('Page $_currentPage'),
+                          IconButton(
+                              icon: const Icon(Icons.arrow_forward),
+                              onPressed: () => _nextPage(checkers.length)),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         ],
                       ),
                     ],
@@ -321,6 +534,25 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
                 },
               ),
             ),
+<<<<<<< HEAD
+=======
+
+            // ADD BUTTON
+            Align(
+              alignment: Alignment.bottomRight,
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const AdminStockCheckerForm()),
+                  );
+                },
+                child: const Icon(Icons.add),
+                tooltip: 'Add Stock Checker',
+              ),
+            ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
       ),

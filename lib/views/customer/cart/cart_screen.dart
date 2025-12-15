@@ -67,7 +67,11 @@ class _CartScreenState extends State<CartScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+<<<<<<< HEAD
         iconTheme: IconThemeData(color: textPrimary),
+=======
+        iconTheme: IconThemeData(color: primaryGreen),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         actions: [
           StreamBuilder<QuerySnapshot>(
             stream: _cartStream,
@@ -1114,6 +1118,7 @@ class __CartItemState extends State<_CartItem> {
                         ),
                       ),
                       const Spacer(),
+<<<<<<< HEAD
                       Container(
                         width: 36,
                         height: 36,
@@ -1127,6 +1132,14 @@ class __CartItemState extends State<_CartItem> {
                           color: Colors.red[400],
                           padding: EdgeInsets.zero,
                         ),
+=======
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        onPressed: () => widget.removeFromCart(widget.itemId),
+                        color: Colors.red[400],
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ],
                   ),

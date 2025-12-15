@@ -12,3 +12,8 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663

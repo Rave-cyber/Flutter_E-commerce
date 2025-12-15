@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 
 class ProductPaginationWidget extends StatelessWidget {
   final int currentPage;
+<<<<<<< HEAD
   final int? totalPages;
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   final VoidCallback onPreviousPage;
   final VoidCallback onNextPage;
 
   const ProductPaginationWidget({
     Key? key,
     required this.currentPage,
+<<<<<<< HEAD
     this.totalPages,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     required this.onPreviousPage,
     required this.onNextPage,
   }) : super(key: key);
@@ -50,9 +56,13 @@ class ProductPaginationWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
+<<<<<<< HEAD
                 totalPages != null
                     ? 'Page $currentPage of $totalPages'
                     : 'Page $currentPage',
+=======
+                'Page $currentPage',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,

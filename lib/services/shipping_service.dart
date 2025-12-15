@@ -11,6 +11,11 @@ class ShippingService {
   // Base shipping rates
   static const double baseRate = 5.99; // Base rate for first 5km
   static const double additionalPerKm = 2.50; // Rate per km after first 5km
+<<<<<<< HEAD
+=======
+  static const double freeShippingThreshold =
+      100.00; // Free shipping for orders over this amount
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   /// Calculate shipping fee based on address and order total
   Future<ShippingCalculation> calculateShipping({
@@ -93,6 +98,7 @@ class ShippingService {
     String? barangay,
     String? fullAddress,
   }) async {
+<<<<<<< HEAD
     // Try to parse address components from the full address
     if (fullAddress != null && fullAddress.isNotEmpty) {
       final address = fullAddress.toLowerCase();
@@ -168,6 +174,13 @@ class ShippingService {
     }
 
     // Default to Manila coordinates if no match found
+=======
+    // For now, return Manila coordinates as default
+    // In a real implementation, you would use a geocoding service
+    // like Google Maps Geocoding API or similar
+
+    // Default to Manila coordinates
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     return Coordinates(latitude: 14.5995, longitude: 120.9842);
   }
 
@@ -196,9 +209,15 @@ class ShippingService {
 
   /// Calculate shipping fee based on distance and order total
   double _calculateShippingFee(double distance, double orderTotal) {
+<<<<<<< HEAD
     // Ensure we have a valid distance
     if (distance <= 0 || distance.isNaN || distance.isInfinite) {
       return baseRate; // Fallback to base rate for invalid distances
+=======
+    // Free shipping for orders over threshold
+    if (orderTotal >= freeShippingThreshold) {
+      return 0.0;
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     }
 
     // Base rate for first 5km

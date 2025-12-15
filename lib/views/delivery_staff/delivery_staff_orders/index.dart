@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -215,6 +216,76 @@ class _DeliveryStaffOrdersScreenState extends State<DeliveryStaffOrdersScreen> {
           ],
         ),
       ),
+=======
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../layouts/delivery_staff_layout.dart';
+import '../../../firestore_service.dart';
+
+class DeliveryStaffOrdersScreen extends StatelessWidget {
+  const DeliveryStaffOrdersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const DeliveryStaffLayout(
+      title: 'Orders',
+      selectedRoute: '/delivery-staff/orders',
+      child: OrdersList(),
+    );
+  }
+}
+
+class OrdersList extends StatelessWidget {
+  const OrdersList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getDeliveryStaffOrders(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error loading orders'));
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final orders = snapshot.data ?? [];
+
+        if (orders.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.inbox_outlined,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No orders available',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final order = orders[index];
+            return OrderCard(order: order);
+          },
+        );
+      },
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     );
   }
 }
@@ -234,8 +305,11 @@ class OrderCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+<<<<<<< HEAD
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -256,6 +330,7 @@ class OrderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
+<<<<<<< HEAD
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
@@ -271,6 +346,13 @@ class OrderCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
+=======
+                    Text(
+                      'Status: ${order['status']}',
+                      style: TextStyle(
+                        color: _getStatusColor(order['status']),
+                        fontWeight: FontWeight.w500,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ),
                   ],
@@ -280,12 +362,21 @@ class OrderCard extends StatelessWidget {
                     horizontal: 12,
                     vertical: 6,
                   ),
+<<<<<<< HEAD
                   // decoration: BoxDecoration(
                   //   color: Colors.green.shade100,
                   //   borderRadius: BorderRadius.circular(20),
                   // ),
                   child: Text(
                     '₱${NumberFormat('#,###.00').format(totalAmount)}',
+=======
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '₱${totalAmount.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
@@ -296,6 +387,7 @@ class OrderCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+<<<<<<< HEAD
             const Divider(),
             const SizedBox(height: 8),
 
@@ -350,6 +442,24 @@ class OrderCard extends StatelessWidget {
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                 ],
+=======
+
+            // Order details
+            Text(
+              'Items: ${items.length} item(s)',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 4),
+            Text('Address: $shippingAddress'),
+            const SizedBox(height: 2),
+            Text('Contact: $contactNumber'),
+
+            if (createdAt != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Order Date: ${_formatDate(createdAt.toDate())}',
+                style: TextStyle(color: Colors.grey.shade600),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
             ],
 
@@ -361,12 +471,18 @@ class OrderCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => _showPickupConfirmation(context, order),
                 style: ElevatedButton.styleFrom(
+<<<<<<< HEAD
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
+=======
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 ),
                 child: const Text(
                   'Pick Up Order',
@@ -389,10 +505,13 @@ class OrderCard extends StatelessWidget {
         return Colors.blue;
       case 'processing':
         return Colors.orange;
+<<<<<<< HEAD
       case 'shipped':
         return Colors.purple;
       case 'delivered':
         return Colors.green;
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       default:
         return Colors.grey;
     }
@@ -408,8 +527,11 @@ class OrderCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+<<<<<<< HEAD
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           title: const Text('Confirm Pickup'),
           content: Text(
               'Are you sure you want to pick up order #${order['id'].toString().substring(0, 8)}?\n\n'
@@ -427,9 +549,12 @@ class OrderCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
+<<<<<<< HEAD
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
               child: const Text('Confirm Pickup'),
             ),
@@ -444,11 +569,15 @@ class OrderCard extends StatelessWidget {
     try {
       // Get current delivery staff ID (you'll need to implement user authentication)
       // For now, using a placeholder - replace with actual user ID
+<<<<<<< HEAD
       final currentUser = AuthService().currentUser;
       if (currentUser == null) {
         throw Exception('No authenticated user found');
       }
       final deliveryStaffId = currentUser.uid;
+=======
+      const deliveryStaffId = 'current_delivery_staff_id';
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
       await FirestoreService.markOrderAsShipped(order['id'], deliveryStaffId);
 

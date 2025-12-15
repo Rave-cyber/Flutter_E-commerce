@@ -84,7 +84,12 @@ class OrderConfirmationScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildDetailRow('Order ID', orderId),
                       const Divider(),
+<<<<<<< HEAD
                       _buildDetailRow('Total Amount', '\$${total.toStringAsFixed(2)}'),
+=======
+                      _buildDetailRow(
+                          'Total Amount', '\₱${total.toStringAsFixed(2)}'),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     ],
                   ),
                 ),
@@ -206,4 +211,7 @@ class OrderConfirmationScreen extends StatelessWidget {
     );
   }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663

@@ -10,7 +10,10 @@ import '../../../widgets/product_filter_widget.dart';
 import '../../../widgets/product_card_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
+<<<<<<< HEAD
 import '../../../widgets/product_details_modal_vertical.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class AdminProductsIndex extends StatefulWidget {
   const AdminProductsIndex({Key? key}) : super(key: key);
@@ -96,6 +99,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+<<<<<<< HEAD
   int _getTotalPages(List<ProductModel> products) {
     // Apply filters
     List<ProductModel> filtered = products.where((product) {
@@ -121,6 +125,8 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
     return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -234,6 +240,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
     }
   }
 
+<<<<<<< HEAD
   void _showProductDetailsModal(ProductModel product) {
     showDialog(
       context: context,
@@ -251,6 +258,11 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
   Widget build(BuildContext context) {
     return AdminLayout(
       selectedRoute: '/admin/products',
+=======
+  @override
+  Widget build(BuildContext context) {
+    return AdminLayout(
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -316,7 +328,10 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                   final products = snapshot.data!;
                   final paginatedProducts =
                       _applyFilterSearchPagination(products);
+<<<<<<< HEAD
                   final totalPages = _getTotalPages(products);
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
                   return Column(
                     children: [
@@ -333,7 +348,10 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                               getBrandName: _getBrandName,
                               onMenuSelected: (value) =>
                                   _handleMenuSelection(value, product),
+<<<<<<< HEAD
                               onTap: () => _showProductDetailsModal(product),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             );
                           },
                         ),
@@ -348,7 +366,10 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
                           // PAGINATION CONTROLS - Left end
                           ProductPaginationWidget(
                             currentPage: _currentPage,
+<<<<<<< HEAD
                             totalPages: totalPages,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             onPreviousPage: _prevPage,
                             onNextPage: () => _nextPage(products.length),
                           ),

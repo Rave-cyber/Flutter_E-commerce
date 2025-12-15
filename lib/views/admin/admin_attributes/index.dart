@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../layouts/admin_layout.dart';
 import '/models/attribute_model.dart';
+<<<<<<< HEAD
 import '/models/attribute_value_model.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import '/services/admin/attribute_service.dart';
 import '/views/admin/admin_attributes/form.dart';
 import '/widgets/product_search_widget.dart';
@@ -56,6 +59,7 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+<<<<<<< HEAD
   int _getTotalPages(List<AttributeModel> attributes) {
     // Apply filters
     List<AttributeModel> filtered = attributes.where((attr) {
@@ -81,6 +85,8 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
     return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -93,6 +99,7 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
     }
   }
 
+<<<<<<< HEAD
   Future<void> _handleMenuSelection(
       String value, AttributeModel attribute) async {
     switch (value) {
@@ -371,10 +378,16 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
   Widget build(BuildContext context) {
     return AdminLayout(
       selectedRoute: '/admin/attributes',
+=======
+  @override
+  Widget build(BuildContext context) {
+    return AdminLayout(
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+<<<<<<< HEAD
             // SEARCH FIELD
             ProductSearchWidget(
               controller: _searchController,
@@ -399,12 +412,53 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
               child: StreamBuilder<List<AttributeModel>>(
                 stream: _attributeService.getAttributesStream(
                     includeArchived: true),
+=======
+            // SEARCH FIELD - Using ProductSearchWidget
+            ProductSearchWidget(
+              controller: _searchController,
+              onChanged: () {
+                setState(() {
+                  _currentPage = 1;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // FILTER WIDGET - Using ProductFilterWidget
+            ProductFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _filterStatus = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
+              onItemsPerPageChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _itemsPerPage = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // ATTRIBUTE LIST
+            Expanded(
+              child: StreamBuilder<List<AttributeModel>>(
+                stream: _attributeService.getAttributesStream(),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
+<<<<<<< HEAD
                     return Center(
                       child: Material(
                         elevation: 4,
@@ -433,22 +487,34 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                         ),
                       ),
                     );
+=======
+                    return const Center(child: Text('No attributes found.'));
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   }
 
                   final attributes = snapshot.data!;
                   final paginatedAttributes =
                       _applyFilterSearchPagination(attributes);
+<<<<<<< HEAD
                   final totalPages = _getTotalPages(attributes);
 
                   return Column(
                     children: [
                       // ATTRIBUTE LIST
+=======
+
+                  return Column(
+                    children: [
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedAttributes.length,
                           itemBuilder: (context, index) {
                             final attribute = paginatedAttributes[index];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             return Container(
                               margin: const EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 4),
@@ -483,8 +549,11 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(16),
+<<<<<<< HEAD
                                     onTap: () =>
                                         _showAttributeDetailsModal(attribute),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                                     title: Text(
                                       attribute.name,
                                       style: TextStyle(
@@ -506,6 +575,7 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
+<<<<<<< HEAD
                                     trailing: PopupMenuButton<String>(
                                       icon: Icon(
                                         Icons.more_vert,
@@ -562,6 +632,173 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                                         //   ),
                                         // ),
                                       ],
+=======
+                                    trailing: Material(
+                                      elevation: 2,
+                                      shadowColor:
+                                          Colors.black.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[50],
+                                      child: PopupMenuButton<String>(
+                                        icon: Icon(
+                                          Icons.more_vert,
+                                          color: Colors.grey[700],
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        elevation: 8,
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    AdminAttributeForm(
+                                                  attribute: attribute,
+                                                ),
+                                              ),
+                                            );
+                                          } else if (value == 'archive' ||
+                                              value == 'unarchive') {
+                                            final action = value;
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: Text('Confirm $action'),
+                                                content: Text(
+                                                  'Are you sure you want to $action "${attribute.name}"?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.orange,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: Text(
+                                                      '${action[0].toUpperCase()}${action.substring(1)}',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm == true) {
+                                              await _attributeService
+                                                  .archiveAttribute(
+                                                      attribute.id);
+                                            }
+                                          } else if (value == 'delete') {
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: const Text(
+                                                    'Confirm Delete'),
+                                                content: Text(
+                                                    'Are you sure you want to delete "${attribute.name}"?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: const Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm == true) {
+                                              // Optional: implement delete method
+                                              // await _attributeService.deleteAttribute(attribute.id);
+                                              await _attributeService
+                                                  .archiveAttribute(
+                                                      attribute.id);
+                                            }
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit, size: 20),
+                                                SizedBox(width: 8),
+                                                Text('Edit'),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: attribute.is_archived
+                                                ? 'unarchive'
+                                                : 'archive',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  attribute.is_archived
+                                                      ? Icons.unarchive
+                                                      : Icons.archive,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(attribute.is_archived
+                                                    ? 'Unarchive'
+                                                    : 'Archive'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 20,
+                                                    color: Colors.red),
+                                                SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        color: Colors.red)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                                     ),
                                   ),
                                 ),
@@ -571,6 +808,7 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                         ),
                       ),
 
+<<<<<<< HEAD
                       const SizedBox(height: 16),
 
                       // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
@@ -596,12 +834,38 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
                             },
                           ),
                         ],
+=======
+                      // PAGINATION CONTROLS - Using ProductPaginationWidget
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: ProductPaginationWidget(
+                          currentPage: _currentPage,
+                          onPreviousPage: _prevPage,
+                          onNextPage: () => _nextPage(attributes.length),
+                        ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ],
                   );
                 },
               ),
             ),
+<<<<<<< HEAD
+=======
+
+            // FLOATING BUTTON - Using FloatingActionButtonWidget
+            FloatingActionButtonWidget(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminAttributeForm(),
+                  ),
+                );
+              },
+              tooltip: 'Add Attribute',
+            ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
       ),

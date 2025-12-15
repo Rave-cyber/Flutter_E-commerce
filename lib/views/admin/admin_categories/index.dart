@@ -55,6 +55,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
+<<<<<<< HEAD
   int _getTotalPages(List<CategoryModel> categories) {
     // Apply filters
     List<CategoryModel> filtered = categories.where((cat) {
@@ -80,6 +81,8 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
     return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
   }
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -92,6 +95,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
     }
   }
 
+<<<<<<< HEAD
   Future<void> _handleMenuSelection(
       String value, CategoryModel category) async {
     switch (value) {
@@ -198,10 +202,16 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
   Widget build(BuildContext context) {
     return AdminLayout(
       selectedRoute: '/admin/categories',
+=======
+  @override
+  Widget build(BuildContext context) {
+    return AdminLayout(
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+<<<<<<< HEAD
             // SEARCH FIELD
             ProductSearchWidget(
               controller: _searchController,
@@ -222,6 +232,43 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
             const SizedBox(height: 16),
 
             // CATEGORY LIST WITH BOTTOM CONTROLS
+=======
+            // SEARCH FIELD - Using ProductSearchWidget
+            ProductSearchWidget(
+              controller: _searchController,
+              onChanged: () {
+                setState(() {
+                  _currentPage = 1;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // FILTER WIDGET - Using ProductFilterWidget
+            ProductFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _filterStatus = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
+              onItemsPerPageChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _itemsPerPage = val;
+                    _currentPage = 1;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // CATEGORY LIST
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
             Expanded(
               child: StreamBuilder<List<CategoryModel>>(
                 stream: _categoryService.getCategories(),
@@ -231,6 +278,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
+<<<<<<< HEAD
                     return Center(
                       child: Material(
                         elevation: 4,
@@ -259,22 +307,34 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                         ),
                       ),
                     );
+=======
+                    return const Center(child: Text('No categories found.'));
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   }
 
                   final categories = snapshot.data!;
                   final paginatedCategories =
                       _applyFilterSearchPagination(categories);
+<<<<<<< HEAD
                   final totalPages = _getTotalPages(categories);
 
                   return Column(
                     children: [
                       // CATEGORY LIST
+=======
+
+                  return Column(
+                    children: [
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedCategories.length,
                           itemBuilder: (context, index) {
                             final category = paginatedCategories[index];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             return Container(
                               margin: const EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 4),
@@ -330,6 +390,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
+<<<<<<< HEAD
                                     trailing: PopupMenuButton<String>(
                                       icon: Icon(
                                         Icons.more_vert,
@@ -385,6 +446,169 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                                         //   ),
                                         // ),
                                       ],
+=======
+                                    trailing: Material(
+                                      elevation: 2,
+                                      shadowColor:
+                                          Colors.black.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.grey[50],
+                                      child: PopupMenuButton<String>(
+                                        icon: Icon(
+                                          Icons.more_vert,
+                                          color: Colors.grey[700],
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        elevation: 8,
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    AdminCategoryForm(
+                                                        category: category),
+                                              ),
+                                            );
+                                          } else if (value == 'archive' ||
+                                              value == 'unarchive') {
+                                            final action = value;
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: Text('Confirm $action'),
+                                                content: Text(
+                                                  'Are you sure you want to $action "${category.name}"?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.orange,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: Text(
+                                                      action[0].toUpperCase() +
+                                                          action.substring(1),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm == true) {
+                                              await _categoryService
+                                                  .toggleArchive(category);
+                                            }
+                                          } else if (value == 'delete') {
+                                            final confirm =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                title: const Text(
+                                                    'Confirm Delete'),
+                                                content: Text(
+                                                    'Are you sure you want to delete "${category.name}"?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: const Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (confirm == true) {
+                                              await _categoryService
+                                                  .deleteCategory(category.id);
+                                            }
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit, size: 20),
+                                                SizedBox(width: 8),
+                                                Text('Edit'),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: category.is_archived
+                                                ? 'unarchive'
+                                                : 'archive',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  category.is_archived
+                                                      ? Icons.unarchive
+                                                      : Icons.archive,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(category.is_archived
+                                                    ? 'Unarchive'
+                                                    : 'Archive'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete,
+                                                    size: 20,
+                                                    color: Colors.red),
+                                                SizedBox(width: 8),
+                                                Text('Delete',
+                                                    style: TextStyle(
+                                                        color: Colors.red)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                                     ),
                                   ),
                                 ),
@@ -394,6 +618,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                         ),
                       ),
 
+<<<<<<< HEAD
                       const SizedBox(height: 16),
 
                       // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
@@ -419,12 +644,38 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
                             },
                           ),
                         ],
+=======
+                      // PAGINATION CONTROLS - Using ProductPaginationWidget
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: ProductPaginationWidget(
+                          currentPage: _currentPage,
+                          onPreviousPage: _prevPage,
+                          onNextPage: () => _nextPage(categories.length),
+                        ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ],
                   );
                 },
               ),
             ),
+<<<<<<< HEAD
+=======
+
+            // FLOATING BUTTON - Using FloatingActionButtonWidget
+            FloatingActionButtonWidget(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminCategoryForm(),
+                  ),
+                );
+              },
+              tooltip: 'Add Category',
+            ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
       ),

@@ -10,7 +10,10 @@ class ProductVariantModel {
   double sale_price;
   int? stock;
   bool is_archived;
+<<<<<<< HEAD
   String? sku;
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   DateTime created_at;
   DateTime updated_at;
 
@@ -22,9 +25,14 @@ class ProductVariantModel {
     this.images,
     required this.base_price,
     required this.sale_price,
+<<<<<<< HEAD
     this.stock, // optional
     required this.is_archived,
     this.sku,
+=======
+    required this.stock,
+    required this.is_archived,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     required this.created_at,
     required this.updated_at,
   });
@@ -38,9 +46,14 @@ class ProductVariantModel {
       'images': images,
       'base_price': base_price,
       'sale_price': sale_price,
+<<<<<<< HEAD
       'stock': stock ?? 0, // default to 0
       'is_archived': is_archived,
       'sku': sku,
+=======
+      'stock': stock,
+      'is_archived': is_archived,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       'created_at': created_at,
       'updated_at': updated_at,
     };
@@ -55,9 +68,14 @@ class ProductVariantModel {
       images: map['images'] != null ? List<String>.from(map['images']) : null,
       base_price: (map['base_price'] ?? 0).toDouble(),
       sale_price: (map['sale_price'] ?? 0).toDouble(),
+<<<<<<< HEAD
       stock: map['stock'] ?? 0, // default to 0
       is_archived: map['is_archived'] ?? false,
       sku: map['sku'],
+=======
+      stock: map['stock'] ?? 0,
+      is_archived: map['is_archived'] ?? false,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
       created_at: (map['created_at'] as Timestamp).toDate(),
       updated_at: (map['updated_at'] as Timestamp).toDate(),
     );

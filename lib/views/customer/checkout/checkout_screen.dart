@@ -37,8 +37,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       TextEditingController();
   bool _isLoading = false;
   String? _customerId;
+<<<<<<< HEAD
 
   // Shipping calculation variables
+=======
+  String? _customerName;
+
+// Shipping calculation variables
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   double _shippingFee = 0.0;
   double _distance = 0.0;
   int _estimatedDays = 3;
@@ -57,6 +63,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (customer != null) {
       setState(() {
         _customerId = customer.id;
+<<<<<<< HEAD
+=======
+        _customerName =
+            '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
       });
@@ -127,7 +138,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
+<<<<<<< HEAD
         foregroundColor: darkGreen,
+=======
+        iconTheme: IconThemeData(color: primaryGreen),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
@@ -204,16 +219,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+<<<<<<< HEAD
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: lightGreen,
                   borderRadius: BorderRadius.circular(8),
+=======
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
                   color: primaryGreen,
+<<<<<<< HEAD
                   size: 20,
                 ),
               ),
@@ -251,10 +278,51 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
+=======
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+<<<<<<< HEAD
+=======
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Shipping Address',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _showEditAddressSheet,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: primaryGreen.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 18,
+                              color: primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     Text(
                       _shippingAddressController.text.isEmpty
                           ? 'Add your shipping address'
@@ -264,19 +332,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         color: _shippingAddressController.text.isEmpty
                             ? Colors.grey[400]
                             : Colors.grey[800],
+<<<<<<< HEAD
                       ),
                       maxLines: 2,
+=======
+                        height: 1.4,
+                      ),
+                      maxLines: 3,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (_contactNumberController.text.isNotEmpty)
                       Padding(
+<<<<<<< HEAD
                         padding: const EdgeInsets.only(top: 4),
+=======
+                        padding: const EdgeInsets.only(top: 6),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         child: Text(
                           _contactNumberController.text,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
                           ),
+<<<<<<< HEAD
+=======
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         ),
                       ),
                   ],
@@ -386,7 +469,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 4),
               Text(
+<<<<<<< HEAD
                 '\$${price.toStringAsFixed(2)}',
+=======
+                '\₱${price.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -399,7 +486,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         // Total Price
         Text(
+<<<<<<< HEAD
           '\$${total.toStringAsFixed(2)}',
+=======
+          '\₱${total.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -583,13 +674,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 16),
 
           // Price Breakdown
+<<<<<<< HEAD
           _buildSummaryRow('Item Total', '\$${_subtotal.toStringAsFixed(2)}'),
+=======
+          _buildSummaryRow('Item Total', '\₱${_subtotal.toStringAsFixed(2)}'),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           const SizedBox(height: 8),
           _buildSummaryRow(
               'Shipping Fee',
               _isCalculatingShipping
                   ? 'Calculating...'
+<<<<<<< HEAD
                   : '\$${_shippingFee.toStringAsFixed(2)}'),
+=======
+                  : '\₱${_shippingFee.toStringAsFixed(2)}'),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           if (_distance > 0) ...[
             const SizedBox(height: 4),
             Padding(
@@ -620,7 +719,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               Text(
+<<<<<<< HEAD
                 '\$${_total.toStringAsFixed(2)}',
+=======
+                '\₱${_total.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -711,7 +814,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
+<<<<<<< HEAD
                     '\$${_total.toStringAsFixed(2)}',
+=======
+                    '\₱${_total.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -739,7 +846,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                   shape: RoundedRectangleBorder(
+<<<<<<< HEAD
                     borderRadius: BorderRadius.circular(25),
+=======
+                    borderRadius: BorderRadius.circular(12),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ),
                   elevation: 0,
                   shadowColor: Colors.transparent,
@@ -820,6 +931,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final orderId = await FirestoreService.createOrder(
         userId: user.uid,
         customerId: _customerId!,
+<<<<<<< HEAD
+=======
+        customerName: _customerName ?? 'Customer',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
         items: orderItems,
         subtotal: _subtotal,
         shipping: _shippingFee,
@@ -868,6 +983,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+<<<<<<< HEAD
   void _showEditAddressSheet() {
     final TextEditingController houseController = TextEditingController();
     bool saving = false;
@@ -1008,11 +1124,412 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       : provinces
+=======
+ void _showEditAddressSheet() {
+  final TextEditingController houseController = TextEditingController();
+  final TextEditingController contactController = TextEditingController(
+    text: _contactNumberController.text,
+  );
+
+  bool saving = false;
+
+  List<Map<String, dynamic>> regions = [];
+  List<Map<String, dynamic>> provinces = [];
+  List<Map<String, dynamic>> cities = [];
+  List<Map<String, dynamic>> barangays = [];
+
+  Map<String, dynamic>? selectedRegion;
+  Map<String, dynamic>? selectedProvince;
+  Map<String, dynamic>? selectedCity;
+  Map<String, dynamic>? selectedBarangay;
+
+  bool loadingRegions = true;
+  bool loadingProvinces = false;
+  bool loadingCities = false;
+  bool loadingBarangays = false;
+  bool initialized = false;
+
+  // Helper function to safely update modal state
+  void safeModalSetState(VoidCallback fn) {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  // Parse existing address
+  void parseExistingAddress() {
+    final currentAddress = _shippingAddressController.text;
+    if (currentAddress.isNotEmpty) {
+      final parts = currentAddress.split(', ');
+      if (parts.isNotEmpty) {
+        houseController.text = parts[0];
+      }
+    }
+  }
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) {
+      return StatefulBuilder(builder: (ctx, setModalState) {
+        // Helper function to safely update modal state
+        void safeModalSetState(VoidCallback fn) {
+          if (mounted) {
+            setModalState(fn);
+          }
+        }
+
+        if (!initialized) {
+          initialized = true;
+          parseExistingAddress();
+          Future.microtask(() async {
+            try {
+              final r = await PhilippineAddressService.getRegions();
+              if (mounted) {
+                safeModalSetState(() {
+                  regions = r;
+                  loadingRegions = false;
+                });
+              }
+            } catch (e) {
+              if (mounted) {
+                safeModalSetState(() => loadingRegions = false);
+              }
+              if (mounted) {
+                _showSnackBar('Failed to load regions');
+              }
+            }
+          });
+        }
+
+        return GestureDetector(
+          onTap: () => FocusScope.of(ctx).unfocus(),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 30,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Edit Shipping Address',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: primaryGreen,
+                              ),
+                            ),
+                            Text(
+                              'Update your delivery location',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Current Address Preview
+                    if (_shippingAddressController.text.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: primaryGreen.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: primaryGreen.withOpacity(0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  size: 16,
+                                  color: primaryGreen,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Current Address',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _shippingAddressController.text,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[800],
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Divider(color: Colors.grey),
+                      const SizedBox(height: 20),
+                    ],
+
+                    // Form Title
+                    Text(
+                      'New Shipping Address',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: primaryGreen,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fill in your complete address details',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Contact Number
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Contact Number',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: contactController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: 'e.g., 09123456789',
+                              hintStyle: TextStyle(
+                                  color: Colors.grey[600]!.withOpacity(0.6)),
+                              border: InputBorder.none,
+                              prefixIcon: Icon(
+                                Icons.phone_rounded,
+                                color: primaryGreen,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // House/Unit and Street
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'House/Unit and Street',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            Text(
+                              ' *',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: houseController,
+                            decoration: InputDecoration(
+                              hintText: 'e.g., Unit 3B, 123 Sample Street',
+                              hintStyle: TextStyle(
+                                  color: Colors.grey[600]!.withOpacity(0.6)),
+                              border: InputBorder.none,
+                              prefixIcon: Icon(
+                                Icons.home_rounded,
+                                color: primaryGreen,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Region Dropdown
+                    _buildCheckoutDropdownFormField(
+                      value: selectedRegion,
+                      label: 'Region',
+                      hint: 'Select region',
+                      icon: Icons.map_rounded,
+                      isLoading: loadingRegions,
+                      items: regions
+                          .map((region) => DropdownMenuItem(
+                                value: region,
+                                child: Text(
+                                    region['regionName'] ?? region['name']),
+                              ))
+                          .toList(),
+                      onChanged: (value) async {
+                        if (!mounted) return;
+                        
+                        safeModalSetState(() {
+                          selectedRegion = value;
+                          selectedProvince = null;
+                          selectedCity = null;
+                          selectedBarangay = null;
+                          provinces = [];
+                          cities = [];
+                          barangays = [];
+                          loadingProvinces = true;
+                        });
+                        
+                        if (value != null) {
+                          try {
+                            final p =
+                                await PhilippineAddressService.getProvinces(
+                                    value['code']);
+                            if (mounted) {
+                              safeModalSetState(() {
+                                provinces = p;
+                                loadingProvinces = false;
+                              });
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              safeModalSetState(() => loadingProvinces = false);
+                              _showSnackBar('Failed to load provinces');
+                            }
+                          }
+                        } else {
+                          if (mounted) {
+                            safeModalSetState(() => loadingProvinces = false);
+                          }
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Province Dropdown
+                    _buildCheckoutDropdownFormField(
+                      value: selectedProvince,
+                      label: 'Province',
+                      hint: 'Select province',
+                      icon: Icons.place_rounded,
+                      isLoading: loadingProvinces,
+                      items: provinces
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           .map((province) => DropdownMenuItem(
                                 value: province,
                                 child: Text(province['name']),
                               ))
                           .toList(),
+<<<<<<< HEAD
                   onChanged: loadingProvinces
                       ? null
                       : (value) async {
@@ -1057,11 +1574,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       : cities
+=======
+                      onChanged: (value) async {
+                        if (!mounted) return;
+                        
+                        safeModalSetState(() {
+                          selectedProvince = value;
+                          selectedCity = null;
+                          selectedBarangay = null;
+                          cities = [];
+                          barangays = [];
+                          loadingCities = true;
+                        });
+                        
+                        if (value != null) {
+                          try {
+                            final c = await PhilippineAddressService
+                                .getCitiesMunicipalities(value['code']);
+                            if (mounted) {
+                              safeModalSetState(() {
+                                cities = c;
+                                loadingCities = false;
+                              });
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              safeModalSetState(() => loadingCities = false);
+                              _showSnackBar('Failed to load cities');
+                            }
+                          }
+                        } else {
+                          if (mounted) {
+                            safeModalSetState(() => loadingCities = false);
+                          }
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // City/Municipality Dropdown
+                    _buildCheckoutDropdownFormField(
+                      value: selectedCity,
+                      label: 'City/Municipality',
+                      hint: 'Select city or municipality',
+                      icon: Icons.location_city_rounded,
+                      isLoading: loadingCities,
+                      items: cities
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           .map((city) => DropdownMenuItem(
                                 value: city,
                                 child: Text(city['name']),
                               ))
                           .toList(),
+<<<<<<< HEAD
                   onChanged: loadingCities
                       ? null
                       : (value) async {
@@ -1104,11 +1669,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       : barangays
+=======
+                      onChanged: (value) async {
+                        if (!mounted) return;
+                        
+                        safeModalSetState(() {
+                          selectedCity = value;
+                          selectedBarangay = null;
+                          barangays = [];
+                          loadingBarangays = true;
+                        });
+                        
+                        if (value != null) {
+                          try {
+                            final b =
+                                await PhilippineAddressService.getBarangays(
+                                    value['code']);
+                            if (mounted) {
+                              safeModalSetState(() {
+                                barangays = b;
+                                loadingBarangays = false;
+                              });
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              safeModalSetState(() => loadingBarangays = false);
+                              _showSnackBar('Failed to load barangays');
+                            }
+                          }
+                        } else {
+                          if (mounted) {
+                            safeModalSetState(() => loadingBarangays = false);
+                          }
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Barangay Dropdown
+                    _buildCheckoutDropdownFormField(
+                      value: selectedBarangay,
+                      label: 'Barangay',
+                      hint: 'Select barangay',
+                      icon: Icons.home_work_rounded,
+                      isLoading: loadingBarangays,
+                      items: barangays
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           .map((brgy) => DropdownMenuItem(
                                 value: brgy,
                                 child: Text(brgy['name']),
                               ))
                           .toList(),
+<<<<<<< HEAD
                   onChanged: loadingBarangays
                       ? null
                       : (value) {
@@ -1225,4 +1837,282 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       },
     );
   }
+=======
+                      onChanged: (value) {
+                        if (mounted) {
+                          safeModalSetState(() {
+                            selectedBarangay = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: saving
+                                ? null
+                                : () async {
+                                    final house = houseController.text.trim();
+                                    final contact = contactController.text.trim();
+
+                                    // Validation
+                                    if (contact.isEmpty) {
+                                      if (mounted) {
+                                        _showSnackBar('Please enter contact number');
+                                      }
+                                      return;
+                                    }
+                                    if (selectedRegion == null ||
+                                        selectedProvince == null ||
+                                        selectedCity == null ||
+                                        selectedBarangay == null) {
+                                      if (mounted) {
+                                        _showSnackBar(
+                                            'Please select all address fields');
+                                      }
+                                      return;
+                                    }
+                                    if (house.isEmpty) {
+                                      if (mounted) {
+                                        _showSnackBar(
+                                            'Please enter house/unit and street');
+                                      }
+                                      return;
+                                    }
+
+                                    if (mounted) {
+                                      safeModalSetState(() => saving = true);
+                                    }
+                                    
+                                    try {
+                                      final parts = <String>[];
+                                      parts.add(house);
+
+                                      if (selectedBarangay != null) {
+                                        parts.add(
+                                            'Brgy. ${selectedBarangay!['name']}');
+                                      }
+
+                                      parts.add(selectedCity!['name']);
+                                      parts.add(selectedProvince!['name']);
+                                      parts.add(
+                                          selectedRegion!['regionName'] ??
+                                              selectedRegion!['name']);
+
+                                      final finalAddress = parts.join(', ');
+
+                                      final auth = Provider.of<AuthService>(
+                                          context,
+                                          listen: false);
+                                      final user = auth.currentUser;
+                                      if (user == null) throw 'Not logged in';
+
+                                      final fs = FirebaseFirestore.instance;
+                                      final query = await fs
+                                          .collection('customers')
+                                          .where('user_id',
+                                              isEqualTo: user.uid)
+                                          .limit(1)
+                                          .get();
+
+                                      if (query.docs.isNotEmpty) {
+                                        await fs
+                                            .collection('customers')
+                                            .doc(query.docs.first.id)
+                                            .update({
+                                          'address': finalAddress,
+                                          'contact': contact,
+                                          'updated_at':
+                                              FieldValue.serverTimestamp(),
+                                        });
+                                      } else {
+                                        await fs.collection('customers').add({
+                                          'user_id': user.uid,
+                                          'firstname': '',
+                                          'middlename': '',
+                                          'lastname': '',
+                                          'address': finalAddress,
+                                          'contact': contact,
+                                          'created_at':
+                                              FieldValue.serverTimestamp(),
+                                          'updated_at':
+                                              FieldValue.serverTimestamp(),
+                                        });
+                                      }
+
+                                      // Update local state
+                                      if (mounted) {
+                                        setState(() {
+                                          _shippingAddressController.text =
+                                              finalAddress;
+                                          _contactNumberController.text =
+                                              contact;
+                                        });
+                                        await _calculateShippingFee(
+                                            finalAddress, _subtotal);
+                                      }
+
+                                      if (mounted) {
+                                        Navigator.pop(ctx);
+                                        _showSnackBar(
+                                            '✅ Address updated successfully!');
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        _showSnackBar(
+                                            '❌ Failed to update address: ${e.toString()}');
+                                        safeModalSetState(() => saving = false);
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryGreen,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(0, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: saving
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(
+                                          Colors.white),
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.check_rounded, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Save Address',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      });
+    },
+  );
+}
+Widget _buildCheckoutDropdownFormField({
+  required Map<String, dynamic>? value,
+  required String label,
+  required String hint,
+  required IconData icon,
+  required bool isLoading,
+  required List<DropdownMenuItem<Map<String, dynamic>>> items,
+  required Function(Map<String, dynamic>?) onChanged,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey[800],
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButtonFormField<Map<String, dynamic>>(
+            value: value,
+            isExpanded: true,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              prefixIcon: isLoading
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(primaryGreen),
+                      ),
+                    )
+                  : Icon(icon, color: primaryGreen),
+            ),
+            hint: Text(
+              isLoading ? 'Loading...' : hint,
+              style: TextStyle(
+                color: isLoading ? primaryGreen : Colors.grey[600]!.withOpacity(0.6),
+              ),
+            ),
+            items: items,
+            onChanged: onChanged,
+            dropdownColor: Colors.white,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[800],
+            ),
+            icon: Icon(
+              Icons.arrow_drop_down_rounded,
+              color: primaryGreen,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 }

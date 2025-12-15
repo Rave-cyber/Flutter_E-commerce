@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/firestore_service.dart';
+<<<<<<< HEAD
 import 'package:firebase/models/order_model.dart';
 import 'package:intl/intl.dart';
+=======
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
@@ -15,7 +23,10 @@ class OrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryGreen = const Color(0xFF2C8610);
+<<<<<<< HEAD
     final Color accentBlue = const Color(0xFF4A90E2);
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
     final Color backgroundColor = const Color(0xFFF8FAFC);
     final Color cardColor = Colors.white;
     final Color textPrimary = const Color(0xFF1A1A1A);
@@ -232,6 +243,11 @@ class OrderDetailScreen extends StatelessWidget {
                 // Order Summary
                 _buildOrderSummary(
                     order, primaryGreen, cardColor, textPrimary, textSecondary),
+<<<<<<< HEAD
+=======
+                const SizedBox(height: 12),
+                _buildReceiptActions(context, order, primaryGreen, textPrimary),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 const SizedBox(height: 20),
 
                 // Shipping Information
@@ -255,6 +271,34 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+<<<<<<< HEAD
+=======
+  Widget _buildReceiptActions(BuildContext context, Map<String, dynamic> order,
+      Color primaryGreen, Color textPrimary) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () => _downloadReceipt(context, order, primaryGreen),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryGreen,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          icon: const Icon(Icons.receipt_long, size: 18),
+          label: const Text(
+            'Download Receipt',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildOrderHeader(
     Map<String, dynamic> order,
     Color primaryGreen,
@@ -359,7 +403,11 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
+<<<<<<< HEAD
                       '\$${(order['total'] ?? 0.0).toStringAsFixed(2)}',
+=======
+                      '\₱${(order['total'] ?? 0.0).toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -754,7 +802,11 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
+<<<<<<< HEAD
                       '\$${price.toStringAsFixed(2)} each',
+=======
+                      '\₱${price.toStringAsFixed(2)} each',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -771,7 +823,11 @@ class OrderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
+<<<<<<< HEAD
                 '\$${total.toStringAsFixed(2)}',
+=======
+                '\₱${total.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -859,7 +915,11 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
+<<<<<<< HEAD
                   '\$${total.toStringAsFixed(2)}',
+=======
+                  '\₱${total.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -1067,7 +1127,11 @@ class OrderDetailScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
+<<<<<<< HEAD
                 borderRadius: BorderRadius.circular(16),
+=======
+                borderRadius: BorderRadius.circular(8),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
               side: BorderSide(color: Colors.grey[300]!),
             ),
@@ -1091,7 +1155,11 @@ class OrderDetailScreen extends StatelessWidget {
               backgroundColor: primaryGreen,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
+<<<<<<< HEAD
                 borderRadius: BorderRadius.circular(16),
+=======
+                borderRadius: BorderRadius.circular(8),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
             ),
             child: const Text(
@@ -1121,7 +1189,11 @@ class OrderDetailScreen extends StatelessWidget {
           ),
         ),
         Text(
+<<<<<<< HEAD
           '\$${amount.toStringAsFixed(2)}',
+=======
+          '\₱${amount.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -1218,4 +1290,126 @@ class OrderDetailScreen extends StatelessWidget {
         return paymentMethod;
     }
   }
+<<<<<<< HEAD
+=======
+
+  Future<void> _downloadReceipt(BuildContext context,
+      Map<String, dynamic> order, Color primaryGreen) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: primaryGreen),
+              const SizedBox(height: 16),
+              const Text('Generating receipt...'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final receiptText = _generateReceiptText(order);
+
+      if (Platform.isAndroid || Platform.isIOS) {
+        final Directory tempDir = await getTemporaryDirectory();
+        final File file =
+            File('${tempDir.path}/receipt_order_${order['id']}.txt');
+        await file.writeAsString(receiptText);
+
+        Navigator.pop(context); // close loading
+
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text:
+              'Receipt for Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
+        );
+      } else {
+        Navigator.pop(context); // close loading
+
+        await Clipboard.setData(ClipboardData(text: receiptText));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Receipt copied to clipboard'),
+            backgroundColor: primaryGreen,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to download receipt: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  String _generateReceiptText(Map<String, dynamic> order) {
+    final items = order['items'] as List<dynamic>? ?? [];
+    final total = (order['total'] ?? 0.0).toDouble();
+    final orderId = order['id'] ?? '';
+    final createdAt = order['createdAt'] as Timestamp?;
+    final deliveredAt = order['deliveredAt'] as Timestamp?;
+    final confirmedAt = order['confirmedAt'] as Timestamp?;
+
+    StringBuffer sb = StringBuffer();
+
+    sb.writeln('=' * 40);
+    sb.writeln('            ORDER RECEIPT');
+    sb.writeln('=' * 40);
+    sb.writeln();
+    sb.writeln(
+        'Order ID: #${orderId.toString().substring(0, 8).toUpperCase()}');
+    sb.writeln(
+        'Date: ${createdAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt.toDate()) : 'N/A'}');
+    if (confirmedAt != null) {
+      sb.writeln(
+          'Confirmed: ${DateFormat('yyyy-MM-dd').format(confirmedAt.toDate())}');
+    }
+    if (deliveredAt != null) {
+      sb.writeln(
+          'Delivered: ${DateFormat('yyyy-MM-dd').format(deliveredAt.toDate())}');
+    }
+    sb.writeln();
+    sb.writeln('-' * 40);
+    sb.writeln('Items');
+    sb.writeln('-' * 40);
+
+    for (var item in items) {
+      final itemMap = item as Map<String, dynamic>;
+      final price = (itemMap['price'] ?? 0.0).toDouble();
+      final quantity = itemMap['quantity'] ?? 1;
+      final subtotal = price * quantity;
+
+      sb.writeln('${itemMap['productName']}');
+      sb.writeln(
+          '  ${quantity.toString().padLeft(2)} x \₱${price.toStringAsFixed(2)} = \₱${subtotal.toStringAsFixed(2)}');
+    }
+
+    sb.writeln();
+    sb.writeln('-' * 40);
+    sb.writeln('Total: \₱${total.toStringAsFixed(2)}');
+    sb.writeln('=' * 40);
+    sb.writeln();
+    sb.writeln('Thank you for your purchase!');
+    sb.writeln(
+        'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+
+    return sb.toString();
+  }
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 }

@@ -6,6 +6,10 @@ import '../../../models/product.dart';
 import '../../../firestore_service.dart';
 import '../../../services/customer/category_service.dart';
 import '../product/product_detail_screen.dart';
+<<<<<<< HEAD
+=======
+import '../search/search_screen.dart';
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class CategoriesScreen extends StatefulWidget {
   final UserModel? user;
@@ -221,7 +225,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ),
           IconButton(
             icon: Icon(Icons.search, color: primaryGreen),
+<<<<<<< HEAD
             onPressed: () {},
+=======
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
           IconButton(
             icon: Icon(Icons.refresh, color: primaryGreen),
@@ -510,7 +525,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
+<<<<<<< HEAD
                   if (product.stock_quantity! <= 5 &&
+=======
+                  if (product.stock_quantity! < 5 &&
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       product.stock_quantity! > 0)
                     Text(
                       'Only ${product.stock_quantity} left',

@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 class ProductSearchWidget extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback? onChanged;
+<<<<<<< HEAD
   final String? placeholder;
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   const ProductSearchWidget({
     Key? key,
     required this.controller,
     this.onChanged,
+<<<<<<< HEAD
     this.placeholder,
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }) : super(key: key);
 
   @override
@@ -21,7 +27,11 @@ class ProductSearchWidget extends StatelessWidget {
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
+<<<<<<< HEAD
           labelText: placeholder ?? 'Search Products',
+=======
+          labelText: 'Search Products',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
           prefixIcon: const Icon(Icons.search, color: Colors.green),
           filled: true,
           fillColor: Colors.white,

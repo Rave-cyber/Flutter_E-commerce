@@ -2,7 +2,10 @@ import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
+<<<<<<< HEAD
 import 'package:firebase/views/customer/search/search_screen.dart';
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -17,6 +20,10 @@ import '../customer/product/product_detail_screen.dart';
 import '../customer/categories/categories_screen.dart';
 import '../customer/favorites/favorites_screen.dart';
 import '../customer/profile/profile_screen.dart';
+<<<<<<< HEAD
+=======
+import '../customer/search/search_screen.dart';
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class HomeScreen extends StatefulWidget {
   final UserModel? user;
@@ -94,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         // Notification Icon
+<<<<<<< HEAD
         _buildActionButton(
           Icons.notifications_none_outlined,
           'Notifications',
@@ -101,6 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
           showBadge: false,
         ),
         const SizedBox(width: 4),
+=======
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
         // Orders Icon with dynamic badge
         StreamBuilder<List<Map<String, dynamic>>>(
@@ -591,6 +601,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryItem(CategoryModel category) {
+<<<<<<< HEAD
     final isSelected = _selectedCategory == category.id;
 
     return GestureDetector(
@@ -713,6 +724,114 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+=======
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(category.name),
+        selected: false,
+        selectedColor: primaryGreen,
+        backgroundColor: Colors.grey[200],
+        labelStyle: TextStyle(
+          color: primaryGreen,
+          fontWeight: FontWeight.bold,
+        ),
+        onSelected: (selected) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoriesScreen(
+                user: widget.user,
+                initialCategoryId: category.id,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoriesShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 100,
+            margin: const EdgeInsets.only(right: 16),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 60,
+                  height: 12,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFeaturedProductsSection() {
+    return StreamBuilder<List<ProductModel>>(
+      stream: FirestoreService.getFeaturedProducts(),
+      builder: (context, snapshot) {
+        final products = snapshot.data ?? [];
+        if (products.isEmpty) return const SizedBox();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Featured Products',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: lightGreen,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Trending',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: primaryGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
             const SizedBox(height: 16),
             SizedBox(
               height: 280,
@@ -1033,7 +1152,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
+<<<<<<< HEAD
                       '\$${product.sale_price.toStringAsFixed(2)}',
+=======
+                      '\₱${product.sale_price.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1042,13 +1165,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     if (hasDiscount)
                       Text(
+<<<<<<< HEAD
                         '\$${product.base_price.toStringAsFixed(2)}',
+=======
+                        '\₱${product.base_price.toStringAsFixed(2)}',
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
+<<<<<<< HEAD
                     Row(
                       children: [
                         Icon(Icons.star, color: Colors.amber, size: 14),
@@ -1072,6 +1200,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+=======
+                    _buildRatingRow(product),
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ],
                 ),
               ),
@@ -1082,6 +1213,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+<<<<<<< HEAD
+=======
+  Widget _buildRatingRow(ProductModel product) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getProductRatingsStream(product.id),
+      builder: (context, snapshot) {
+        final ratings = snapshot.data ?? [];
+        double avg = 0;
+        if (ratings.isNotEmpty) {
+          avg = ratings
+                  .map((r) => (r['stars'] as num?)?.toDouble() ?? 0)
+                  .fold<double>(0, (a, b) => a + b) /
+              ratings.length;
+        }
+
+        final display = ratings.isEmpty ? 'New' : avg.toStringAsFixed(1);
+
+        return Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              display,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (ratings.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                '(${ratings.length})',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+            const Spacer(),
+            Icon(
+              product.stock_quantity! > 0
+                  ? Icons.check_circle_outline
+                  : Icons.remove_circle_outline,
+              color: product.stock_quantity! > 0 ? Colors.green : Colors.red,
+              size: 14,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+>>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildProductsShimmer() {
     return GridView.builder(
       shrinkWrap: true,
