@@ -266,7 +266,7 @@ class FirestoreService {
       return null;
     } catch (e) {
       print('Error getting variant: $e');
-      return null;
+      throw e;
     }
   }
 
@@ -792,25 +792,83 @@ class FirestoreService {
     }
   }
 
-  // Get delivery staff data by user ID
+  // Get delivery staff data by user ID - IMPROVED with multiple search strategies
   static Future<Map<String, dynamic>?> getDeliveryStaffData(
-      String userId) async {
+      String deliveryStaffId) async {
     try {
-      final query = await _firestore
+      print('🔍 Searching for delivery staff with ID: $deliveryStaffId');
+
+      // First try: Search by user_id field (most common scenario)
+      print('📋 Strategy 1: Searching by user_id field...');
+      final queryByUserId = await _firestore
           .collection('delivery_staff')
-          .where('user_id', isEqualTo: userId)
+          .where('user_id', isEqualTo: deliveryStaffId)
           .limit(1)
           .get();
 
-      if (query.docs.isNotEmpty) {
+      if (queryByUserId.docs.isNotEmpty) {
+        print(
+            '✅ Found delivery staff by user_id: ${queryByUserId.docs.first.data()}');
         return {
-          'id': query.docs.first.id,
-          ...query.docs.first.data(),
+          'id': queryByUserId.docs.first.id,
+          ...queryByUserId.docs.first.data(),
         };
       }
+
+      // Second try: Search by document ID (if deliveryStaffId is the document ID)
+      print('📋 Strategy 2: Searching by document ID...');
+      final docById = await _firestore
+          .collection('delivery_staff')
+          .doc(deliveryStaffId)
+          .get();
+
+      if (docById.exists) {
+        print('✅ Found delivery staff by document ID: ${docById.data()}');
+        return {
+          'id': docById.id,
+          ...docById.data()!,
+        };
+      }
+
+      // Third try: Search by id field in document (if there's an id field)
+      print('📋 Strategy 3: Searching by id field in document...');
+      final queryByIdField = await _firestore
+          .collection('delivery_staff')
+          .where('id', isEqualTo: deliveryStaffId)
+          .limit(1)
+          .get();
+
+      if (queryByIdField.docs.isNotEmpty) {
+        print(
+            '✅ Found delivery staff by id field: ${queryByIdField.docs.first.data()}');
+        return {
+          'id': queryByIdField.docs.first.id,
+          ...queryByIdField.docs.first.data(),
+        };
+      }
+
+      // Fourth try: Search by staff_id field (alternative field name)
+      print('📋 Strategy 4: Searching by staff_id field...');
+      final queryByStaffId = await _firestore
+          .collection('delivery_staff')
+          .where('staff_id', isEqualTo: deliveryStaffId)
+          .limit(1)
+          .get();
+
+      if (queryByStaffId.docs.isNotEmpty) {
+        print(
+            '✅ Found delivery staff by staff_id: ${queryByStaffId.docs.first.data()}');
+        return {
+          'id': queryByStaffId.docs.first.id,
+          ...queryByStaffId.docs.first.data(),
+        };
+      }
+
+      print(
+          '⚠️ No delivery staff found for ID: $deliveryStaffId after trying all strategies');
       return null;
     } catch (e) {
-      print('Error getting delivery staff data: $e');
+      print('❌ Error getting delivery staff data: $e');
       return null;
     }
   }

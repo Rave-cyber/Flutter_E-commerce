@@ -704,40 +704,19 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
       return 'Unknown Staff';
     }
 
-    // Try multiple possible field name variations
-    final firstname = _deliveryStaffData!['firstname'] ??
-        _deliveryStaffData!['first_name'] ??
-        _deliveryStaffData!['fname'] ??
-        '';
-
-    final middlename = _deliveryStaffData!['middlename'] ??
-        _deliveryStaffData!['middle_name'] ??
-        _deliveryStaffData!['mname'] ??
-        '';
-
-    final lastname = _deliveryStaffData!['lastname'] ??
-        _deliveryStaffData!['last_name'] ??
-        _deliveryStaffData!['lname'] ??
-        '';
-
-    // Alternative: try full_name field
-    final fullName = _deliveryStaffData!['full_name'] ??
-        _deliveryStaffData!['fullname'] ??
-        '';
+    // Use exact field names from DeliveryStaffModel
+    final firstname = _deliveryStaffData!['firstname'] ?? '';
+    final middlename = _deliveryStaffData!['middlename'] ?? '';
+    final lastname = _deliveryStaffData!['lastname'] ?? '';
 
     List<String> nameParts = [];
-    if (fullName.isNotEmpty) {
-      nameParts.add(fullName);
-      print('📝 Using full_name field: $fullName');
-    } else {
-      if (firstname.isNotEmpty) nameParts.add(firstname);
-      if (middlename.isNotEmpty) nameParts.add(middlename);
-      if (lastname.isNotEmpty) nameParts.add(lastname);
-      print(
-          '📝 Using individual name fields - First: $firstname, Middle: $middlename, Last: $lastname');
-    }
+    if (firstname.isNotEmpty) nameParts.add(firstname);
+    if (middlename.isNotEmpty) nameParts.add(middlename);
+    if (lastname.isNotEmpty) nameParts.add(lastname);
 
     final result = nameParts.isNotEmpty ? nameParts.join(' ') : 'Unknown Staff';
+    print(
+        '📝 Using DeliveryStaffModel fields - First: $firstname, Middle: $middlename, Last: $lastname');
     print('✅ Final name result: $result');
 
     return result;

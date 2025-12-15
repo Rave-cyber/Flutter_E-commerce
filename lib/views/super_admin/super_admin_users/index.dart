@@ -4,8 +4,7 @@ import 'package:firebase/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/super_admin_layout.dart';
 import 'form.dart';
-import '../../../widgets/product_search_widget.dart';
-import '../../../widgets/product_filter_widget.dart';
+import '../../../widgets/user_search_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
 
@@ -60,6 +59,147 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
     }
   }
 
+  Future<void> _handleMenuSelection(String value, UserModel user) async {
+    switch (value) {
+      case 'edit':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const SuperAdminUsersForm(),
+          ),
+        );
+        break;
+      case 'archive':
+      case 'unarchive':
+        final action = user.is_archived ? 'unarchive' : 'archive';
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text('Confirm $action'),
+            content: Text(
+              'Are you sure you want to $action "${user.display_name ?? user.email}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  elevation: 2,
+                ),
+                child: Text(
+                  action[0].toUpperCase() + action.substring(1),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          // Handle archive/unarchive logic here
+          // await _authService.toggleArchive(user);
+        }
+        break;
+      case 'delete':
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Confirm Delete'),
+            content: Text(
+              'Are you sure you want to delete "${user.display_name ?? user.email}"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  elevation: 2,
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          // Handle delete logic here
+          // await _authService.deleteUser(user.id);
+        }
+        break;
+    }
+  }
+
+  void _showUserDetailsModal(UserModel user) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: _getRoleColor(user.role).withOpacity(0.1),
+                child: Icon(
+                  _getRoleIcon(user.role),
+                  size: 30,
+                  color: _getRoleColor(user.role),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                user.display_name ?? 'No Name',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(user.email),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getRoleColor(user.role).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: _getRoleColor(user.role).withOpacity(0.3)),
+                ),
+                child: Text(
+                  user.role.toUpperCase().replaceAll('_', ' '),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _getRoleColor(user.role),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SuperAdminLayout(
@@ -70,7 +210,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
         child: Column(
           children: [
             // SEARCH FIELD
-            ProductSearchWidget(
+            UserSearchWidget(
               controller: _searchController,
               onChanged: () => setState(() {
                 _currentPage = 1;
@@ -78,8 +218,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
             ),
             const SizedBox(height: 16),
 
-            // FILTER AND PER PAGE DROPDOWN
-            // We use ProductFilterWidget but adapt it for our roles
+            // FILTER AND PER PAGE DROPDOWN - Horizontally Scrollable
             Material(
               elevation: 3,
               shadowColor: Colors.green.withOpacity(0.2),
@@ -88,69 +227,73 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.filter_list, color: Colors.green[600]),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Filter:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _roleFilter,
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'all', child: Text('All Roles')),
-                            DropdownMenuItem(
-                                value: 'admin', child: Text('Admins')),
-                            DropdownMenuItem(
-                                value: 'delivery_staff',
-                                child: Text('Delivery Staff')),
-                            DropdownMenuItem(
-                                value: 'customer', child: Text('Customers')),
-                          ],
-                          onChanged: _onFilterChanged,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.filter_list, color: Colors.green[600]),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Filter:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 24),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _itemsPerPage,
-                          items: const [
-                            DropdownMenuItem(value: 10, child: Text('10')),
-                            DropdownMenuItem(value: 25, child: Text('25')),
-                            DropdownMenuItem(value: 50, child: Text('50')),
-                            DropdownMenuItem(value: 100, child: Text('100')),
-                          ],
-                          onChanged: _onItemsPerPageChanged,
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _roleFilter,
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'all', child: Text('All Roles')),
+                              DropdownMenuItem(
+                                  value: 'admin', child: Text('Admins')),
+                              DropdownMenuItem(
+                                  value: 'delivery_staff',
+                                  child: Text('Delivery Staff')),
+                              DropdownMenuItem(
+                                  value: 'customer', child: Text('Customers')),
+                            ],
+                            onChanged: _onFilterChanged,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 24),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _itemsPerPage,
+                            items: const [
+                              DropdownMenuItem(value: 10, child: Text('10')),
+                              DropdownMenuItem(value: 25, child: Text('25')),
+                              DropdownMenuItem(value: 50, child: Text('50')),
+                              DropdownMenuItem(value: 100, child: Text('100')),
+                            ],
+                            onChanged: _onItemsPerPageChanged,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // USERS LIST
+            // USERS LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 // We are querying the 'users' collection
@@ -236,6 +379,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
 
                   return Column(
                     children: [
+                      // USER LIST
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedUsers.length,
@@ -245,32 +389,38 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
 
-                      // PAGINATION CONTROLS
-                      ProductPaginationWidget(
-                        currentPage: _currentPage,
-                        onPreviousPage: _prevPage,
-                        onNextPage: () => _nextPage(users.length),
+                      const SizedBox(height: 16),
+
+                      // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // PAGINATION CONTROLS - Left end
+                          ProductPaginationWidget(
+                            currentPage: _currentPage,
+                            onPreviousPage: _prevPage,
+                            onNextPage: () => _nextPage(users.length),
+                          ),
+
+                          // ADD USER BUTTON - Right end
+                          FloatingActionButtonWidget(
+                            tooltip: 'Add User',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        const SuperAdminUsersForm()),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   );
                 },
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // FLOATING BUTTON
-            FloatingActionButtonWidget(
-              tooltip: 'Add User',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const SuperAdminUsersForm()),
-                );
-              },
             ),
           ],
         ),
@@ -391,12 +541,42 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                   ),
                 ),
 
-                // Action Button (View/Edit placeholder)
-                IconButton(
-                  icon: Icon(Icons.chevron_right, color: Colors.grey[400]),
-                  onPressed: () {
-                    // Future: Navigate to details or edit
-                  },
+                // Popup Menu Button
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: Colors.grey[400]),
+                  onSelected: (value) => _handleMenuSelection(value, user),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'archive',
+                      child: Row(
+                        children: [
+                          Icon(Icons.archive, size: 18),
+                          SizedBox(width: 8),
+                          Text('Archive'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

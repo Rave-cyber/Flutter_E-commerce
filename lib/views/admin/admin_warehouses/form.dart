@@ -465,7 +465,14 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                 : _regions.map((region) {
                     return DropdownMenuItem(
                       value: region,
-                      child: Text(region['regionName'] ?? region['name']),
+                      child: SizedBox(
+                        width:
+                            200, // Fixed width to enable horizontal scrolling
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(region['regionName'] ?? region['name']),
+                        ),
+                      ),
                     );
                   }).toList(),
             onChanged: _onRegionChanged,
@@ -489,7 +496,14 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                 : _provinces.map((province) {
                     return DropdownMenuItem(
                       value: province,
-                      child: Text(province['name']),
+                      child: SizedBox(
+                        width:
+                            200, // Fixed width to enable horizontal scrolling
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(province['name']),
+                        ),
+                      ),
                     );
                   }).toList(),
             onChanged: _onProvinceChanged,
@@ -513,7 +527,14 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                 : _citiesMunicipalities.map((cityMunicipality) {
                     return DropdownMenuItem(
                       value: cityMunicipality,
-                      child: Text(cityMunicipality['name']),
+                      child: SizedBox(
+                        width:
+                            200, // Fixed width to enable horizontal scrolling
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(cityMunicipality['name']),
+                        ),
+                      ),
                     );
                   }).toList(),
             onChanged: _onCityMunicipalityChanged,
@@ -537,7 +558,14 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                 : _barangays.map((barangay) {
                     return DropdownMenuItem(
                       value: barangay,
-                      child: Text(barangay['name']),
+                      child: SizedBox(
+                        width:
+                            200, // Fixed width to enable horizontal scrolling
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(barangay['name']),
+                        ),
+                      ),
                     );
                   }).toList(),
             onChanged: (value) {
