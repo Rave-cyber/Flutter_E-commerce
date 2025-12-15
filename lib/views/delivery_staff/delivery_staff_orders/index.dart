@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../firestore_service.dart';
 import '../../../layouts/delivery_staff_layout.dart';
 import '../../../widgets/order_details_modal.dart';
@@ -275,12 +276,12 @@ class OrderCard extends StatelessWidget {
                     horizontal: 12,
                     vertical: 6,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  // decoration: BoxDecoration(
+                  //   color: Colors.green.shade100,
+                  //   borderRadius: BorderRadius.circular(20),
+                  // ),
                   child: Text(
-                    '₱${totalAmount.toStringAsFixed(2)}',
+                    '₱${NumberFormat('#,###.00').format(totalAmount)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,

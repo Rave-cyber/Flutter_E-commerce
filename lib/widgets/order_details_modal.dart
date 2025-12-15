@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OrderDetailsModal extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -220,7 +221,7 @@ class OrderDetailsModal extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '₱${(item['price'] * item['quantity']).toStringAsFixed(2)}',
+                                '₱${NumberFormat('#,###.00').format(item['price'] * item['quantity'])}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -362,7 +363,7 @@ class OrderDetailsModal extends StatelessWidget {
           ),
         ),
         Text(
-          '₱${amount.toStringAsFixed(2)}',
+          '₱${NumberFormat('#,###.00').format(amount)}',
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
