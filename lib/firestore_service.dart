@@ -688,10 +688,12 @@ class FirestoreService {
   }
 
   // Get orders for delivery staff (confirmed and processing statuses)
-  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders() {
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders(
+      String deliveryStaffId) {
     return _firestore
         .collection('orders')
         .where('status', whereIn: ['confirmed', 'processing'])
+        .where('deliveryStaffId', isEqualTo: deliveryStaffId)
         .snapshots()
         .map((snapshot) {
           final orders = snapshot.docs.map((doc) {
@@ -721,10 +723,12 @@ class FirestoreService {
   }
 
   // Get shipped orders for delivery staff deliveries
-  static Stream<List<Map<String, dynamic>>> getDeliveryStaffDeliveries() {
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffDeliveries(
+      String deliveryStaffId) {
     return _firestore
         .collection('orders')
         .where('status', isEqualTo: 'shipped')
+        .where('deliveryStaffId', isEqualTo: deliveryStaffId)
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) {
@@ -907,7 +911,8 @@ class FirestoreService {
   }
 
   // Get delivered orders for delivery staff order history
-  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrderHistory() {
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrderHistory(
+      String deliveryStaffId) {
     return _firestore
         .collection('orders')
         .where('status', isEqualTo: 'delivered')

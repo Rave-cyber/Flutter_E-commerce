@@ -7,6 +7,7 @@ import '../../../widgets/order_details_modal.dart';
 import '../../../widgets/order_filter_widget.dart';
 import '../../../widgets/order_pagination_widget.dart';
 import '../../../widgets/order_search_widget.dart';
+import '../../../services/auth_service.dart';
 import 'form.dart';
 
 class DeliveryStaffDeliveriesScreen extends StatefulWidget {
@@ -112,7 +113,10 @@ class _DeliveryStaffDeliveriesScreenState
             // DELIVERY LIST
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: FirestoreService.getDeliveryStaffDeliveries(),
+                stream: AuthService().currentUser?.uid != null
+                    ? FirestoreService.getDeliveryStaffDeliveries(
+                        AuthService().currentUser!.uid)
+                    : Stream.value([]),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(

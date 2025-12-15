@@ -7,6 +7,7 @@ import '../../../widgets/order_details_modal.dart';
 import '../../../widgets/order_filter_widget.dart';
 import '../../../widgets/order_pagination_widget.dart';
 import '../../../widgets/order_search_widget.dart';
+import '../../../services/auth_service.dart';
 
 class DeliveryStaffOrderHistoryScreen extends StatefulWidget {
   const DeliveryStaffOrderHistoryScreen({super.key});
@@ -310,7 +311,10 @@ class _DeliveryStaffOrderHistoryScreenState
             // ORDER LIST
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: FirestoreService.getDeliveryStaffOrderHistory(),
+                stream: AuthService().currentUser?.uid != null
+                    ? FirestoreService.getDeliveryStaffOrderHistory(
+                        AuthService().currentUser!.uid)
+                    : Stream.value([]),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(

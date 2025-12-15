@@ -7,6 +7,7 @@ import '../../../widgets/order_details_modal.dart';
 import '../../../widgets/order_filter_widget.dart';
 import '../../../widgets/order_pagination_widget.dart';
 import '../../../widgets/order_search_widget.dart';
+import '../../../services/auth_service.dart';
 
 class DeliveryStaffOrdersScreen extends StatefulWidget {
   const DeliveryStaffOrdersScreen({super.key});
@@ -109,7 +110,10 @@ class _DeliveryStaffOrdersScreenState extends State<DeliveryStaffOrdersScreen> {
             // ORDER LIST
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: FirestoreService.getDeliveryStaffOrders(),
+                stream: AuthService().currentUser?.uid != null
+                    ? FirestoreService.getDeliveryStaffOrders(
+                        AuthService().currentUser!.uid)
+                    : Stream.value([]),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const Center(child: Text('Error loading orders'));
@@ -440,7 +444,11 @@ class OrderCard extends StatelessWidget {
     try {
       // Get current delivery staff ID (you'll need to implement user authentication)
       // For now, using a placeholder - replace with actual user ID
-      const deliveryStaffId = 'current_delivery_staff_id';
+      final currentUser = AuthService().currentUser;
+      if (currentUser == null) {
+        throw Exception('No authenticated user found');
+      }
+      final deliveryStaffId = currentUser.uid;
 
       await FirestoreService.markOrderAsShipped(order['id'], deliveryStaffId);
 
