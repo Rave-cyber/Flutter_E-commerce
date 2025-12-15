@@ -38,7 +38,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isLoading = false;
   String? _customerId;
 
-  // Shipping calculation variables
+// Shipping calculation variables
   double _shippingFee = 0.0;
   double _distance = 0.0;
   int _estimatedDays = 3;
@@ -127,7 +127,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
-        foregroundColor: darkGreen,
+        iconTheme: IconThemeData(color: primaryGreen),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
@@ -871,8 +871,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _showEditAddressSheet() {
     final TextEditingController houseController = TextEditingController();
     bool saving = false;
+    bool modalClosed = false;
 
-    // Cascading dropdown state
     List<Map<String, dynamic>> regions = [];
     List<Map<String, dynamic>> provinces = [];
     List<Map<String, dynamic>> cities = [];
@@ -897,18 +897,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setModalState) {
+          // Helper function to safely update state
+          void safeSetState(VoidCallback fn) {
+            if (!modalClosed && mounted) {
+              setModalState(fn);
+            }
+          }
+
           // Initial load for regions
           if (!initialized) {
             initialized = true;
             Future.microtask(() async {
               try {
                 final r = await PhilippineAddressService.getRegions();
-                setModalState(() {
+                safeSetState(() {
                   regions = r;
                   loadingRegions = false;
                 });
               } catch (_) {
-                setModalState(() {
+                safeSetState(() {
                   loadingRegions = false;
                 });
               }
@@ -935,14 +942,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
+                      onPressed: () {
+                        modalClosed = true;
+                        Navigator.pop(ctx);
+                      },
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
 
                 // Region
+                // Region Dropdown - FIXED VERSION
                 DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true, // <-- ADD THIS LINE
                   value: selectedRegion,
                   decoration: const InputDecoration(
                     labelText: 'Region',
@@ -965,7 +977,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingRegions
                       ? null
                       : (value) async {
-                          setModalState(() {
+                          safeSetState(() {
                             selectedRegion = value;
                             selectedProvince = null;
                             selectedCity = null;
@@ -977,20 +989,156 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
+<<<<<<< HEAD
                               final p = await PhilippineAddressService.getProvinces(value['code']);
                               setModalState(() {
+=======
+                              final p =
+                                  await PhilippineAddressService.getProvinces(
+                                      value['code']);
+                              safeSetState(() {
+>>>>>>> 0c5d047 (some deisgn fix)
                                 provinces = p;
                                 loadingProvinces = false;
                               });
                             } catch (_) {
-                              setModalState(() => loadingProvinces = false);
+                              safeSetState(() => loadingProvinces = false);
                             }
                           } else {
-                            setModalState(() => loadingProvinces = false);
+                            safeSetState(() => loadingProvinces = false);
                           }
                         },
                 ),
-                const SizedBox(height: 12),
+
+// Province Dropdown - FIXED VERSION
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true, // <-- ADD THIS LINE
+                  value: selectedProvince,
+                  decoration: const InputDecoration(
+                    labelText: 'Province',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: provinces.isEmpty && !loadingProvinces
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a region first'),
+                          ),
+                        ]
+                      : provinces
+                          .map((province) => DropdownMenuItem(
+                                value: province,
+                                child: Text(province['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingProvinces
+                      ? null
+                      : (value) async {
+                          safeSetState(() {
+                            selectedProvince = value;
+                            selectedCity = null;
+                            selectedBarangay = null;
+                            cities = [];
+                            barangays = [];
+                            loadingCities = true;
+                          });
+                          if (value != null) {
+                            try {
+                              final c = await PhilippineAddressService
+                                  .getCitiesMunicipalities(value['code']);
+                              safeSetState(() {
+                                cities = c;
+                                loadingCities = false;
+                              });
+                            } catch (_) {
+                              safeSetState(() => loadingCities = false);
+                            }
+                          } else {
+                            safeSetState(() => loadingCities = false);
+                          }
+                        },
+                ),
+
+// City/Municipality Dropdown - FIXED VERSION
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true, // <-- ADD THIS LINE
+                  value: selectedCity,
+                  decoration: const InputDecoration(
+                    labelText: 'City/Municipality',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: cities.isEmpty && !loadingCities
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a province first'),
+                          ),
+                        ]
+                      : cities
+                          .map((city) => DropdownMenuItem(
+                                value: city,
+                                child: Text(city['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingCities
+                      ? null
+                      : (value) async {
+                          safeSetState(() {
+                            selectedCity = value;
+                            selectedBarangay = null;
+                            barangays = [];
+                            loadingBarangays = true;
+                          });
+                          if (value != null) {
+                            try {
+                              final b =
+                                  await PhilippineAddressService.getBarangays(
+                                      value['code']);
+                              safeSetState(() {
+                                barangays = b;
+                                loadingBarangays = false;
+                              });
+                            } catch (_) {
+                              safeSetState(() => loadingBarangays = false);
+                            }
+                          } else {
+                            safeSetState(() => loadingBarangays = false);
+                          }
+                        },
+                ),
+
+// Barangay Dropdown - FIXED VERSION
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true, // <-- ADD THIS LINE
+                  value: selectedBarangay,
+                  decoration: const InputDecoration(
+                    labelText: 'Barangay (Optional)',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: barangays.isEmpty && !loadingBarangays
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a city/municipality first'),
+                          ),
+                        ]
+                      : barangays
+                          .map((brgy) => DropdownMenuItem(
+                                value: brgy,
+                                child: Text(brgy['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingBarangays
+                      ? null
+                      : (value) {
+                          safeSetState(() {
+                            selectedBarangay = value;
+                          });
+                        },
+                ),
 
                 // Province
                 DropdownButtonFormField<Map<String, dynamic>>(
@@ -1016,7 +1164,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingProvinces
                       ? null
                       : (value) async {
-                          setModalState(() {
+                          safeSetState(() {
                             selectedProvince = value;
                             selectedCity = null;
                             selectedBarangay = null;
@@ -1026,16 +1174,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
+<<<<<<< HEAD
                               final c = await PhilippineAddressService.getCitiesMunicipalities(value['code']);
                               setModalState(() {
+=======
+                              final c = await PhilippineAddressService
+                                  .getCitiesMunicipalities(value['code']);
+                              safeSetState(() {
+>>>>>>> 0c5d047 (some deisgn fix)
                                 cities = c;
                                 loadingCities = false;
                               });
                             } catch (_) {
-                              setModalState(() => loadingCities = false);
+                              safeSetState(() => loadingCities = false);
                             }
                           } else {
-                            setModalState(() => loadingCities = false);
+                            safeSetState(() => loadingCities = false);
                           }
                         },
                 ),
@@ -1065,7 +1219,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingCities
                       ? null
                       : (value) async {
-                          setModalState(() {
+                          safeSetState(() {
                             selectedCity = value;
                             selectedBarangay = null;
                             barangays = [];
@@ -1073,16 +1227,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
+<<<<<<< HEAD
                               final b = await PhilippineAddressService.getBarangays(value['code']);
                               setModalState(() {
+=======
+                              final b =
+                                  await PhilippineAddressService.getBarangays(
+                                      value['code']);
+                              safeSetState(() {
+>>>>>>> 0c5d047 (some deisgn fix)
                                 barangays = b;
                                 loadingBarangays = false;
                               });
                             } catch (_) {
-                              setModalState(() => loadingBarangays = false);
+                              safeSetState(() => loadingBarangays = false);
                             }
                           } else {
-                            setModalState(() => loadingBarangays = false);
+                            safeSetState(() => loadingBarangays = false);
                           }
                         },
                 ),
@@ -1112,7 +1273,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingBarangays
                       ? null
                       : (value) {
-                          setModalState(() {
+                          safeSetState(() {
                             selectedBarangay = value;
                           });
                         },
@@ -1145,7 +1306,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               _showSnackBar('Please enter house/unit and street');
                               return;
                             }
-                            setModalState(() => saving = true);
+
+                            safeSetState(() => saving = true);
+
                             try {
                               final parts = <String>[];
                               parts.add(house);
@@ -1155,23 +1318,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               parts.add(selectedRegion!['regionName'] ?? selectedRegion!['name']);
                               final finalAddress = parts.join(', ');
 
+<<<<<<< HEAD
                               // Update in Firestore: single address string in customers collection
                               final auth = Provider.of<AuthService>(context, listen: false);
+=======
+                              // Update in Firestore
+                              final auth = Provider.of<AuthService>(context,
+                                  listen: false);
+>>>>>>> 0c5d047 (some deisgn fix)
                               final user = auth.currentUser;
                               if (user == null) {
                                 throw 'Not logged in';
                               }
-                              // find customer by user_id
+
                               final fs = FirebaseFirestore.instance;
                               final query = await fs
                                   .collection('customers')
                                   .where('user_id', isEqualTo: user.uid)
                                   .limit(1)
                                   .get();
+
                               if (query.docs.isNotEmpty) {
                                 await fs.collection('customers').doc(query.docs.first.id).update({'address': finalAddress});
                               } else {
-                                // create minimal customer doc if missing
                                 await fs.collection('customers').add({
                                   'id': '',
                                   'user_id': user.uid,
@@ -1184,6 +1353,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 });
                               }
 
+<<<<<<< HEAD
                               // update local state
                               setState(() {
                                 _shippingAddressController.text = finalAddress;
@@ -1191,11 +1361,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               // recalc shipping
                               await _calculateShippingFee(finalAddress, _subtotal);
                               if (mounted) Navigator.pop(ctx);
+=======
+                              // Update local state and close modal
+                              if (mounted) {
+                                setState(() {
+                                  _shippingAddressController.text =
+                                      finalAddress;
+                                });
+                                await _calculateShippingFee(
+                                    finalAddress, _subtotal);
+                              }
+
+                              modalClosed = true;
+                              Navigator.pop(ctx);
+>>>>>>> 0c5d047 (some deisgn fix)
                               _showSnackBar('Address updated');
                             } catch (e) {
-                              _showSnackBar('Failed to update address: $e');
-                            } finally {
-                              if (mounted) setModalState(() => saving = false);
+                              if (mounted) {
+                                _showSnackBar('Failed to update address: $e');
+                              }
+                              safeSetState(() => saving = false);
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -1223,6 +1408,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         });
       },
-    );
+    ).then((_) {
+      modalClosed = true;
+    });
   }
 }

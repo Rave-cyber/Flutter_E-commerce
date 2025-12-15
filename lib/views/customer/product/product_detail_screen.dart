@@ -1655,10 +1655,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: _submittingRating ? null : _submitRating,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryGreen,
-                  minimumSize: const Size(double.infinity, 50),
-                ),
                 child: _submittingRating
                     ? const SizedBox(
                         width: 18,
@@ -1667,7 +1663,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             strokeWidth: 2,
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white)))
-                    : const Text('Submit Rating'),
+                    : Text(
+                        _hasUserRated ? 'Update Rating' : 'Submit Rating',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ),
           ],

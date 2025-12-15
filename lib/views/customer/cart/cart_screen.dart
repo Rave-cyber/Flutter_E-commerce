@@ -67,7 +67,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: textPrimary),
+        iconTheme: IconThemeData(color: primaryGreen),
         actions: [
           StreamBuilder<QuerySnapshot>(
             stream: _cartStream,

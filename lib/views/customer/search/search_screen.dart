@@ -395,34 +395,27 @@ class _SearchScreenState extends State<SearchScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: categories.map((category) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CategoriesScreen(
-                            initialCategoryId: category.id,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(category.name),
+                      selected: false,
+                      selectedColor: primaryGreen,
+                      backgroundColor: Colors.grey[200],
+                      labelStyle: TextStyle(
                         color: primaryGreen,
-                        borderRadius: BorderRadius.circular(20),
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: Text(
-                        category.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
+                      onSelected: (selected) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoriesScreen(
+                              initialCategoryId: category.id,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 }).toList(),
