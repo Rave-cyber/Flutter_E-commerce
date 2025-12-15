@@ -450,7 +450,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user.display_name ?? 'No Name',
+                          user.display_name ?? user.email,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
