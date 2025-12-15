@@ -503,33 +503,74 @@ class FirestoreService {
     });
   }
 
-  // Add a product rating. If the user has a delivered order for this product,
-  // the rating will be activated immediately. Otherwise it will be saved but
-  // marked as not activated.
-  static Future<void> addProductRating({
+  // Add or update a product rating. If the user has a delivered order for this
+  // product, the rating will be activated immediately. Otherwise it will be
+  // saved but marked as not activated.
+  static Future<void> addOrUpdateProductRating({
     required String productId,
     required String userId,
     required int stars,
     String? comment,
   }) async {
     try {
+      // Check if an existing rating from this user for this product exists
+      final existingSnapshot = await _firestore
+          .collection('product_ratings')
+          .where('productId', isEqualTo: productId)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
       // Check if user has a delivered order containing this product
       final delivered =
           await hasUserDeliveredOrderForProduct(userId, productId);
 
-      final ratingsRef = _firestore.collection('product_ratings').doc();
-      await ratingsRef.set({
+      final data = {
         'productId': productId,
         'userId': userId,
         'stars': stars,
         'comment': comment ?? '',
         'activated': delivered,
-        'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      if (existingSnapshot.docs.isNotEmpty) {
+        // Update existing rating
+        await existingSnapshot.docs.first.reference.update(data);
+      } else {
+        // Create new rating
+        await _firestore.collection('product_ratings').add({
+          ...data,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
     } catch (e) {
-      print('Error adding product rating: $e');
+      print('Error adding/updating product rating: $e');
       throw e;
+    }
+  }
+
+  /// Get the current user's rating for a specific product, if it exists.
+  static Future<Map<String, dynamic>?> getUserRatingForProduct(
+      String userId, String productId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('product_ratings')
+          .where('productId', isEqualTo: productId)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final doc = snapshot.docs.first;
+      return {
+        'id': doc.id,
+        ...doc.data(),
+      };
+    } catch (e) {
+      print('Error getting user rating for product: $e');
+      return null;
     }
   }
 

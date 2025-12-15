@@ -66,9 +66,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Local Lottie animation for auth required state
               Lottie.asset(
-                'assets/lottie/auth_required.json', // Your local file
+                'assets/lottie/auth_required.json',
                 height: 150,
                 width: 150,
                 fit: BoxFit.contain,
@@ -148,8 +147,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
           return Column(
             children: [
-              // Green filter chips
-              _buildGreenFilterChips(),
               _buildOrdersList(filteredOrders, context),
             ],
           );
@@ -158,52 +155,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildGreenFilterChips() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _statusFilters.map((status) {
-            final isSelected = _selectedStatus == status;
-            final label = status == 'all' ? 'All' : _capitalize(status);
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : primaryGreen,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedStatus = selected ? status : 'all';
-                  });
-                },
-                backgroundColor: lightGreen,
-                selectedColor: primaryGreen,
-                side: BorderSide(
-                  color: isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
-                  width: 1,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                elevation: 0,
-                shadowColor: Colors.transparent,
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
 
   String _capitalize(String text) {
     if (text.isEmpty) return text;
@@ -217,9 +169,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Local error animation
             Lottie.asset(
-              'assets/animations/box_empty.json', // Your local file
+              'assets/animations/box_empty.json',
               height: 120,
               width: 120,
             ),
@@ -253,11 +204,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Local Lottie animation for empty orders
             Lottie.asset(
               noOrders
-                  ? 'assets/animations/Box empty.json' // Your local file
-                  : 'assets/animations/Empty Cart.json', // Your local file
+                  ? 'assets/animations/Box empty.json'
+                  : 'assets/animations/Empty Cart.json',
               height: 200,
               width: 200,
               repeat: true,
@@ -329,8 +279,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final dateText = createdAt != null
         ? DateFormat('MMM dd, yyyy').format(createdAt.toDate())
         : '';
+    final deliveredAt = order['deliveredAt'] as Timestamp?;
 
-    // Using consistent green theme for all statuses
     final statusText = _capitalize(status);
     final isDelivered = status.toLowerCase() == 'delivered';
 
@@ -403,7 +353,30 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               const SizedBox(height: 16),
 
-              // Footer with status and total - ALL GREEN
+              // Delivery date if delivered
+              if (isDelivered && deliveredAt != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delivery_dining,
+                        size: 14,
+                        color: primaryGreen,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Delivered on ${DateFormat('MMM dd, yyyy').format(deliveredAt.toDate())}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Footer with status, total, and receipt button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -524,6 +497,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         return Icons.info;
     }
   }
+
 
   void _showFilterBottomSheet(BuildContext context) {
     showModalBottomSheet(

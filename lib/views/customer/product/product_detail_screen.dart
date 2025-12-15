@@ -1,10 +1,13 @@
 // product_detail_screen.dart
+import 'dart:async';
+
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
 import 'package:firebase/views/auth/login_screen.dart';
 
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
+import 'package:firebase/views/customer/orders/orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
@@ -32,11 +35,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _loadingVariants = true;
   bool _loadingBrandCategory = true;
   final Color primaryGreen = const Color(0xFF2C8610);
+  int _mainStock = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _productSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _variantsSub;
 
   // Rating state
   int _selectedStars = 5;
   final TextEditingController _ratingController = TextEditingController();
   bool _submittingRating = false;
+  bool _hasUserRated = false;
+  Map<String, dynamic>? _userRating;
 
   List<ProductVariantModel> _variants = [];
   // Two possible selections: main product or variant
@@ -49,15 +57,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedOption = widget.product;
+    _mainStock = widget.product.stock_quantity ?? 0;
     _checkIfFavorite();
     _loadProductDetails();
     _canRateFuture = _checkIfUserCanRate();
+    _listenToProductStock();
   }
 
   @override
   void dispose() {
+    _productSub?.cancel();
+    _variantsSub?.cancel();
     _ratingController.dispose();
     super.dispose();
+  }
+
+  int _currentStock() {
+    if (_isSelectingMainProduct) {
+      return _mainStock;
+    }
+    if (_selectedOption is ProductVariantModel) {
+      return (_selectedOption as ProductVariantModel).stock ?? 0;
+    }
+    return 0;
   }
 
   void _checkIfFavorite() async {
@@ -93,36 +116,80 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    final completer = Completer<void>();
+
     try {
-      final variants = await FirebaseFirestore.instance
+      _variantsSub?.cancel();
+      _variantsSub = FirebaseFirestore.instance
           .collection('product_variants')
           .where('product_id', isEqualTo: widget.product.id)
           .where('is_archived', isEqualTo: false)
-          .get();
+          .snapshots()
+          .listen((snapshot) {
+        final variantsList = snapshot.docs
+            .map((doc) => ProductVariantModel.fromMap({
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
+            .toList();
 
-      final variantsList = variants.docs
-          .map((doc) => ProductVariantModel.fromMap({
-                'id': doc.id,
-                ...doc.data(),
-              }))
-          .toList();
+        final bool hadVariantSelected = _selectedOption is ProductVariantModel;
+        final String? previousVariantId = hadVariantSelected
+            ? (_selectedOption as ProductVariantModel).id
+            : null;
 
-      if (mounted) {
-        setState(() {
-          _variants = variantsList;
-          _loadingVariants = false;
+        ProductVariantModel? updatedSelection;
+        if (previousVariantId != null) {
+          try {
+            updatedSelection = variantsList
+                .firstWhere((variant) => variant.id == previousVariantId);
+          } catch (_) {
+            updatedSelection =
+                variantsList.isNotEmpty ? variantsList.first : null;
+          }
+        } else if (variantsList.isNotEmpty) {
+          updatedSelection = variantsList.first;
+        }
 
-          // If product has variants, select first variant by default
-          // Otherwise, select main product
-          if (variantsList.isNotEmpty) {
-            _selectedOption = variantsList.first;
-            _isSelectingMainProduct = false;
-          } else {
+        if (mounted) {
+          setState(() {
+            _variants = variantsList;
+            _loadingVariants = false;
+
+            if (variantsList.isEmpty) {
+              _selectedOption = widget.product;
+              _isSelectingMainProduct = true;
+            } else if (_isSelectingMainProduct && !hadVariantSelected) {
+              // Auto-select first variant by default (existing behavior)
+              _selectedOption = updatedSelection ?? variantsList.first;
+              _isSelectingMainProduct = false;
+            } else if (hadVariantSelected) {
+              _selectedOption = updatedSelection ?? variantsList.first;
+              _isSelectingMainProduct = _selectedOption is! ProductVariantModel
+                  ? true
+                  : false;
+            }
+
+            // Safety: ensure there's always a selected option
+            _selectedOption ??= widget.product;
+            if (_selectedOption is! ProductVariantModel) {
+              _isSelectingMainProduct = true;
+            }
+          });
+        }
+
+        if (!completer.isCompleted) completer.complete();
+      }, onError: (error) {
+        print('Error loading variants: $error');
+        if (mounted) {
+          setState(() {
+            _loadingVariants = false;
             _selectedOption = widget.product;
             _isSelectingMainProduct = true;
-          }
-        });
-      }
+          });
+        }
+        if (!completer.isCompleted) completer.complete();
+      });
     } catch (e) {
       print('Error loading variants: $e');
       if (mounted) {
@@ -132,7 +199,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _isSelectingMainProduct = true;
         });
       }
+      if (!completer.isCompleted) completer.complete();
     }
+
+    return completer.future;
+  }
+
+  void _listenToProductStock() {
+    if (widget.product.id == null) return;
+
+    _productSub?.cancel();
+    _productSub = FirebaseFirestore.instance
+        .collection('products')
+        .doc(widget.product.id!)
+        .snapshots()
+        .listen((doc) {
+      if (!doc.exists) return;
+      final data = doc.data();
+      if (data == null) return;
+      final newStock = (data['stock_quantity'] as num?)?.toInt() ?? 0;
+
+      if (mounted) {
+        setState(() {
+          _mainStock = newStock;
+        });
+      }
+    }, onError: (error) {
+      print('Error listening to product stock: $error');
+    });
   }
 
   Future<void> _loadBrandAndCategory() async {
@@ -230,12 +324,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    // Determine stock based on selected option (live)
+    final stock = _currentStock();
 
-    if (stock! <= 0) {
+    if (stock <= 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -321,12 +413,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    // Determine stock based on selected option (live)
+    final stock = _currentStock();
 
-    if (stock! <= 0) {
+    if (stock <= 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -479,7 +569,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _shareProduct() {
     final shareText =
-        'Check out ${widget.product.name} for \$${widget.product.sale_price.toStringAsFixed(2)}';
+        'Check out ${widget.product.name} for ₱${widget.product.sale_price.toStringAsFixed(2)}';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -670,14 +760,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? widget.product.base_price
         : (_selectedOption as ProductVariantModel).base_price;
 
-    final hasDiscount = price < originalPrice;
-    final discountPercent = hasDiscount
-        ? ((originalPrice - price) / originalPrice * 100).toStringAsFixed(0)
-        : '0';
-    final discountValue = int.parse(discountPercent);
-
-    // Only show discount UI if there's a meaningful discount (at least 1%)
-    final showDiscount = hasDiscount && discountValue > 0;
+    final discountPercent = originalPrice > price
+        ? ((originalPrice - price) / originalPrice * 100).round()
+        : 0;
+    final stock = _currentStock();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -697,81 +783,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Sale price
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\$',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                      ),
-                    ),
-                    Text(
-                      price.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Original price - only show if meaningful discount
-                if (showDiscount)
-                  Row(
-                    children: [
-                      Text(
-                        '\$${originalPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                Text(
+                  '₱${price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: primaryGreen,
+                    height: 1.2,
                   ),
+                ),
+                // Original price (crossed out) if there's a discount
+                if (originalPrice > price)
+                  Text(
+                    '₱${originalPrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
+                      decoration: TextDecoration.lineThrough,
+                      height: 1.2,
+                    ),
+                  ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.inventory_2_outlined,
+                            size: 18, color: Colors.grey[700]),
+                        const SizedBox(width: 6),
+                        Text(
+                          stock > 0 ? '$stock in stock' : 'Out of stock',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: stock > 0 ? Colors.grey[700] : Colors.red,
+                            fontWeight:
+                                stock > 0 ? FontWeight.w600 : FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
               ],
             ),
           ),
-          // Discount badge - only show if meaningful discount
-          if (showDiscount)
+          if (discountPercent > 0)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryGreen, primaryGreen.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryGreen.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$discountPercent% OFF',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              child: Text(
+                '-$discountPercent%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],
@@ -894,9 +959,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Get stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    final stock = _currentStock();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -956,20 +1019,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               Expanded(
                 child: _buildModernInfoCard(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Stock',
-                  value: '$stock available',
-                  valueColor: stock! > 0 ? Colors.green : Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildModernInfoCard(
                   icon: Icons.verified_outlined,
                   label: 'Status',
                   value: widget.product.is_archived ? 'Archived' : 'Active',
                   valueColor:
                       widget.product.is_archived ? Colors.orange : Colors.green,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildModernInfoCard(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Stock',
+                  value: stock > 0 ? '$stock available' : 'Out of stock',
+                  valueColor: stock > 0 ? primaryGreen : Colors.red,
                 ),
               ),
             ],
@@ -1042,7 +1105,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     try {
-      await FirestoreService.addProductRating(
+      await FirestoreService.addOrUpdateProductRating(
         productId: widget.product.id!,
         userId: authUser.uid,
         stars: _selectedStars,
@@ -1053,11 +1116,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           authUser.uid, widget.product.id!);
 
       if (mounted) {
-        _ratingController.clear();
-        setState(() {
-          _selectedStars = 5;
-        });
-
         _showSnackBar(
           activated
               ? 'Thanks! Your rating is now active.'
@@ -1259,6 +1317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
+
           // Check if user can rate
           FutureBuilder<bool>(
             future: _canRateFuture,
@@ -1288,41 +1347,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               return _buildRatingForm();
             },
           ),
-          TextField(
-            controller: _ratingController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Write a comment (optional)',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _submittingRating ? null : _submitRating,
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-                  child: _submittingRating
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white)))
-                      : const Text('Submit Rating'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text('Note: Ratings become active after your order is delivered.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         ],
       ),
     );
@@ -1436,10 +1460,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     try {
       // Check if user has delivered order for this product
-      return await FirestoreService.hasUserDeliveredOrderForProduct(
+      final canRate = await FirestoreService.hasUserDeliveredOrderForProduct(
         authUser.uid,
         widget.product.id!,
       );
+
+      // Also check if user has already rated this product
+      final existingRating = await FirestoreService.getUserRatingForProduct(
+        authUser.uid,
+        widget.product.id!,
+      );
+
+      if (mounted) {
+        setState(() {
+          _hasUserRated = existingRating != null;
+          _userRating = existingRating;
+          if (existingRating != null) {
+            _selectedStars = existingRating['stars'] ?? 5;
+            _ratingController.text = existingRating['comment'] ?? '';
+          }
+        });
+      }
+
+      return canRate;
     } catch (e) {
       print('Error checking if user can rate: $e');
       return false;
@@ -1517,13 +1560,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue[300]!),
+            color: primaryGreen.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: primaryGreen.withOpacity(0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.shopping_bag, color: Colors.blue[800]),
+              Icon(Icons.shopping_bag, color: primaryGreen),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1534,7 +1577,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
+                        color: primaryGreen,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1598,11 +1641,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: ElevatedButton(
                       onPressed: null, // Disabled
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                  backgroundColor: Colors.grey[300],
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                       ),
                       child: Text(
                         'Submit Rating',
@@ -1623,7 +1666,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          _hasUserRated ? 'Edit your rating' : 'Leave a rating',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        if (_hasUserRated)
+          Container(
+            margin: const EdgeInsets.only(top: 8, bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.edit, color: Colors.amber[700], size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'You have already rated this product. You can update your rating below.',
+                    style: TextStyle(
+                      color: Colors.amber[800],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 8),
         Row(
           children: List.generate(5, (i) {
@@ -1645,9 +1717,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         TextField(
           controller: _ratingController,
           maxLines: 3,
+          style: TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Write a comment (optional)',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            filled: true,
+            fillColor: Colors.white,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
@@ -1660,8 +1735,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: _submittingRating ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  backgroundColor: primaryGreen,
+                  disabledBackgroundColor: Colors.grey,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 child: _submittingRating
@@ -1672,7 +1749,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             strokeWidth: 2,
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white)))
-                    : const Text('Submit Rating'),
+                    : Text(
+                        _hasUserRated ? 'Update Rating' : 'Submit Rating',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ),
           ],
@@ -1698,10 +1778,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    // Get stock based on selected option (live)
+    final stock = _currentStock();
 
     return Scaffold(
       body: CustomScrollView(
@@ -1766,50 +1844,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                     // Variant Selector
                     _buildVariantSelector(),
-
-                    // Stock Status
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: stock! > 0
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: stock > 0
-                              ? Colors.green.withOpacity(0.3)
-                              : Colors.red.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            stock! > 0
-                                ? Icons.check_circle_rounded
-                                : Icons.cancel_rounded,
-                            color: stock > 0 ? Colors.green : Colors.red,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            stock > 0
-                                ? '$stock items in stock'
-                                : 'Out of stock',
-                            style: TextStyle(
-                              color: stock > 0
-                                  ? Colors.green[800]
-                                  : Colors.red[800],
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                     // Product Information
                     _buildProductInfoSection(),
@@ -1892,67 +1926,59 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Row(
         children: [
+          // Cart Icon Button (small, outlined)
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: primaryGreen,
+                width: 2,
+              ),
+            ),
+            child: IconButton(
+              onPressed: stock > 0 && !_addingToCart ? _addToCart : null,
+              icon: _addingToCart
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_cart_outlined),
+              color: primaryGreen,
+              disabledColor: Colors.grey,
+              splashRadius: 20,
+              padding: const EdgeInsets.all(12),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Buy Now Button (big, green, full width)
           Expanded(
             child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _addToCart : null,
+              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 backgroundColor: primaryGreen,
                 disabledBackgroundColor: Colors.grey,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 0,
-              ),
-              child: _addingToCart
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined),
-                        SizedBox(width: 8),
-                        Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                backgroundColor: Colors.orange,
-                disabledBackgroundColor: Colors.grey,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
+                elevation: 3,
+                shadowColor: primaryGreen.withOpacity(0.3),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flash_on),
-                  SizedBox(width: 8),
+                  Icon(Icons.flash_on, size: 22),
+                  SizedBox(width: 10),
                   Text(
                     'Buy Now',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

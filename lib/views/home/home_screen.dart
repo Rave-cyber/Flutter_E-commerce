@@ -2,7 +2,6 @@ import 'package:firebase/models/customer_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/views/customer/cart/cart_screen.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
-import 'package:firebase/views/customer/search/search_screen.dart';
 import 'package:firebase/views/widgets/animated_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -17,6 +16,7 @@ import '../customer/product/product_detail_screen.dart';
 import '../customer/categories/categories_screen.dart';
 import '../customer/favorites/favorites_screen.dart';
 import '../customer/profile/profile_screen.dart';
+import '../customer/search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel? user;
@@ -94,13 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         // Notification Icon
-        _buildActionButton(
-          Icons.notifications_none_outlined,
-          'Notifications',
-          onPressed: () {},
-          showBadge: false,
-        ),
-        const SizedBox(width: 4),
 
         // Orders Icon with dynamic badge
         StreamBuilder<List<Map<String, dynamic>>>(
@@ -591,44 +584,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryItem(CategoryModel category) {
-    final isSelected = _selectedCategory == category.id;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CategoriesScreen(
-              user: widget.user,
-              initialCategoryId: category.id,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(category.name),
+        selected: false,
+        selectedColor: primaryGreen,
+        backgroundColor: Colors.grey[200],
+        labelStyle: TextStyle(
           color: primaryGreen,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: primaryGreen.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          fontWeight: FontWeight.bold,
         ),
-        child: Center(
-          child: Text(
-            category.name,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+        onSelected: (selected) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoriesScreen(
+                user: widget.user,
+                initialCategoryId: category.id,
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1033,7 +1010,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${product.sale_price.toStringAsFixed(2)}',
+                      '\₱${product.sale_price.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1042,36 +1019,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     if (hasDiscount)
                       Text(
-                        '\$${product.base_price.toStringAsFixed(2)}',
+                        '\₱${product.base_price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          '4.5',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          product.stock_quantity! > 0
-                              ? Icons.check_circle_outline
-                              : Icons.remove_circle_outline,
-                          color: product.stock_quantity! > 0
-                              ? Colors.green
-                              : Colors.red,
-                          size: 14,
-                        ),
-                      ],
-                    ),
+                    _buildRatingRow(product),
                   ],
                 ),
               ),
@@ -1079,6 +1034,57 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRatingRow(ProductModel product) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getProductRatingsStream(product.id),
+      builder: (context, snapshot) {
+        final ratings = snapshot.data ?? [];
+        double avg = 0;
+        if (ratings.isNotEmpty) {
+          avg = ratings
+                  .map((r) => (r['stars'] as num?)?.toDouble() ?? 0)
+                  .fold<double>(0, (a, b) => a + b) /
+              ratings.length;
+        }
+
+        final display = ratings.isEmpty ? 'New' : avg.toStringAsFixed(1);
+
+        return Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              display,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (ratings.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                '(${ratings.length})',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+            const Spacer(),
+            Icon(
+              product.stock_quantity! > 0
+                  ? Icons.check_circle_outline
+                  : Icons.remove_circle_outline,
+              color: product.stock_quantity! > 0 ? Colors.green : Colors.red,
+              size: 14,
+            ),
+          ],
+        );
+      },
     );
   }
 
