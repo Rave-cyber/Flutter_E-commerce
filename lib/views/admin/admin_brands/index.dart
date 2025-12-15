@@ -203,6 +203,7 @@ class _AdminBrandsIndexState extends State<AdminBrandsIndex> {
             // SEARCH FIELD
             ProductSearchWidget(
               controller: _searchController,
+              placeholder: 'Search brands',
               onChanged: () => setState(() {
                 _currentPage = 1;
               }),

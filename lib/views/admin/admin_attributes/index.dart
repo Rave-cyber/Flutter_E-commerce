@@ -378,6 +378,7 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
             // SEARCH FIELD
             ProductSearchWidget(
               controller: _searchController,
+              placeholder: 'Search attributes',
               onChanged: () => setState(() {
                 _currentPage = 1;
               }),

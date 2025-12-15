@@ -205,6 +205,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
             // SEARCH FIELD
             ProductSearchWidget(
               controller: _searchController,
+              placeholder: 'Search categories',
               onChanged: () => setState(() {
                 _currentPage = 1;
               }),
