@@ -687,22 +687,31 @@ class FirestoreService {
     }
   }
 
-  // Get orders for delivery staff (confirmed and processing statuses)
+  // Get orders for delivery staff (confirmed and processing statuses, unassigned)
   static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders(
       String deliveryStaffId) {
     return _firestore
         .collection('orders')
         .where('status', whereIn: ['confirmed', 'processing'])
-        .where('deliveryStaffId', isEqualTo: deliveryStaffId)
         .snapshots()
         .map((snapshot) {
-          final orders = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'id': doc.id,
-              ...data,
-            };
-          }).toList();
+          final orders = snapshot.docs
+              .map((doc) {
+                final data = doc.data();
+                // Only include orders that are not assigned to any delivery staff
+                // or are assigned to the current delivery staff
+                if (data['deliveryStaffId'] != null &&
+                    data['deliveryStaffId'] != deliveryStaffId) {
+                  return null;
+                }
+                return {
+                  'id': doc.id,
+                  ...data,
+                };
+              })
+              .where((order) => order != null)
+              .cast<Map<String, dynamic>>()
+              .toList();
 
           // Sort by createdAt in memory (descending - newest first)
           orders.sort((a, b) {
