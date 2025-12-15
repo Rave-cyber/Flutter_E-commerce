@@ -1,71 +1,202 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../layouts/delivery_staff_layout.dart';
+import 'package:flutter/material.dart';
 import '../../../firestore_service.dart';
+import '../../../layouts/delivery_staff_layout.dart';
+import '../../../widgets/order_filter_widget.dart';
+import '../../../widgets/order_pagination_widget.dart';
+import '../../../widgets/order_search_widget.dart';
 
-class DeliveryStaffOrdersScreen extends StatelessWidget {
+class DeliveryStaffOrdersScreen extends StatefulWidget {
   const DeliveryStaffOrdersScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const DeliveryStaffLayout(
-      title: 'Orders',
-      selectedRoute: '/delivery-staff/orders',
-      child: OrdersList(),
-    );
-  }
+  State<DeliveryStaffOrdersScreen> createState() =>
+      _DeliveryStaffOrdersScreenState();
 }
 
-class OrdersList extends StatelessWidget {
-  const OrdersList({super.key});
+class _DeliveryStaffOrdersScreenState extends State<DeliveryStaffOrdersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _filterStatus = 'all';
+  int _itemsPerPage = 10;
+  int _currentPage = 1;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onFilterChanged(String? value) {
+    if (value != null) {
+      setState(() {
+        _filterStatus = value;
+        _currentPage = 1;
+      });
+    }
+  }
+
+  void _onItemsPerPageChanged(int? value) {
+    if (value != null) {
+      setState(() {
+        _itemsPerPage = value;
+        _currentPage = 1;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _getFilteredOrders(
+      List<Map<String, dynamic>> orders) {
+    // FILTER
+    List<Map<String, dynamic>> filtered = orders.where((order) {
+      if (_filterStatus == 'all') return true;
+      return order['status'] == _filterStatus;
+    }).toList();
+
+    // SEARCH
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      filtered = filtered.where((order) {
+        final id = order['id'].toString().toLowerCase();
+        final address =
+            (order['shippingAddress'] ?? '').toString().toLowerCase();
+        final contact = (order['contactNumber'] ?? '').toString().toLowerCase();
+        return id.contains(query) ||
+            address.contains(query) ||
+            contact.contains(query);
+      }).toList();
+    }
+    return filtered;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: FirestoreService.getDeliveryStaffOrders(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error loading orders'));
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final orders = snapshot.data ?? [];
-
-        if (orders.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.inbox_outlined,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'No orders available',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
+    return DeliveryStaffLayout(
+      title: 'Orders',
+      selectedRoute: '/delivery-staff/orders',
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // SEARCH FIELD
+            OrderSearchWidget(
+              controller: _searchController,
+              onChanged: () => setState(() {
+                _currentPage = 1;
+              }),
             ),
-          );
-        }
+            const SizedBox(height: 16),
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            return OrderCard(order: order);
-          },
-        );
-      },
+            // FILTER AND PER PAGE DROPDOWN
+            OrderFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: _onFilterChanged,
+              onItemsPerPageChanged: _onItemsPerPageChanged,
+            ),
+            const SizedBox(height: 16),
+
+            // ORDER LIST
+            Expanded(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: FirestoreService.getDeliveryStaffOrders(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading orders'));
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final orders = snapshot.data ?? [];
+                  final filteredOrders = _getFilteredOrders(orders);
+                  final totalCount = filteredOrders.length;
+                  final totalPages =
+                      (totalCount + _itemsPerPage - 1) ~/ _itemsPerPage;
+                  final effectiveTotalPages = totalPages == 0 ? 1 : totalPages;
+
+                  // Ensure current page is valid
+                  if (_currentPage > effectiveTotalPages) {
+                    _currentPage = effectiveTotalPages;
+                  }
+
+                  if (filteredOrders.isEmpty) {
+                    return Center(
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inbox_outlined,
+                                  size: 64, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No orders found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final start = (_currentPage - 1) * _itemsPerPage;
+                  final end = start + _itemsPerPage;
+                  final paginatedOrders = filteredOrders.sublist(
+                      start, end > totalCount ? totalCount : end);
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: paginatedOrders.length,
+                          itemBuilder: (context, index) {
+                            final order = paginatedOrders[index];
+                            return OrderCard(order: order);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // BOTTOM CONTROLS
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OrderPaginationWidget(
+                            currentPage: _currentPage,
+                            totalPages: effectiveTotalPages,
+                            onPreviousPage: () {
+                              if (_currentPage > 1) {
+                                setState(() => _currentPage--);
+                              }
+                            },
+                            onNextPage: () {
+                              if (_currentPage < effectiveTotalPages) {
+                                setState(() => _currentPage++);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
