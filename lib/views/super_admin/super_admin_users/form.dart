@@ -419,223 +419,259 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
   @override
   Widget build(BuildContext context) {
     return SuperAdminLayout(
-      title: 'Create User',
-      child: Form(
-        key: _formKey,
-        child: Stepper(
-          currentStep: _currentStep,
-          onStepContinue:
-              _currentStep == _getLastStepForRole() ? _submitForm : _nextStep,
-          onStepCancel: _previousStep,
-          onStepTapped: (step) {
-            // Only allow tapping on visible steps
-            if (_shouldShowStep(step)) {
-              setState(() => _currentStep = step);
-            }
-          },
-          controlsBuilder: (BuildContext context, ControlsDetails details) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (_currentStep > 0)
-                    ElevatedButton(
-                      onPressed: details.onStepCancel,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  if (_currentStep > 0) const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : details.onStepContinue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
-                        : Text(
-                            _currentStep == _getLastStepForRole()
-                                ? 'Create User'
-                                : 'Next',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Create User',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          backgroundColor: Colors.green.shade50,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.green.shade50!,
+                Colors.white,
+                Colors.grey.shade50!,
+              ],
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Stepper(
+              currentStep: _currentStep,
+              onStepContinue: _currentStep == _getLastStepForRole()
+                  ? _submitForm
+                  : _nextStep,
+              onStepCancel: _previousStep,
+              onStepTapped: (step) {
+                // Only allow tapping on visible steps
+                if (_shouldShowStep(step)) {
+                  setState(() => _currentStep = step);
+                }
+              },
+              controlsBuilder: (BuildContext context, ControlsDetails details) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (_currentStep > 0)
+                        ElevatedButton(
+                          onPressed: details.onStepCancel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                  ),
-                ],
-              ),
-            );
-          },
-          steps: [
-            // Step 0: Account Role (always visible)
-            Step(
-              title: const Text('Account Role'),
-              content: _buildSectionCard(
-                title: 'Account Role',
-                child: _buildRoleDropdown(),
-              ),
-              isActive: _currentStep >= 0,
-              state: _currentStep >= 0
-                  ? (_validateCurrentStep()
-                      ? StepState.complete
-                      : StepState.indexed)
-                  : StepState.indexed,
-            ),
-
-            // Step 1: Login Credentials (always visible)
-            Step(
-              title: const Text('Login Credentials'),
-              content: _buildSectionCard(
-                title: 'Login Credentials',
-                child: Column(
-                  children: [
-                    _buildTextField(_emailController, 'Email',
-                        icon: Icons.email,
-                        keyboardType: TextInputType.emailAddress),
-                    const SizedBox(height: 16),
-                    _buildTextField(_passwordController, 'Password',
-                        icon: Icons.lock, obscureText: true),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          child: const Text(
+                            'Back',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
+                      if (_currentStep > 0) const SizedBox(width: 16),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : details.onStepContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
+                            : Text(
+                                _currentStep == _getLastStepForRole()
+                                    ? 'Create User'
+                                    : 'Next',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold),
+                              ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
+                );
+              },
+              steps: [
+                // Step 0: Account Role (always visible)
+                Step(
+                  title: const Text('Account Role'),
+                  content: _buildSectionCard(
+                    title: 'Account Role',
+                    child: _buildRoleDropdown(),
+                  ),
+                  isActive: _currentStep >= 0,
+                  state: _currentStep >= 0
+                      ? (_validateCurrentStep()
+                          ? StepState.complete
+                          : StepState.indexed)
+                      : StepState.indexed,
                 ),
-              ),
-              isActive: _currentStep >= 1,
-              state: _currentStep >= 1
-                  ? (_validateCurrentStep()
-                      ? StepState.complete
-                      : StepState.indexed)
-                  : StepState.indexed,
-            ),
 
-            // Step 2: Personal Information (hidden for admin)
-            Step(
-              title: const Text('Personal Information'),
-              content: _buildSectionCard(
-                title: 'Personal Information',
-                child: _selectedRole != 'admin'
-                    ? Column(
-                        children: [
-                          _buildTextField(_firstNameController, 'First Name',
-                              icon: Icons.person),
-                          const SizedBox(height: 16),
-                          _buildTextField(_middleNameController, 'Middle Name',
-                              icon: Icons.person_outline),
-                          const SizedBox(height: 16),
-                          _buildTextField(_lastNameController, 'Last Name',
-                              icon: Icons.person),
-                          const SizedBox(height: 16),
-                          _buildTextField(_contactController, 'Contact Number',
-                              icon: Icons.phone,
-                              keyboardType: TextInputType.phone),
-                        ],
-                      )
-                    : _buildAdminPlaceholder(
-                        'Personal information is not required for admin users.'),
-              ),
-              isActive: _currentStep >= 2 && _selectedRole != 'admin',
-              state: _currentStep >= 2 && _selectedRole != 'admin'
-                  ? (_validateCurrentStep()
-                      ? StepState.complete
-                      : StepState.indexed)
-                  : StepState.indexed,
-            ),
+                // Step 1: Login Credentials (always visible)
+                Step(
+                  title: const Text('Login Credentials'),
+                  content: _buildSectionCard(
+                    title: 'Login Credentials',
+                    child: Column(
+                      children: [
+                        _buildTextField(_emailController, 'Email',
+                            icon: Icons.email,
+                            keyboardType: TextInputType.emailAddress),
+                        const SizedBox(height: 16),
+                        _buildTextField(_passwordController, 'Password',
+                            icon: Icons.lock, obscureText: true),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Confirm Password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.green),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm your password';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  isActive: _currentStep >= 1,
+                  state: _currentStep >= 1
+                      ? (_validateCurrentStep()
+                          ? StepState.complete
+                          : StepState.indexed)
+                      : StepState.indexed,
+                ),
 
-            // Step 3: Address Information (hidden for admin)
-            Step(
-              title: const Text('Address Information'),
-              content: _buildSectionCard(
-                title: 'Address Information',
-                child: _selectedRole != 'admin'
-                    ? _buildAddressSection()
-                    : _buildAdminPlaceholder(
-                        'Address information is not required for admin users.'),
-              ),
-              isActive: _currentStep >= 3 && _selectedRole != 'admin',
-              state: _currentStep >= 3 && _selectedRole != 'admin'
-                  ? (_validateCurrentStep()
-                      ? StepState.complete
-                      : StepState.indexed)
-                  : StepState.indexed,
-            ),
+                // Step 2: Personal Information (hidden for admin)
+                Step(
+                  title: const Text('Personal Information'),
+                  content: _buildSectionCard(
+                    title: 'Personal Information',
+                    child: _selectedRole != 'admin'
+                        ? Column(
+                            children: [
+                              _buildTextField(
+                                  _firstNameController, 'First Name',
+                                  icon: Icons.person),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _middleNameController, 'Middle Name',
+                                  icon: Icons.person_outline),
+                              const SizedBox(height: 16),
+                              _buildTextField(_lastNameController, 'Last Name',
+                                  icon: Icons.person),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _contactController, 'Contact Number',
+                                  icon: Icons.phone,
+                                  keyboardType: TextInputType.phone),
+                            ],
+                          )
+                        : _buildAdminPlaceholder(
+                            'Personal information is not required for admin users.'),
+                  ),
+                  isActive: _currentStep >= 2 && _selectedRole != 'admin',
+                  state: _currentStep >= 2 && _selectedRole != 'admin'
+                      ? (_validateCurrentStep()
+                          ? StepState.complete
+                          : StepState.indexed)
+                      : StepState.indexed,
+                ),
 
-            // Step 4: Delivery Staff Details (only for delivery_staff)
-            Step(
-              title: const Text('Delivery Staff Details'),
-              content: _buildSectionCard(
-                title: 'Delivery Staff Details',
-                child: _selectedRole == 'delivery_staff'
-                    ? Column(
-                        children: [
-                          _buildTextField(
-                              _vehicleTypeController, 'Vehicle Type',
-                              icon: Icons.directions_car),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                              _vehicleNumberController, 'Vehicle Number',
-                              icon: Icons.confirmation_number),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                              _licenseNumberController, 'License Number',
-                              icon: Icons.card_membership),
-                        ],
-                      )
-                    : _buildAdminPlaceholder(
-                        'Delivery staff details are only required for delivery staff users.'),
-              ),
-              isActive: _currentStep >= 4 && _selectedRole == 'delivery_staff',
-              state: _currentStep >= 4 && _selectedRole == 'delivery_staff'
-                  ? (_validateCurrentStep()
-                      ? StepState.complete
-                      : StepState.indexed)
-                  : StepState.indexed,
+                // Step 3: Address Information (hidden for admin)
+                Step(
+                  title: const Text('Address Information'),
+                  content: _buildSectionCard(
+                    title: 'Address Information',
+                    child: _selectedRole != 'admin'
+                        ? _buildAddressSection()
+                        : _buildAdminPlaceholder(
+                            'Address information is not required for admin users.'),
+                  ),
+                  isActive: _currentStep >= 3 && _selectedRole != 'admin',
+                  state: _currentStep >= 3 && _selectedRole != 'admin'
+                      ? (_validateCurrentStep()
+                          ? StepState.complete
+                          : StepState.indexed)
+                      : StepState.indexed,
+                ),
+
+                // Step 4: Delivery Staff Details (only for delivery_staff)
+                Step(
+                  title: const Text('Delivery Staff Details'),
+                  content: _buildSectionCard(
+                    title: 'Delivery Staff Details',
+                    child: _selectedRole == 'delivery_staff'
+                        ? Column(
+                            children: [
+                              _buildTextField(
+                                  _vehicleTypeController, 'Vehicle Type',
+                                  icon: Icons.directions_car),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _vehicleNumberController, 'Vehicle Number',
+                                  icon: Icons.confirmation_number),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                  _licenseNumberController, 'License Number',
+                                  icon: Icons.card_membership),
+                            ],
+                          )
+                        : _buildAdminPlaceholder(
+                            'Delivery staff details are only required for delivery staff users.'),
+                  ),
+                  isActive:
+                      _currentStep >= 4 && _selectedRole == 'delivery_staff',
+                  state: _currentStep >= 4 && _selectedRole == 'delivery_staff'
+                      ? (_validateCurrentStep()
+                          ? StepState.complete
+                          : StepState.indexed)
+                      : StepState.indexed,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
