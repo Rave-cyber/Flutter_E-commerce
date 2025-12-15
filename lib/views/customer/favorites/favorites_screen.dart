@@ -371,7 +371,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '\$${product.sale_price.toStringAsFixed(2)}',
+                        '\₱${product.sale_price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -381,7 +381,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       if (product.base_price > product.sale_price) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '\$${product.base_price.toStringAsFixed(2)}',
+                          '\₱${product.base_price.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],

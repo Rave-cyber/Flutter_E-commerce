@@ -462,7 +462,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Row(
                     children: [
                       Text(
-                        '\$${total.toStringAsFixed(2)}',
+                        '\₱${total.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -775,7 +775,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final orderId = order['id'] ?? '';
     final createdAt = order['createdAt'] as Timestamp?;
     final deliveredAt = order['deliveredAt'] as Timestamp?;
-    final confirmedAt = order['confirmedAt'] as Timestamp?; // Added confirmed timestamp
+    final confirmedAt =
+        order['confirmedAt'] as Timestamp?; // Added confirmed timestamp
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -890,7 +891,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     ),
                     Text(
-                      '\$${subtotal.toStringAsFixed(2)}',
+                      '\₱${subtotal.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -917,7 +918,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   ),
                 ),
                 Text(
-                  '\$${total.toStringAsFixed(2)}',
+                  '\₱${total.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -1120,12 +1121,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
       sb.writeln('${itemMap['productName']}');
       sb.writeln(
-          '  ${quantity.toString().padLeft(2)} x \$${price.toStringAsFixed(2)} = \$${subtotal.toStringAsFixed(2)}');
+          '  ${quantity.toString().padLeft(2)} x \₱${price.toStringAsFixed(2)} = \₱${subtotal.toStringAsFixed(2)}');
     }
 
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('Total: \$${total.toStringAsFixed(2)}');
+    sb.writeln('Total: \₱${total.toStringAsFixed(2)}');
     sb.writeln('=' * 40);
     sb.writeln();
     sb.writeln('Thank you for your purchase!');

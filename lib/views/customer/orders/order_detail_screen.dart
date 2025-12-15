@@ -359,7 +359,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${(order['total'] ?? 0.0).toStringAsFixed(2)}',
+                      '\₱${(order['total'] ?? 0.0).toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -754,7 +754,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '\$${price.toStringAsFixed(2)} each',
+                      '\₱${price.toStringAsFixed(2)} each',
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -771,7 +771,7 @@ class OrderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${total.toStringAsFixed(2)}',
+                '\₱${total.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -859,7 +859,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${total.toStringAsFixed(2)}',
+                  '\₱${total.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -1121,7 +1121,7 @@ class OrderDetailScreen extends StatelessWidget {
           ),
         ),
         Text(
-          '\$${amount.toStringAsFixed(2)}',
+          '\₱${amount.toStringAsFixed(2)}',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,

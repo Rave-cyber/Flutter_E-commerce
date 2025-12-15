@@ -38,6 +38,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _selectedStars = 5;
   final TextEditingController _ratingController = TextEditingController();
   bool _submittingRating = false;
+  bool _hasUserRated = false;
+  Map<String, dynamic>? _userRating;
 
   List<ProductVariantModel> _variants = [];
   // Two possible selections: main product or variant
@@ -480,7 +482,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _shareProduct() {
     final shareText =
-        'Check out ${widget.product.name} for \$${widget.product.sale_price.toStringAsFixed(2)}';
+        'Check out ${widget.product.name} for ₱${widget.product.sale_price.toStringAsFixed(2)}';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -671,14 +673,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? widget.product.base_price
         : (_selectedOption as ProductVariantModel).base_price;
 
-    final hasDiscount = price < originalPrice;
-    final discountPercent = hasDiscount
-        ? ((originalPrice - price) / originalPrice * 100).toStringAsFixed(0)
-        : '0';
-    final discountValue = int.parse(discountPercent);
-
-    // Only show discount UI if there's a meaningful discount (at least 1%)
-    final showDiscount = hasDiscount && discountValue > 0;
+    final discountPercent = originalPrice > price
+        ? ((originalPrice - price) / originalPrice * 100).round()
+        : 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -698,81 +695,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Sale price
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\$',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                      ),
-                    ),
-                    Text(
-                      price.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
+                Text(
+                  '₱${price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: primaryGreen,
+                    height: 1.2,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                // Original price - only show if meaningful discount
-                if (showDiscount)
-                  Row(
-                    children: [
-                      Text(
-                        '\$${originalPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+                // Original price (crossed out) if there's a discount
+                if (originalPrice > price)
+                  Text(
+                    '₱${originalPrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
+                      decoration: TextDecoration.lineThrough,
+                      height: 1.2,
+                    ),
                   ),
               ],
             ),
           ),
-          // Discount badge - only show if meaningful discount
-          if (showDiscount)
+          if (discountPercent > 0)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryGreen, primaryGreen.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryGreen.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$discountPercent% OFF',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              child: Text(
+                '-$discountPercent%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],
@@ -957,15 +916,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               Expanded(
                 child: _buildModernInfoCard(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Stock',
-                  value: '$stock available',
-                  valueColor: stock > 0 ? Colors.green : Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildModernInfoCard(
                   icon: Icons.verified_outlined,
                   label: 'Status',
                   value: widget.product.is_archived ? 'Archived' : 'Active',
@@ -1043,7 +993,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     try {
-      await FirestoreService.addProductRating(
+      await FirestoreService.addOrUpdateProductRating(
         productId: widget.product.id!,
         userId: authUser.uid,
         stars: _selectedStars,
@@ -1054,11 +1004,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           authUser.uid, widget.product.id!);
 
       if (mounted) {
-        _ratingController.clear();
-        setState(() {
-          _selectedStars = 5;
-        });
-
         _showSnackBar(
           activated
               ? 'Thanks! Your rating is now active.'
@@ -1403,10 +1348,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     try {
       // Check if user has delivered order for this product
-      return await FirestoreService.hasUserDeliveredOrderForProduct(
+      final canRate = await FirestoreService.hasUserDeliveredOrderForProduct(
         authUser.uid,
         widget.product.id!,
       );
+
+      // Also check if user has already rated this product
+      final existingRating = await FirestoreService.getUserRatingForProduct(
+        authUser.uid,
+        widget.product.id!,
+      );
+
+      if (mounted) {
+        setState(() {
+          _hasUserRated = existingRating != null;
+          _userRating = existingRating;
+          if (existingRating != null) {
+            _selectedStars = existingRating['stars'] ?? 5;
+            _ratingController.text = existingRating['comment'] ?? '';
+          }
+        });
+      }
+
+      return canRate;
     } catch (e) {
       print('Error checking if user can rate: $e');
       return false;
@@ -1570,7 +1534,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       child: Text(
                         'Submit Rating',
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: TextStyle(color: Colors.black),
                       ),
                     ),
                   ),
@@ -1587,7 +1551,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          _hasUserRated ? 'Edit your rating' : 'Leave a rating',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        if (_hasUserRated)
+          Container(
+            margin: const EdgeInsets.only(top: 8, bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.edit, color: Colors.amber[700], size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'You have already rated this product. You can update your rating below.',
+                    style: TextStyle(
+                      color: Colors.amber[800],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 8),
         Row(
           children: List.generate(5, (i) {
@@ -1609,9 +1602,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         TextField(
           controller: _ratingController,
           maxLines: 3,
+          style: TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Write a comment (optional)',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            filled: true,
+            fillColor: Colors.white,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
@@ -1624,17 +1620,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: _submittingRating ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryGreen,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey[300],
+                  disabledForegroundColor: Colors.black,
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 child: _submittingRating
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white)))
-                    : const Text('Submit Rating'),
+                                AlwaysStoppedAnimation<Color>(primaryGreen)))
+                    : Text(
+                        _hasUserRated ? 'Update Rating' : 'Submit Rating',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ),
           ],
@@ -1728,50 +1730,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                     // Variant Selector
                     _buildVariantSelector(),
-
-                    // Stock Status
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: stock > 0
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: stock > 0
-                              ? Colors.green.withOpacity(0.3)
-                              : Colors.red.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            stock > 0
-                                ? Icons.check_circle_rounded
-                                : Icons.cancel_rounded,
-                            color: stock > 0 ? Colors.green : Colors.red,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            stock > 0
-                                ? '$stock items in stock'
-                                : 'Out of stock',
-                            style: TextStyle(
-                              color: stock > 0
-                                  ? Colors.green[800]
-                                  : Colors.red[800],
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                     // Product Information
                     _buildProductInfoSection(),

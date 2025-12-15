@@ -239,10 +239,8 @@ class FirestoreService {
   static Future<ProductVariantModel?> getVariantById(
       String productId, String variantId) async {
     try {
-      final doc = await _firestore
-          .collection('product_variants')
-          .doc(variantId)
-          .get();
+      final doc =
+          await _firestore.collection('product_variants').doc(variantId).get();
 
       if (doc.exists) {
         final data = doc.data()!;
@@ -497,8 +495,33 @@ class FirestoreService {
     });
   }
 
-  // Add a product rating
-  static Future<void> addProductRating({
+  // Check if user has already rated this product
+  static Future<Map<String, dynamic>?> getUserRatingForProduct(
+      String userId, String productId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('product_ratings')
+          .where('userId', isEqualTo: userId)
+          .where('productId', isEqualTo: productId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user rating: $e');
+      return null;
+    }
+  }
+
+  // Add or update a product rating (one per user per product)
+  static Future<void> addOrUpdateProductRating({
     required String productId,
     required String userId,
     required int stars,
@@ -509,20 +532,52 @@ class FirestoreService {
       final delivered =
           await hasUserDeliveredOrderForProduct(userId, productId);
 
-      final ratingsRef = _firestore.collection('product_ratings').doc();
-      await ratingsRef.set({
-        'productId': productId,
-        'userId': userId,
-        'stars': stars,
-        'comment': comment ?? '',
-        'activated': delivered,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // Check if user already has a rating for this product
+      final existingRating = await getUserRatingForProduct(userId, productId);
+
+      if (existingRating != null) {
+        // Update existing rating
+        await _firestore
+            .collection('product_ratings')
+            .doc(existingRating['id'])
+            .update({
+          'stars': stars,
+          'comment': comment ?? '',
+          'activated': delivered,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Add new rating
+        final ratingsRef = _firestore.collection('product_ratings').doc();
+        await ratingsRef.set({
+          'productId': productId,
+          'userId': userId,
+          'stars': stars,
+          'comment': comment ?? '',
+          'activated': delivered,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
     } catch (e) {
-      print('Error adding product rating: $e');
+      print('Error adding/updating product rating: $e');
       throw e;
     }
+  }
+
+  // Add a product rating (deprecated - use addOrUpdateProductRating instead)
+  static Future<void> addProductRating({
+    required String productId,
+    required String userId,
+    required int stars,
+    String? comment,
+  }) async {
+    return addOrUpdateProductRating(
+      productId: productId,
+      userId: userId,
+      stars: stars,
+      comment: comment,
+    );
   }
 
   // Returns true if the given user has at least one order with status
@@ -718,14 +773,15 @@ class FirestoreService {
   }
 
   // NEW: Get customer by user ID
-  static Future<Map<String, dynamic>?> getCustomerByUserId(String userId) async {
+  static Future<Map<String, dynamic>?> getCustomerByUserId(
+      String userId) async {
     try {
       final querySnapshot = await _firestore
           .collection('customers')
           .where('user_id', isEqualTo: userId)
           .limit(1)
           .get();
-      
+
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         return {
@@ -749,7 +805,7 @@ class FirestoreService {
         final firstName = customer['firstname']?.toString().trim() ?? '';
         final lastName = customer['lastname']?.toString().trim() ?? '';
         final middleName = customer['middlename']?.toString().trim() ?? '';
-        
+
         if (firstName.isNotEmpty && lastName.isNotEmpty) {
           if (middleName.isNotEmpty) {
             return '$firstName $middleName $lastName';
@@ -762,21 +818,21 @@ class FirestoreService {
           return lastName;
         }
       }
-      
+
       // Fallback to users collection
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (userDoc.exists) {
         final userData = userDoc.data()!;
         final displayName = userData['displayName']?.toString().trim() ?? '';
         final email = userData['email']?.toString() ?? '';
-        
+
         if (displayName.isNotEmpty) {
           return displayName;
         } else if (email.isNotEmpty) {
           return email.split('@').first;
         }
       }
-      
+
       return 'Customer $userId';
     } catch (e) {
       print('Error getting customer name: $e');

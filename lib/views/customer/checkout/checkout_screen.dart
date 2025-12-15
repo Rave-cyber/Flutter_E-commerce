@@ -58,7 +58,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (customer != null) {
       setState(() {
         _customerId = customer.id;
-         _customerName = '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
+        _customerName =
+            '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
       });
@@ -388,7 +389,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '\$${price.toStringAsFixed(2)}',
+                '\₱${price.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -401,7 +402,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         // Total Price
         Text(
-          '\$${total.toStringAsFixed(2)}',
+          '\₱${total.toStringAsFixed(2)}',
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -585,13 +586,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 16),
 
           // Price Breakdown
-          _buildSummaryRow('Item Total', '\$${_subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow('Item Total', '\₱${_subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           _buildSummaryRow(
               'Shipping Fee',
               _isCalculatingShipping
                   ? 'Calculating...'
-                  : '\$${_shippingFee.toStringAsFixed(2)}'),
+                  : '\₱${_shippingFee.toStringAsFixed(2)}'),
           if (_distance > 0) ...[
             const SizedBox(height: 4),
             Padding(
@@ -622,7 +623,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               Text(
-                '\$${_total.toStringAsFixed(2)}',
+                '\₱${_total.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -713,7 +714,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '\$${_total.toStringAsFixed(2)}',
+                    '\₱${_total.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -822,7 +823,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final orderId = await FirestoreService.createOrder(
         userId: user.uid,
         customerId: _customerId!,
-         customerName: _customerName ?? 'Customer', 
+        customerName: _customerName ?? 'Customer',
         items: orderItems,
         subtotal: _subtotal,
         shipping: _shippingFee,
@@ -933,7 +934,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const Expanded(
                       child: Text(
                         'Edit Shipping Address',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                     IconButton(
@@ -962,7 +964,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       : regions
                           .map((region) => DropdownMenuItem(
                                 value: region,
-                                child: Text(region['regionName'] ?? region['name']),
+                                child: Text(
+                                    region['regionName'] ?? region['name']),
                               ))
                           .toList(),
                   onChanged: loadingRegions
@@ -980,7 +983,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final p = await PhilippineAddressService.getProvinces(value['code']);
+                              final p =
+                                  await PhilippineAddressService.getProvinces(
+                                      value['code']);
                               setModalState(() {
                                 provinces = p;
                                 loadingProvinces = false;
@@ -1029,7 +1034,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final c = await PhilippineAddressService.getCitiesMunicipalities(value['code']);
+                              final c = await PhilippineAddressService
+                                  .getCitiesMunicipalities(value['code']);
                               setModalState(() {
                                 cities = c;
                                 loadingCities = false;
@@ -1076,7 +1082,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final b = await PhilippineAddressService.getBarangays(value['code']);
+                              final b =
+                                  await PhilippineAddressService.getBarangays(
+                                      value['code']);
                               setModalState(() {
                                 barangays = b;
                                 loadingBarangays = false;
@@ -1140,26 +1148,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ? null
                         : () async {
                             final house = houseController.text.trim();
-                            if (selectedRegion == null || selectedProvince == null || selectedCity == null) {
-                              _showSnackBar('Please select your region, province, and city/municipality');
+                            if (selectedRegion == null ||
+                                selectedProvince == null ||
+                                selectedCity == null) {
+                              _showSnackBar(
+                                  'Please select your region, province, and city/municipality');
                               return;
                             }
                             if (house.isEmpty || house.length < 3) {
-                              _showSnackBar('Please enter house/unit and street');
+                              _showSnackBar(
+                                  'Please enter house/unit and street');
                               return;
                             }
                             setModalState(() => saving = true);
                             try {
                               final parts = <String>[];
                               parts.add(house);
-                              if (selectedBarangay != null) parts.add(selectedBarangay!['name']);
+                              if (selectedBarangay != null)
+                                parts.add(selectedBarangay!['name']);
                               parts.add(selectedCity!['name']);
                               parts.add(selectedProvince!['name']);
-                              parts.add(selectedRegion!['regionName'] ?? selectedRegion!['name']);
+                              parts.add(selectedRegion!['regionName'] ??
+                                  selectedRegion!['name']);
                               final finalAddress = parts.join(', ');
 
                               // Update in Firestore: single address string in customers collection
-                              final auth = Provider.of<AuthService>(context, listen: false);
+                              final auth = Provider.of<AuthService>(context,
+                                  listen: false);
                               final user = auth.currentUser;
                               if (user == null) {
                                 throw 'Not logged in';
@@ -1172,7 +1187,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   .limit(1)
                                   .get();
                               if (query.docs.isNotEmpty) {
-                                await fs.collection('customers').doc(query.docs.first.id).update({'address': finalAddress});
+                                await fs
+                                    .collection('customers')
+                                    .doc(query.docs.first.id)
+                                    .update({'address': finalAddress});
                               } else {
                                 // create minimal customer doc if missing
                                 await fs.collection('customers').add({
@@ -1192,7 +1210,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 _shippingAddressController.text = finalAddress;
                               });
                               // recalc shipping
-                              await _calculateShippingFee(finalAddress, _subtotal);
+                              await _calculateShippingFee(
+                                  finalAddress, _subtotal);
                               if (mounted) Navigator.pop(ctx);
                               _showSnackBar('Address updated');
                             } catch (e) {

@@ -591,44 +591,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryItem(CategoryModel category) {
-    final isSelected = _selectedCategory == category.id;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CategoriesScreen(
-              user: widget.user,
-              initialCategoryId: category.id,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(category.name),
+        selected: false,
+        selectedColor: primaryGreen,
+        backgroundColor: Colors.grey[200],
+        labelStyle: TextStyle(
           color: primaryGreen,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: primaryGreen.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          fontWeight: FontWeight.bold,
         ),
-        child: Center(
-          child: Text(
-            category.name,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+        onSelected: (selected) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CategoriesScreen(
+                user: widget.user,
+                initialCategoryId: category.id,
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1033,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${product.sale_price.toStringAsFixed(2)}',
+                      '\₱${product.sale_price.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1042,7 +1026,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     if (hasDiscount)
                       Text(
-                        '\$${product.base_price.toStringAsFixed(2)}',
+                        '\₱${product.base_price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
