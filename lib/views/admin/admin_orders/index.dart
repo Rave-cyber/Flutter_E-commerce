@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase/firestore_service.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../firestore_service.dart';
 import '../../../layouts/admin_layout.dart';
-import '../../../widgets/product_search_widget.dart';
-import '../../../widgets/product_pagination_widget.dart';
+import '../../../widgets/order_details_modal.dart';
+import '../../../widgets/order_filter_widget.dart';
+import '../../../widgets/order_pagination_widget.dart';
+import '../../../widgets/order_search_widget.dart';
 
 class AdminOrdersIndex extends StatefulWidget {
   const AdminOrdersIndex({Key? key}) : super(key: key);
@@ -35,25 +37,25 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> _applyFilterSearchPagination(
+  List<Map<String, dynamic>> _getFilteredOrders(
       List<Map<String, dynamic>> orders) {
     // FILTER
     List<Map<String, dynamic>> filtered = orders.where((order) {
       if (_filterStatus == 'all') return true;
-      return (order['status'] ?? '').toLowerCase() == _filterStatus;
+      return order['status'] == _filterStatus;
     }).toList();
 
     // SEARCH
     if (_searchController.text.isNotEmpty) {
-      final searchLower = _searchController.text.toLowerCase();
+      final query = _searchController.text.toLowerCase();
       filtered = filtered.where((order) {
-        final orderId = (order['id'] ?? '').toLowerCase();
-        final customerId = (order['customerId'] ?? '').toLowerCase();
-        final customerName = (order['customerName'] ?? '').toLowerCase();
-
-        return orderId.contains(searchLower) ||
-            customerId.contains(searchLower) ||
-            customerName.contains(searchLower);
+        final id = order['id'].toString().toLowerCase();
+        final customerName =
+            (order['customerName'] ?? '').toString().toLowerCase();
+        final customerId = (order['customerId'] ?? '').toString().toLowerCase();
+        return id.contains(query) ||
+            customerName.contains(query) ||
+            customerId.contains(query);
       }).toList();
     }
 
@@ -64,24 +66,7 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
       return bTime.compareTo(aTime);
     });
 
-    // PAGINATION
-    final start = (_currentPage - 1) * _itemsPerPage;
-    final end = start + _itemsPerPage;
-    if (start >= filtered.length) return [];
-    return filtered.sublist(
-        start, end > filtered.length ? filtered.length : end);
-  }
-
-  void _nextPage(int totalItems) {
-    if (_currentPage * _itemsPerPage < totalItems) {
-      setState(() => _currentPage++);
-    }
-  }
-
-  void _prevPage() {
-    if (_currentPage > 1) {
-      setState(() => _currentPage--);
-    }
+    return filtered;
   }
 
   void _onFilterChanged(String? value) {
@@ -281,251 +266,12 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> order) {
-    final orderId = order['id'] ?? '';
-    final status = order['status'] ?? 'pending';
-    final total = (order['total'] ?? 0.0).toDouble();
-    final items = order['items'] as List<dynamic>? ?? [];
-    final paymentMethod = order['paymentMethod'] ?? 'gcash';
-    final createdAt = order['createdAt'] as Timestamp?;
-    final customerId = order['customerId'] ?? '';
-    final customerName = order['customerName'] ?? 'Unknown Customer';
-    final shippingAddress = order['shippingAddress'] ?? 'Not provided';
-    final contactNumber = order['contactNumber'] ?? 'Not provided';
-
-    String dateText = 'Date not available';
-    if (createdAt != null) {
-      dateText = DateFormat('MMM dd, yyyy • HH:mm').format(createdAt.toDate());
-    }
-
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            // Order Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Order Icon
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _getStatusIcon(status),
-                      color: _getStatusColor(status),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Order Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Order #${orderId.substring(0, 8).toUpperCase()}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(status).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                status.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: _getStatusColor(status),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          customerName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.access_time_rounded,
-                                size: 14, color: Colors.grey.shade500),
-                            const SizedBox(width: 4),
-                            Text(
-                              dateText,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Divider
-            Container(
-              height: 1,
-              color: Colors.grey.shade200,
-            ),
-
-            // Order Details
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'ITEMS',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${items.length} item${items.length != 1 ? 's' : ''}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PAYMENT',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatPaymentMethod(paymentMethod).toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'TOTAL',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '\$${total.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF2C8610),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Quick Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showStatusDialog(orderId, status),
-                          icon: Icon(Icons.edit_rounded,
-                              size: 18, color: const Color(0xFF2C8610)),
-                          label: Text(
-                            'Change Status',
-                            style: TextStyle(color: const Color(0xFF2C8610)),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: const Color(0xFF2C8610)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _viewOrderDetails(order),
-                          icon: Icon(Icons.visibility_rounded, size: 18),
-                          label: const Text('View Details'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C8610),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+  void _showOrderDetailsModal(Map<String, dynamic> order) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return OrderDetailsModal(order: order);
+      },
     );
   }
 
@@ -548,137 +294,6 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
     }
   }
 
-  void _viewOrderDetails(Map<String, dynamic> order) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.receipt_long_rounded,
-                        color: Colors.blue, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Order Details',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Add detailed order view here
-              Text(
-                'Full order details would go here...',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 24),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('CLOSE'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown() {
-    return Container(
-      width: 150,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _filterStatus,
-            isExpanded: true,
-            icon: Icon(Icons.arrow_drop_down_rounded,
-                color: Colors.grey.shade600),
-            items: _statusFilters.map((status) {
-              return DropdownMenuItem<String>(
-                value: status,
-                child: Text(
-                  status == 'all' ? 'All Status' : status.toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: _onFilterChanged,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemsPerPageDropdown() {
-    return Container(
-      width: 100,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: _itemsPerPage,
-            isExpanded: true,
-            icon: Icon(Icons.arrow_drop_down_rounded,
-                color: Colors.grey.shade600),
-            items: [5, 10, 20, 50].map((count) {
-              return DropdownMenuItem<int>(
-                value: count,
-                child: Text(
-                  '$count items',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: _onItemsPerPageChanged,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -687,7 +302,7 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
         child: Column(
           children: [
             // SEARCH FIELD
-            ProductSearchWidget(
+            OrderSearchWidget(
               controller: _searchController,
               onChanged: () => setState(() {
                 _currentPage = 1;
@@ -695,13 +310,12 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
             ),
             const SizedBox(height: 16),
 
-            // FILTER AND PER PAGE DROPDOWN ROW
-            Row(
-              children: [
-                _buildFilterDropdown(),
-                const SizedBox(width: 12),
-                _buildItemsPerPageDropdown(),
-              ],
+            // FILTER AND PER PAGE DROPDOWN
+            OrderFilterWidget(
+              filterStatus: _filterStatus,
+              itemsPerPage: _itemsPerPage,
+              onFilterChanged: _onFilterChanged,
+              onItemsPerPageChanged: _onItemsPerPageChanged,
             ),
             const SizedBox(height: 16),
 
@@ -710,11 +324,27 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: FirestoreService.getAllOrders(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading orders'));
+                  }
+
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (snapshot.hasError) {
+                  final orders = snapshot.data ?? [];
+                  final filteredOrders = _getFilteredOrders(orders);
+                  final totalCount = filteredOrders.length;
+                  final totalPages =
+                      (totalCount + _itemsPerPage - 1) ~/ _itemsPerPage;
+                  final effectiveTotalPages = totalPages == 0 ? 1 : totalPages;
+
+                  // Ensure current page is valid
+                  if (_currentPage > effectiveTotalPages) {
+                    _currentPage = effectiveTotalPages;
+                  }
+
+                  if (filteredOrders.isEmpty) {
                     return Center(
                       child: Material(
                         elevation: 4,
@@ -728,14 +358,14 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline_rounded,
-                                  size: 64, color: Colors.red.shade400),
+                              Icon(Icons.inbox_outlined,
+                                  size: 64, color: Colors.grey[400]),
                               const SizedBox(height: 16),
                               Text(
-                                'Error loading orders',
+                                'No orders found',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey.shade600,
+                                  color: Colors.grey[600],
                                 ),
                               ),
                             ],
@@ -745,61 +375,51 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
                     );
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.shopping_bag_outlined,
-                                  size: 64, color: Colors.grey.shade400),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No orders found.',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  final orders = snapshot.data!;
-                  final paginatedOrders = _applyFilterSearchPagination(orders);
+                  final start = (_currentPage - 1) * _itemsPerPage;
+                  final end = start + _itemsPerPage;
+                  final paginatedOrders = filteredOrders.sublist(
+                      start, end > totalCount ? totalCount : end);
 
                   return Column(
                     children: [
                       Expanded(
-                        child: ListView.separated(
+                        child: ListView.builder(
                           itemCount: paginatedOrders.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final order = paginatedOrders[index];
-                            return _buildOrderCard(order);
+                            return AdminOrderCard(
+                              order: order,
+                              onStatusChanged: () => _showStatusDialog(
+                                order['id'],
+                                order['status'] ?? 'pending',
+                              ),
+                              onViewDetails: () =>
+                                  _showOrderDetailsModal(order),
+                            );
                           },
                         ),
                       ),
+                      const SizedBox(height: 16),
 
-                      const SizedBox(height: 12),
-
-                      // PAGINATION CONTROLS
-                      ProductPaginationWidget(
-                        currentPage: _currentPage,
-                        onPreviousPage: _prevPage,
-                        onNextPage: () => _nextPage(orders.length),
+                      // BOTTOM CONTROLS
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OrderPaginationWidget(
+                            currentPage: _currentPage,
+                            totalPages: effectiveTotalPages,
+                            onPreviousPage: () {
+                              if (_currentPage > 1) {
+                                setState(() => _currentPage--);
+                              }
+                            },
+                            onNextPage: () {
+                              if (_currentPage < effectiveTotalPages) {
+                                setState(() => _currentPage++);
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   );
@@ -810,5 +430,218 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
         ),
       ),
     );
+  }
+}
+
+class AdminOrderCard extends StatelessWidget {
+  final Map<String, dynamic> order;
+  final VoidCallback onStatusChanged;
+  final VoidCallback onViewDetails;
+
+  const AdminOrderCard({
+    super.key,
+    required this.order,
+    required this.onStatusChanged,
+    required this.onViewDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = (order['items'] as List<dynamic>?) ?? [];
+    final totalAmount = order['total']?.toDouble() ?? 0.0;
+    final createdAt = order['createdAt'] as Timestamp?;
+    final paymentMethod = order['paymentMethod'] ?? 'gcash';
+    final customerName = order['customerName'] ?? 'Unknown Customer';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Order header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Order #${order['id'].toString().substring(0, 8)}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color:
+                            _getStatusColor(order['status']).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        (order['status'] ?? 'pending').toUpperCase(),
+                        style: TextStyle(
+                          color: _getStatusColor(order['status']),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    '\$${totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // Order details
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  customerName,
+                  style: TextStyle(color: Colors.grey[800]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.shopping_bag_outlined,
+                    size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  '${items.length} item(s)',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.payment_outlined, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  _formatPaymentMethod(paymentMethod),
+                  style: TextStyle(color: Colors.grey[800]),
+                ),
+              ],
+            ),
+
+            if (createdAt != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatDate(createdAt.toDate()),
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ],
+
+            const SizedBox(height: 16),
+
+            // Admin action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onStatusChanged,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.blue),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text(
+                      'Change Status',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onViewDetails,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('View Details'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.blue;
+      case 'processing':
+        return Colors.purple;
+      case 'shipped':
+        return Colors.indigo;
+      case 'delivered':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _formatPaymentMethod(String paymentMethod) {
+    switch (paymentMethod.toLowerCase()) {
+      case 'gcash':
+        return 'GCash';
+      case 'bankcard':
+        return 'Bank Card';
+      case 'grabpay':
+        return 'GrabPay';
+      default:
+        return paymentMethod;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
