@@ -81,11 +81,15 @@ class _AdminProductFormState extends State<AdminProductForm> {
     _imageUrl = product?.image ?? '';
     _isArchived = product?.is_archived ?? false;
 
+    // Add listener for name changes to update SKU
+    _nameController.addListener(_updateSKU);
+
     _initData();
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_updateSKU);
     _nameController.dispose();
     _descController.dispose();
     _basePriceController.dispose();
@@ -119,7 +123,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   /// Update SKU when category, brand, or name changes
   void _updateSKU() {
-    if (_selectedCategory != null &&
+    if (mounted &&
+        _selectedCategory != null &&
         _selectedBrand != null &&
         _nameController.text.isNotEmpty) {
       setState(() {
@@ -136,33 +141,37 @@ class _AdminProductFormState extends State<AdminProductForm> {
     if (widget.product != null) {
       await _loadExistingVariants(widget.product!.id);
     }
-    setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _loadDropdowns() async {
     final categories = await _categoryService.getCategories().first;
     final brands = await _brandService.getBrands().first;
 
-    setState(() {
-      _categories = categories;
-      _brands = brands;
+    if (mounted) {
+      setState(() {
+        _categories = categories;
+        _brands = brands;
 
-      if (widget.product != null) {
-        _selectedCategory = categories.isNotEmpty
-            ? categories.firstWhere(
-                (c) => c.id == widget.product!.category_id,
-                orElse: () => categories[0],
-              )
-            : null;
+        if (widget.product != null) {
+          _selectedCategory = categories.isNotEmpty
+              ? categories.firstWhere(
+                  (c) => c.id == widget.product!.category_id,
+                  orElse: () => categories[0],
+                )
+              : null;
 
-        _selectedBrand = brands.isNotEmpty
-            ? brands.firstWhere(
-                (b) => b.id == widget.product!.brand_id,
-                orElse: () => brands[0],
-              )
-            : null;
-      }
-    });
+          _selectedBrand = brands.isNotEmpty
+              ? brands.firstWhere(
+                  (b) => b.id == widget.product!.brand_id,
+                  orElse: () => brands[0],
+                )
+              : null;
+        }
+      });
+    }
   }
 
   Future<void> _loadAttributes() async {
@@ -173,10 +182,12 @@ class _AdminProductFormState extends State<AdminProductForm> {
       valuesMap[attr.id] = await _attributeService.getAttributeValues(attr.id);
     }
 
-    setState(() {
-      _attributes = attributes;
-      _attributeValues = valuesMap;
-    });
+    if (mounted) {
+      setState(() {
+        _attributes = attributes;
+        _attributeValues = valuesMap;
+      });
+    }
   }
 
   /// Load existing variants and their attribute pairs for editing
@@ -199,9 +210,11 @@ class _AdminProductFormState extends State<AdminProductForm> {
         entries.add(_VariantEntry(variant: v, attributes: uiPairs));
       }
 
-      setState(() {
-        _variants = entries;
-      });
+      if (mounted) {
+        setState(() {
+          _variants = entries;
+        });
+      }
     } catch (e) {
       // ignore or show error
       debugPrint('Failed loading existing variants: $e');
@@ -210,7 +223,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   Future<void> _pickImage() async {
     final picked = await _productService.pickImage();
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _imageUrl = picked.url;
       });
@@ -675,10 +688,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
             'Product Name',
             icon: Icons.shopping_bag,
             required: true,
-            onTap: () {
-              // Update SKU when name changes
-              _nameController.addListener(_updateSKU);
-            },
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -705,8 +714,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
                     ))
                 .toList(),
             onChanged: (val) {
-              setState(() => _selectedCategory = val);
-              _updateSKU();
+              if (mounted) {
+                setState(() => _selectedCategory = val);
+                _updateSKU();
+              }
             },
             prefixIcon: Icons.category,
             validator: (val) => val == null ? 'Please select a category' : null,
@@ -723,8 +734,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
                     ))
                 .toList(),
             onChanged: (val) {
-              setState(() => _selectedBrand = val);
-              _updateSKU();
+              if (mounted) {
+                setState(() => _selectedBrand = val);
+                _updateSKU();
+              }
             },
             prefixIcon: Icons.storefront,
             validator: (val) => val == null ? 'Please select a brand' : null,

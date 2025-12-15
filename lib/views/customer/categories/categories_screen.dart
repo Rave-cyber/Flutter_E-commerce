@@ -6,6 +6,7 @@ import '../../../models/product.dart';
 import '../../../firestore_service.dart';
 import '../../../services/customer/category_service.dart';
 import '../product/product_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class CategoriesScreen extends StatefulWidget {
   final UserModel? user;
@@ -499,7 +500,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       if (product.base_price > product.sale_price) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '\$${product.base_price.toStringAsFixed(2)}',
+                          '₱${NumberFormat('#,##0.00').format(product.base_price)}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],

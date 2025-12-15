@@ -17,6 +17,7 @@ import '../customer/categories/categories_screen.dart';
 import '../customer/favorites/favorites_screen.dart';
 import '../customer/profile/profile_screen.dart';
 import '../customer/search/search_screen.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel? user;
@@ -1011,7 +1012,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\₱${product.sale_price.toStringAsFixed(2)}',
+                      '₱${NumberFormat('#,##0.00').format(product.sale_price)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1020,7 +1021,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     if (hasDiscount)
                       Text(
-                        '\₱${product.base_price.toStringAsFixed(2)}',
+                        '₱${NumberFormat('#,##0.00').format(product.base_price)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],

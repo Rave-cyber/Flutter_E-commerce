@@ -410,7 +410,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   Row(
                     children: [
                       Text(
-                        '\₱${total.toStringAsFixed(2)}',
+                        '₱${NumberFormat('#,##0.00').format(total)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,

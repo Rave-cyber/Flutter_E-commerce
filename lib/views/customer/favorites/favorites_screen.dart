@@ -8,6 +8,7 @@ import '../../../services/auth_service.dart';
 import '../../../firestore_service.dart';
 import '../../auth/login_screen.dart';
 import '../product/product_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class FavoritesScreen extends StatefulWidget {
   final UserModel? user;
@@ -413,7 +414,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '\₱${product.sale_price.toStringAsFixed(2)}',
+                        '₱${NumberFormat('#,##0.00').format(product.sale_price)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -423,7 +424,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       if (product.base_price > product.sale_price) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '\₱${product.base_price.toStringAsFixed(2)}',
+                          '₱${NumberFormat('#,##0.00').format(product.base_price)}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],

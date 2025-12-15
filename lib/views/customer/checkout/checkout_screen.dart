@@ -7,6 +7,7 @@ import 'package:firebase/models/order_model.dart';
 import 'package:firebase/services/shipping_service.dart';
 import 'package:firebase/services/philippine_address_service.dart';
 import 'order_confirmation_screen.dart';
+import 'package:intl/intl.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -406,7 +407,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         // Total Price
         Text(
-          '\₱${total.toStringAsFixed(2)}',
+          '₱${NumberFormat('#,##0.00').format(total)}',
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -590,13 +591,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 16),
 
           // Price Breakdown
-          _buildSummaryRow('Item Total', '\₱${_subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow('Item Total', '₱${NumberFormat('#,##0.00').format(_total)}'),
           const SizedBox(height: 8),
           _buildSummaryRow(
               'Shipping Fee',
               _isCalculatingShipping
                   ? 'Calculating...'
-                  : '\₱${_shippingFee.toStringAsFixed(2)}'),
+                  : '₱${NumberFormat('#,##0.00').format(_shippingFee)}'),
           if (_distance > 0) ...[
             const SizedBox(height: 4),
             Padding(
@@ -627,7 +628,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
               Text(
-                '\₱${_total.toStringAsFixed(2)}',
+                '₱${NumberFormat('#,##0.00').format(_total)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -718,7 +719,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '\₱${_total.toStringAsFixed(2)}',
+                    '₱${NumberFormat('#,##0.00').format(_total)}',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,

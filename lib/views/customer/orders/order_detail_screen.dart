@@ -7,7 +7,7 @@ import 'package:share_plus/share_plus.dart' show XFile;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-
+import 'package:intl/intl.dart';
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
 
@@ -389,7 +389,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${(order['total'] ?? 0.0).toStringAsFixed(2)}',
+                      '₱${NumberFormat('#,##0.00').format((order['total'] ?? 0.0).toDouble())}',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -784,7 +784,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '\$${price.toStringAsFixed(2)} each',
+                      '₱${NumberFormat('#,##0.00').format(price)} each',
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -801,7 +801,7 @@ class OrderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${total.toStringAsFixed(2)}',
+                '₱${NumberFormat('#,##0.00').format(total)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -889,7 +889,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${total.toStringAsFixed(2)}',
+                  '₱${NumberFormat('#,##0.00').format(total)}',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -1151,7 +1151,7 @@ class OrderDetailScreen extends StatelessWidget {
           ),
         ),
         Text(
-          '\$${amount.toStringAsFixed(2)}',
+          '₱${NumberFormat('#,##0.00').format(amount)}',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -1358,8 +1358,9 @@ class OrderDetailScreen extends StatelessWidget {
 
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('Total: \₱${total.toStringAsFixed(2)}');
+    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
     sb.writeln('=' * 40);
+    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
     sb.writeln();
     sb.writeln('Thank you for your purchase!');
     sb.writeln(
