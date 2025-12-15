@@ -47,6 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoadingCities = false;
   bool _isLoadingBarangays = false;
   int _currentStep = 0;
+  bool _acceptedNda = false;
 
   @override
   void initState() {
@@ -421,6 +422,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     bool isLoading = false,
   }) {
     return DropdownButtonFormField<T>(
+      isExpanded: true,
       value: value,
       items: items,
       onChanged: isLoading ? null : onChanged,
@@ -687,6 +689,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: _acceptedNda,
+                onChanged: (val) {
+                  setState(() {
+                    _acceptedNda = val ?? false;
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Non-Disclosure Agreement (NDA)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'By creating an account, you acknowledge that you have read and agree to our Non-Disclosure Agreement regarding the protection and confidential use of your account and any business information.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -694,6 +733,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptedNda) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Non-Disclosure Agreement to continue'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -812,7 +861,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.green.shade50,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -822,75 +871,95 @@ class _RegisterScreenState extends State<RegisterScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.green.shade50!,
+              Colors.green.shade50,
               Colors.white,
-              Colors.grey.shade50!,
+              Colors.grey.shade50,
             ],
           ),
         ),
-        child: Form(
-          key: _formKey,
-          child: Stepper(
-            type: StepperType.vertical,
-            currentStep: _currentStep,
-            onStepContinue:
-                _currentStep == steps.length - 1 ? _register : _nextStep,
-            onStepCancel: _previousStep,
-            onStepTapped: (step) {
-              setState(() {
-                _currentStep = step;
-              });
-            },
-            controlsBuilder: (BuildContext context, ControlsDetails details) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (_currentStep > 0)
-                      ElevatedButton(
-                        onPressed: details.onStepCancel,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Form(
+                    key: _formKey,
+                    child: Stepper(
+                      type: StepperType.vertical,
+                      currentStep: _currentStep,
+                      physics: const ClampingScrollPhysics(),
+                      onStepContinue: _currentStep == steps.length - 1
+                          ? _register
+                          : _nextStep,
+                      onStepCancel: _previousStep,
+                      onStepTapped: (step) {
+                        setState(() {
+                          _currentStep = step;
+                        });
+                      },
+                      controlsBuilder:
+                          (BuildContext context, ControlsDetails details) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (_currentStep > 0)
+                                ElevatedButton(
+                                  onPressed: details.onStepCancel,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Back',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              if (_currentStep > 0)
+                                const SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed:
+                                    _isLoading ? null : details.onStepContinue,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2),
+                                      )
+                                    : Text(
+                                        _currentStep == steps.length - 1
+                                            ? 'Create Account'
+                                            : 'Next',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ],
                           ),
-                        ),
-                        child: const Text(
-                          'Back',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    if (_currentStep > 0) const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : details.onStepContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
-                          : Text(
-                              _currentStep == steps.length - 1
-                                  ? 'Create Account'
-                                  : 'Next',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
+                        );
+                      },
+                      steps: steps,
                     ),
-                  ],
+                  ),
                 ),
               );
             },
-            steps: steps,
           ),
         ),
       ),

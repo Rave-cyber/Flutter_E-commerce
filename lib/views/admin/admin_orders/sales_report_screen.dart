@@ -381,81 +381,83 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Summary Cards - Responsive Grid
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 600;
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: isWide ? 4 : 2,
-                        childAspectRatio: isWide ? 2.0 : 1.8,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        children: [
-                          _buildSummaryCard(
-                            'Total Revenue',
-                            '\$${totalRevenue.toStringAsFixed(2)}',
-                            _accentColor,
-                            Icons.attach_money_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Delivered Orders',
-                            '$totalOrders',
-                            Colors.orange,
-                            Icons.shopping_bag_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Average Order',
-                            '\$${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
-                            Colors.purple,
-                            Icons.trending_up_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Time Period',
-                            _selectedFilter,
-                            Colors.blue,
-                            Icons.calendar_today_rounded,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                  // Summary + Charts + Table in a single scrollable area
+                  Expanded(
+                    child: sortedData.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.bar_chart_rounded,
+                                    size: 80, color: Colors.grey.shade300),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No sales data available',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Delivered orders will appear here',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500),
+                                ),
+                              ],
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Summary Cards - Responsive Grid
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final isWide =
+                                        constraints.maxWidth > 600;
+                                    return GridView.count(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      crossAxisCount: isWide ? 4 : 2,
+                                      childAspectRatio:
+                                          isWide ? 2.0 : 1.8,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      children: [
+                                        _buildSummaryCard(
+                                          'Total Revenue',
+                                          '\$${totalRevenue.toStringAsFixed(2)}',
+                                          _accentColor,
+                                          Icons.attach_money_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Delivered Orders',
+                                          '$totalOrders',
+                                          Colors.orange,
+                                          Icons.shopping_bag_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Average Order',
+                                          '\$${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
+                                          Colors.purple,
+                                          Icons.trending_up_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Time Period',
+                                          _selectedFilter,
+                                          Colors.blue,
+                                          Icons.calendar_today_rounded,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 24),
 
-                  // Charts Section - Flexible with scroll
-                  if (sortedData.isEmpty)
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.bar_chart_rounded,
-                                size: 80, color: Colors.grey.shade300),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No sales data available',
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Delivered orders will appear here',
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey.shade500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                                // Charts Section
                             // Revenue Chart
                             Container(
                               padding: const EdgeInsets.all(20),

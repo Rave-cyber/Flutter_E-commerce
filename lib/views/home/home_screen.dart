@@ -620,22 +620,23 @@ class _HomeScreenState extends State<HomeScreen> {
         itemCount: 5,
         itemBuilder: (context, index) {
           return Container(
-            width: 100,
-            margin: const EdgeInsets.only(right: 16),
+            width: 80,
+            margin: const EdgeInsets.only(right: 12),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Container(
-                  width: 60,
-                  height: 12,
+                  width: 50,
+                  height: 8,
                   color: Colors.white,
                 ),
               ],

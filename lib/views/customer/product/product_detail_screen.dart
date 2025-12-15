@@ -5,6 +5,7 @@ import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
 import 'package:firebase/views/auth/login_screen.dart';
+import 'package:intl/intl.dart';
 
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
@@ -784,7 +785,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 // Sale price
                 Text(
-                  '₱${price.toStringAsFixed(2)}',
+                  '₱${NumberFormat('#,##0.00').format(price)}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -795,7 +796,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 // Original price (crossed out) if there's a discount
                 if (originalPrice > price)
                   Text(
-                    '₱${originalPrice.toStringAsFixed(2)}',
+                    '₱${NumberFormat('#,##0.##').format(originalPrice)}',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[500],

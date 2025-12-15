@@ -6,14 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 import '../../../layouts/admin_layout.dart';
 import '../../../models/product.dart';
-import '../../../models/product_variant_model.dart';
 import '../../../models/stock_in_model.dart';
 import '../../../models/stock_out_model.dart';
-import '../../../models/stock_in_out_model.dart';
-import '../../../models/brand_model.dart';
-import '../../../models/category_model.dart';
-import '../../../models/supplier_model.dart';
-import '../../../models/warehouse_model.dart';
 import '../../../services/admin/stock_in_service.dart';
 import '../../../services/admin/stock_out_service.dart';
 import '../../../services/admin/product_sevice.dart';
@@ -37,16 +31,13 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
   final StockInService _stockInService = StockInService();
   final StockOutService _stockOutService = StockOutService();
   final ProductService _productService = ProductService();
-  final BrandService _brandService = BrandService();
-  final CategoryService _categoryService = CategoryService();
-  final SupplierService _supplierService = SupplierService();
-  final WarehouseService _warehouseService = WarehouseService();
 
   // Controllers
   final TextEditingController _dateRangeController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   // Filters
+  String _selectedPeriod = 'Week'; // Today, Week, Month, Year
   String _selectedBrand = 'all';
   String _selectedCategory = 'all';
   String _selectedWarehouse = 'all';
@@ -79,6 +70,39 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
   String formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     return DateFormat('MMM dd, yyyy').format(date);
+  }
+
+  // Apply quick time-period filter (similar to SalesReportScreen)
+  void _applyPeriodFilter(String period) {
+    final now = DateTime.now();
+    DateTime? start;
+    DateTime? end;
+
+    if (period == 'Today') {
+      start = DateTime(now.year, now.month, now.day);
+      end = start.add(const Duration(days: 1)).subtract(const Duration(seconds: 1));
+    } else if (period == 'Week') {
+      start = now.subtract(const Duration(days: 7));
+      end = now;
+    } else if (period == 'Month') {
+      start = now.subtract(const Duration(days: 30));
+      end = now;
+    } else if (period == 'Year') {
+      start = DateTime(now.year, 1, 1);
+      end = DateTime(now.year, 12, 31, 23, 59, 59);
+    }
+
+    setState(() {
+      _selectedPeriod = period;
+      _startDate = start;
+      _endDate = end;
+      if (start != null && end != null) {
+        _dateRangeController.text =
+            '${DateFormat('MMM dd, yyyy').format(start)} - ${DateFormat('MMM dd, yyyy').format(end)}';
+      } else {
+        _dateRangeController.clear();
+      }
+    });
   }
 
   // Get stock level status
@@ -419,72 +443,137 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Filters',
+                      'Time Period',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey.shade700),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: const InputDecoration(
-                              labelText: 'Search',
-                              prefixIcon: Icon(Icons.search, size: 18),
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                    SizedBox(
+                      height: 40,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: ['Today', 'Week', 'Month', 'Year'].length,
+                        itemBuilder: (context, index) {
+                          final period =
+                              ['Today', 'Week', 'Month', 'Year'][index];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              label: Text(period),
+                              selected: _selectedPeriod == period,
+                              selectedColor: primaryColor,
+                              backgroundColor:
+                                  const Color(0xFFF0F9EE).withOpacity(0.9),
+                              labelStyle: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: _selectedPeriod == period
+                                    ? Colors.white
+                                    : primaryColor,
+                              ),
+                              onSelected: (bool selected) {
+                                if (selected) {
+                                  _applyPeriodFilter(period);
+                                }
+                              },
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  color: _selectedPeriod == period
+                                      ? primaryColor
+                                      : Colors.grey.shade300,
+                                ),
+                              ),
                             ),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _dateRangeController,
-                            decoration: const InputDecoration(
-                              labelText: 'Date Range',
-                              prefixIcon: Icon(Icons.date_range, size: 18),
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            readOnly: true,
-                            onTap: _selectDateRange,
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+                    const SizedBox(height: 16),
+                    Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: Row(
                         children: [
-                          _buildFilterDropdown(
-                              'Brand',
-                              _selectedBrand,
-                              ['all', 'brand1', 'brand2'],
-                              (v) => setState(() => _selectedBrand = v!)),
-                          const SizedBox(width: 8),
-                          _buildFilterDropdown(
-                              'Category',
-                              _selectedCategory,
-                              ['all', 'category1', 'category2'],
-                              (v) => setState(() => _selectedCategory = v!)),
-                          const SizedBox(width: 8),
-                          _buildFilterDropdown(
-                              'Stock Level',
-                              _stockLevelFilter,
-                              ['all', 'normal', 'low', 'out'],
-                              (v) => setState(() => _stockLevelFilter = v!)),
-                          const SizedBox(width: 8),
-                          _buildFilterDropdown(
-                              'Warehouse',
-                              _selectedWarehouse,
-                              ['all', 'warehouse1', 'warehouse2'],
-                              (v) => setState(() => _selectedWarehouse = v!)),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: const InputDecoration(
+                                labelText: 'Search',
+                                prefixIcon: Icon(Icons.search, size: 18),
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            height: 40,
+                            width: 44,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey),
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.date_range, size: 20),
+                              tooltip: 'Select date range',
+                              onPressed: _selectDateRange,
+                            ),
+                          ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildFilterDropdown(
+                                'Brand',
+                                _selectedBrand,
+                                ['all', 'brand1', 'brand2'],
+                                (v) => setState(() => _selectedBrand = v!)),
+                            const SizedBox(width: 8),
+                            _buildFilterDropdown(
+                                'Category',
+                                _selectedCategory,
+                                ['all', 'category1', 'category2'],
+                                (v) =>
+                                    setState(() => _selectedCategory = v!)),
+                            const SizedBox(width: 8),
+                            _buildFilterDropdown(
+                                'Stock Level',
+                                _stockLevelFilter,
+                                ['all', 'normal', 'low', 'out'],
+                                (v) =>
+                                    setState(() => _stockLevelFilter = v!)),
+                            const SizedBox(width: 8),
+                            _buildFilterDropdown(
+                                'Warehouse',
+                                _selectedWarehouse,
+                                ['all', 'warehouse1', 'warehouse2'],
+                                (v) => setState(
+                                    () => _selectedWarehouse = v!)),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -606,12 +695,8 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
                 double totalValue = stockInList.fold(
                     0.0, (sum, item) => sum + (item.quantity * item.price));
 
-                int lowStockCount = productList
-                    .where((p) => (p.stock_quantity ?? 0) <= 10)
-                    .length;
-                int outOfStockCount = productList
-                    .where((p) => (p.stock_quantity ?? 0) == 0)
-                    .length;
+    int lowStockCount =
+        productList.where((p) => (p.stock_quantity ?? 0) <= 10).length;
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(8),
@@ -671,35 +756,61 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
 
   Widget _buildMetricCard(
       String title, String value, IconData icon, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 4),
-            Flexible(
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.15), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 10),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
