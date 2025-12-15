@@ -8,6 +8,8 @@ import 'package:firebase/services/shipping_service.dart';
 import 'package:firebase/services/philippine_address_service.dart';
 import 'order_confirmation_screen.dart';
 
+enum PaymentMethod { gcash, bankCard, grabPay }
+
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
   final bool isSelectedItems;
@@ -58,7 +60,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (customer != null) {
       setState(() {
         _customerId = customer.id;
-         _customerName = '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
+        _customerName =
+            '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
       });
@@ -826,7 +829,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final orderId = await FirestoreService.createOrder(
         userId: user.uid,
         customerId: _customerId!,
-         customerName: _customerName ?? 'Customer', 
+        customerName: _customerName ?? 'Customer',
         items: orderItems,
         subtotal: _subtotal,
         shipping: _shippingFee,
@@ -944,7 +947,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const Expanded(
                       child: Text(
                         'Edit Shipping Address',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                     IconButton(
@@ -958,10 +962,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Region
-                // Region Dropdown - FIXED VERSION
+                // Region Dropdown
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true, // <-- ADD THIS LINE
+                  isExpanded: true,
                   value: selectedRegion,
                   decoration: const InputDecoration(
                     labelText: 'Region',
@@ -978,7 +981,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       : regions
                           .map((region) => DropdownMenuItem(
                                 value: region,
-                                child: Text(region['regionName'] ?? region['name']),
+                                child: Text(
+                                    region['regionName'] ?? region['name']),
                               ))
                           .toList(),
                   onChanged: loadingRegions
@@ -996,15 +1000,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-<<<<<<< HEAD
-                              final p = await PhilippineAddressService.getProvinces(value['code']);
-                              setModalState(() {
-=======
                               final p =
                                   await PhilippineAddressService.getProvinces(
                                       value['code']);
                               safeSetState(() {
->>>>>>> 0c5d047 (some deisgn fix)
                                 provinces = p;
                                 loadingProvinces = false;
                               });
@@ -1017,9 +1016,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         },
                 ),
 
-// Province Dropdown - FIXED VERSION
+                const SizedBox(height: 12),
+
+                // Province Dropdown
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true, // <-- ADD THIS LINE
+                  isExpanded: true,
                   value: selectedProvince,
                   decoration: const InputDecoration(
                     labelText: 'Province',
@@ -1067,9 +1068,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         },
                 ),
 
-// City/Municipality Dropdown - FIXED VERSION
+                const SizedBox(height: 12),
+
+                // City/Municipality Dropdown
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true, // <-- ADD THIS LINE
+                  isExpanded: true,
                   value: selectedCity,
                   decoration: const InputDecoration(
                     labelText: 'City/Municipality',
@@ -1116,9 +1119,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         },
                 ),
 
-// Barangay Dropdown - FIXED VERSION
+                const SizedBox(height: 12),
+
+                // Barangay Dropdown (Optional)
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true, // <-- ADD THIS LINE
+                  isExpanded: true,
                   value: selectedBarangay,
                   decoration: const InputDecoration(
                     labelText: 'Barangay (Optional)',
@@ -1147,144 +1152,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         },
                 ),
 
-                // Province
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: selectedProvince,
-                  decoration: const InputDecoration(
-                    labelText: 'Province',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: provinces.isEmpty && !loadingProvinces
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a region first'),
-                          ),
-                        ]
-                      : provinces
-                          .map((province) => DropdownMenuItem(
-                                value: province,
-                                child: Text(province['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingProvinces
-                      ? null
-                      : (value) async {
-                          safeSetState(() {
-                            selectedProvince = value;
-                            selectedCity = null;
-                            selectedBarangay = null;
-                            cities = [];
-                            barangays = [];
-                            loadingCities = true;
-                          });
-                          if (value != null) {
-                            try {
-<<<<<<< HEAD
-                              final c = await PhilippineAddressService.getCitiesMunicipalities(value['code']);
-                              setModalState(() {
-=======
-                              final c = await PhilippineAddressService
-                                  .getCitiesMunicipalities(value['code']);
-                              safeSetState(() {
->>>>>>> 0c5d047 (some deisgn fix)
-                                cities = c;
-                                loadingCities = false;
-                              });
-                            } catch (_) {
-                              safeSetState(() => loadingCities = false);
-                            }
-                          } else {
-                            safeSetState(() => loadingCities = false);
-                          }
-                        },
-                ),
-                const SizedBox(height: 12),
-
-                // City/Municipality
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: selectedCity,
-                  decoration: const InputDecoration(
-                    labelText: 'City/Municipality',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: cities.isEmpty && !loadingCities
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a province first'),
-                          ),
-                        ]
-                      : cities
-                          .map((city) => DropdownMenuItem(
-                                value: city,
-                                child: Text(city['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingCities
-                      ? null
-                      : (value) async {
-                          safeSetState(() {
-                            selectedCity = value;
-                            selectedBarangay = null;
-                            barangays = [];
-                            loadingBarangays = true;
-                          });
-                          if (value != null) {
-                            try {
-<<<<<<< HEAD
-                              final b = await PhilippineAddressService.getBarangays(value['code']);
-                              setModalState(() {
-=======
-                              final b =
-                                  await PhilippineAddressService.getBarangays(
-                                      value['code']);
-                              safeSetState(() {
->>>>>>> 0c5d047 (some deisgn fix)
-                                barangays = b;
-                                loadingBarangays = false;
-                              });
-                            } catch (_) {
-                              safeSetState(() => loadingBarangays = false);
-                            }
-                          } else {
-                            safeSetState(() => loadingBarangays = false);
-                          }
-                        },
-                ),
-                const SizedBox(height: 12),
-
-                // Barangay (optional)
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  value: selectedBarangay,
-                  decoration: const InputDecoration(
-                    labelText: 'Barangay (Optional)',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: barangays.isEmpty && !loadingBarangays
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a city/municipality first'),
-                          ),
-                        ]
-                      : barangays
-                          .map((brgy) => DropdownMenuItem(
-                                value: brgy,
-                                child: Text(brgy['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingBarangays
-                      ? null
-                      : (value) {
-                          safeSetState(() {
-                            selectedBarangay = value;
-                          });
-                        },
-                ),
                 const SizedBox(height: 12),
 
                 // House/Street
@@ -1298,6 +1165,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -1305,12 +1173,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ? null
                         : () async {
                             final house = houseController.text.trim();
-                            if (selectedRegion == null || selectedProvince == null || selectedCity == null) {
-                              _showSnackBar('Please select your region, province, and city/municipality');
+                            if (selectedRegion == null ||
+                                selectedProvince == null ||
+                                selectedCity == null) {
+                              _showSnackBar(
+                                  'Please select your region, province, and city/municipality');
                               return;
                             }
                             if (house.isEmpty || house.length < 3) {
-                              _showSnackBar('Please enter house/unit and street');
+                              _showSnackBar(
+                                  'Please enter house/unit and street');
                               return;
                             }
 
@@ -1319,20 +1191,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             try {
                               final parts = <String>[];
                               parts.add(house);
-                              if (selectedBarangay != null) parts.add(selectedBarangay!['name']);
+                              if (selectedBarangay != null)
+                                parts.add(selectedBarangay!['name']);
                               parts.add(selectedCity!['name']);
                               parts.add(selectedProvince!['name']);
-                              parts.add(selectedRegion!['regionName'] ?? selectedRegion!['name']);
+                              parts.add(selectedRegion!['regionName'] ??
+                                  selectedRegion!['name']);
                               final finalAddress = parts.join(', ');
 
-<<<<<<< HEAD
-                              // Update in Firestore: single address string in customers collection
-                              final auth = Provider.of<AuthService>(context, listen: false);
-=======
                               // Update in Firestore
                               final auth = Provider.of<AuthService>(context,
                                   listen: false);
->>>>>>> 0c5d047 (some deisgn fix)
                               final user = auth.currentUser;
                               if (user == null) {
                                 throw 'Not logged in';
@@ -1346,7 +1215,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   .get();
 
                               if (query.docs.isNotEmpty) {
-                                await fs.collection('customers').doc(query.docs.first.id).update({'address': finalAddress});
+                                await fs
+                                    .collection('customers')
+                                    .doc(query.docs.first.id)
+                                    .update({'address': finalAddress});
                               } else {
                                 await fs.collection('customers').add({
                                   'id': '',
@@ -1360,15 +1232,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 });
                               }
 
-<<<<<<< HEAD
-                              // update local state
-                              setState(() {
-                                _shippingAddressController.text = finalAddress;
-                              });
-                              // recalc shipping
-                              await _calculateShippingFee(finalAddress, _subtotal);
-                              if (mounted) Navigator.pop(ctx);
-=======
                               // Update local state and close modal
                               if (mounted) {
                                 setState(() {
@@ -1381,7 +1244,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               modalClosed = true;
                               Navigator.pop(ctx);
->>>>>>> 0c5d047 (some deisgn fix)
                               _showSnackBar('Address updated');
                             } catch (e) {
                               if (mounted) {

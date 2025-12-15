@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase/firestore_service.dart';
+import '../../../firestore_service.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
@@ -265,7 +264,8 @@ class OrderDetailScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ElevatedButton.icon(
-          onPressed: () => _downloadReceipt(context, order, primaryGreen),
+          onPressed: () =>
+              _copyReceiptToClipboard(context, order, primaryGreen),
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryGreen,
             foregroundColor: Colors.white,
@@ -274,9 +274,9 @@ class OrderDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          icon: const Icon(Icons.receipt_long, size: 18),
+          icon: const Icon(Icons.copy, size: 18),
           label: const Text(
-            'Download Receipt',
+            'Copy Receipt',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -1248,64 +1248,23 @@ class OrderDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _downloadReceipt(BuildContext context,
+  Future<void> _copyReceiptToClipboard(BuildContext context,
       Map<String, dynamic> order, Color primaryGreen) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: primaryGreen),
-              const SizedBox(height: 16),
-              const Text('Generating receipt...'),
-            ],
-          ),
-        ),
-      ),
-    );
-
     try {
       final receiptText = _generateReceiptText(order);
 
-      if (Platform.isAndroid || Platform.isIOS) {
-        final Directory tempDir = await getTemporaryDirectory();
-        final File file =
-            File('${tempDir.path}/receipt_order_${order['id']}.txt');
-        await file.writeAsString(receiptText);
-
-        Navigator.pop(context); // close loading
-
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text:
-              'Receipt for Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
-        );
-      } else {
-        Navigator.pop(context); // close loading
-
-        await Clipboard.setData(ClipboardData(text: receiptText));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Receipt copied to clipboard'),
-            backgroundColor: primaryGreen,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context); // close loading
+      await Clipboard.setData(ClipboardData(text: receiptText));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to download receipt: $e'),
+          content: const Text('Receipt copied to clipboard'),
+          backgroundColor: primaryGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to copy receipt: $e'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -1352,12 +1311,12 @@ class OrderDetailScreen extends StatelessWidget {
 
       sb.writeln('${itemMap['productName']}');
       sb.writeln(
-          '  ${quantity.toString().padLeft(2)} x \₱${price.toStringAsFixed(2)} = \₱${subtotal.toStringAsFixed(2)}');
+          '  ${quantity.toString().padLeft(2)} x \$${price.toStringAsFixed(2)} = \$${subtotal.toStringAsFixed(2)}');
     }
 
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('Total: \₱${total.toStringAsFixed(2)}');
+    sb.writeln('Total: \$${total.toStringAsFixed(2)}');
     sb.writeln('=' * 40);
     sb.writeln();
     sb.writeln('Thank you for your purchase!');

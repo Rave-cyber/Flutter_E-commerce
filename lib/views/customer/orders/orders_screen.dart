@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase/services/auth_service.dart';
-import 'package:firebase/firestore_service.dart';
-import 'package:firebase/views/customer/orders/order_detail_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../firestore_service.dart';
+import 'order_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class OrdersScreen extends StatefulWidget {
-  const OrdersScreen({Key? key}) : super(key: key);
+  const OrdersScreen({super.key});
 
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
@@ -189,8 +189,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 backgroundColor: lightGreen,
                 selectedColor: primaryGreen,
                 side: BorderSide(
-                  color:
-                      isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
+                  color: isSelected
+                      ? primaryGreen
+                      : primaryGreen.withValues(alpha: 0.3),
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
@@ -343,7 +344,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -436,7 +437,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: primaryGreen.withOpacity(0.1),
+                      color: primaryGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -495,7 +496,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: primaryGreen.withOpacity(0.3),
+              color: primaryGreen.withValues(alpha: 0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -710,7 +711,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           decoration: BoxDecoration(
             color: color.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.1), width: 1),
+            border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
           ),
           child: Row(
             children: [
@@ -718,7 +719,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -811,7 +812,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: primaryGreen.withOpacity(0.05),
+                color: primaryGreen.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(

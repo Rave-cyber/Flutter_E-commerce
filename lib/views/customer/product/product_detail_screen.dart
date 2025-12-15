@@ -1673,7 +1673,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white)))
                     : Text(
-                        _hasUserRated ? 'Update Rating' : 'Submit Rating',
+                        'Submit Rating',
                         style: TextStyle(color: Colors.white),
                       ),
               ),
