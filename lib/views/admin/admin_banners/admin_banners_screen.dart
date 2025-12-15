@@ -6,6 +6,7 @@ import '../../../widgets/banner_filter_widget.dart';
 import '../../../widgets/banner_card_widget.dart';
 import '../../../widgets/banner_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
+import '../../../widgets/banner_details_modal.dart';
 import 'form.dart';
 
 class AdminBannersScreen extends StatefulWidget {
@@ -215,6 +216,17 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
     }
   }
 
+  void _showBannerDetailsModal(Map<String, dynamic> banner) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return BannerDetailsModal(
+          banner: banner,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
@@ -299,13 +311,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                               banner: banner,
                               onMenuSelected: (value) =>
                                   _handleMenuSelection(value, banner),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      AdminBannerForm(banner: banner),
-                                ),
-                              ),
+                              onTap: () => _showBannerDetailsModal(banner),
                             );
                           },
                         ),
