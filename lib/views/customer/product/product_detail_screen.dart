@@ -1,4 +1,6 @@
 // product_detail_screen.dart
+import 'dart:async';
+
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
@@ -33,6 +35,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _loadingVariants = true;
   bool _loadingBrandCategory = true;
   final Color primaryGreen = const Color(0xFF2C8610);
+  int _mainStock = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _productSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _variantsSub;
 
   // Rating state
   int _selectedStars = 5;
@@ -52,15 +57,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedOption = widget.product;
+    _mainStock = widget.product.stock_quantity ?? 0;
     _checkIfFavorite();
     _loadProductDetails();
     _canRateFuture = _checkIfUserCanRate();
+    _listenToProductStock();
   }
 
   @override
   void dispose() {
+    _productSub?.cancel();
+    _variantsSub?.cancel();
     _ratingController.dispose();
     super.dispose();
+  }
+
+  int _currentStock() {
+    if (_isSelectingMainProduct) {
+      return _mainStock;
+    }
+    if (_selectedOption is ProductVariantModel) {
+      return (_selectedOption as ProductVariantModel).stock ?? 0;
+    }
+    return 0;
   }
 
   void _checkIfFavorite() async {
@@ -96,36 +116,80 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    final completer = Completer<void>();
+
     try {
-      final variants = await FirebaseFirestore.instance
+      _variantsSub?.cancel();
+      _variantsSub = FirebaseFirestore.instance
           .collection('product_variants')
           .where('product_id', isEqualTo: widget.product.id)
           .where('is_archived', isEqualTo: false)
-          .get();
+          .snapshots()
+          .listen((snapshot) {
+        final variantsList = snapshot.docs
+            .map((doc) => ProductVariantModel.fromMap({
+                  'id': doc.id,
+                  ...doc.data(),
+                }))
+            .toList();
 
-      final variantsList = variants.docs
-          .map((doc) => ProductVariantModel.fromMap({
-                'id': doc.id,
-                ...doc.data(),
-              }))
-          .toList();
+        final bool hadVariantSelected = _selectedOption is ProductVariantModel;
+        final String? previousVariantId = hadVariantSelected
+            ? (_selectedOption as ProductVariantModel).id
+            : null;
 
-      if (mounted) {
-        setState(() {
-          _variants = variantsList;
-          _loadingVariants = false;
+        ProductVariantModel? updatedSelection;
+        if (previousVariantId != null) {
+          try {
+            updatedSelection = variantsList
+                .firstWhere((variant) => variant.id == previousVariantId);
+          } catch (_) {
+            updatedSelection =
+                variantsList.isNotEmpty ? variantsList.first : null;
+          }
+        } else if (variantsList.isNotEmpty) {
+          updatedSelection = variantsList.first;
+        }
 
-          // If product has variants, select first variant by default
-          // Otherwise, select main product
-          if (variantsList.isNotEmpty) {
-            _selectedOption = variantsList.first;
-            _isSelectingMainProduct = false;
-          } else {
+        if (mounted) {
+          setState(() {
+            _variants = variantsList;
+            _loadingVariants = false;
+
+            if (variantsList.isEmpty) {
+              _selectedOption = widget.product;
+              _isSelectingMainProduct = true;
+            } else if (_isSelectingMainProduct && !hadVariantSelected) {
+              // Auto-select first variant by default (existing behavior)
+              _selectedOption = updatedSelection ?? variantsList.first;
+              _isSelectingMainProduct = false;
+            } else if (hadVariantSelected) {
+              _selectedOption = updatedSelection ?? variantsList.first;
+              _isSelectingMainProduct = _selectedOption is! ProductVariantModel
+                  ? true
+                  : false;
+            }
+
+            // Safety: ensure there's always a selected option
+            _selectedOption ??= widget.product;
+            if (_selectedOption is! ProductVariantModel) {
+              _isSelectingMainProduct = true;
+            }
+          });
+        }
+
+        if (!completer.isCompleted) completer.complete();
+      }, onError: (error) {
+        print('Error loading variants: $error');
+        if (mounted) {
+          setState(() {
+            _loadingVariants = false;
             _selectedOption = widget.product;
             _isSelectingMainProduct = true;
-          }
-        });
-      }
+          });
+        }
+        if (!completer.isCompleted) completer.complete();
+      });
     } catch (e) {
       print('Error loading variants: $e');
       if (mounted) {
@@ -135,7 +199,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _isSelectingMainProduct = true;
         });
       }
+      if (!completer.isCompleted) completer.complete();
     }
+
+    return completer.future;
+  }
+
+  void _listenToProductStock() {
+    if (widget.product.id == null) return;
+
+    _productSub?.cancel();
+    _productSub = FirebaseFirestore.instance
+        .collection('products')
+        .doc(widget.product.id!)
+        .snapshots()
+        .listen((doc) {
+      if (!doc.exists) return;
+      final data = doc.data();
+      if (data == null) return;
+      final newStock = (data['stock_quantity'] as num?)?.toInt() ?? 0;
+
+      if (mounted) {
+        setState(() {
+          _mainStock = newStock;
+        });
+      }
+    }, onError: (error) {
+      print('Error listening to product stock: $error');
+    });
   }
 
   Future<void> _loadBrandAndCategory() async {
@@ -233,12 +324,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity ?? 0
-        : (_selectedOption as ProductVariantModel).stock ?? 0;
+    // Determine stock based on selected option (live)
+    final stock = _currentStock();
 
-    if (stock < 0) {
+    if (stock <= 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -324,12 +413,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity ?? 0
-        : (_selectedOption as ProductVariantModel).stock ?? 0;
+    // Determine stock based on selected option (live)
+    final stock = _currentStock();
 
-    if (stock < 0) {
+    if (stock <= 0) {
       _showSnackBar('Selected option is out of stock', Colors.red);
       return;
     }
@@ -676,6 +763,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final discountPercent = originalPrice > price
         ? ((originalPrice - price) / originalPrice * 100).round()
         : 0;
+    final stock = _currentStock();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -715,6 +803,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       height: 1.2,
                     ),
                   ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.inventory_2_outlined,
+                            size: 18, color: Colors.grey[700]),
+                        const SizedBox(width: 6),
+                        Text(
+                          stock > 0 ? '$stock in stock' : 'Out of stock',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: stock > 0 ? Colors.grey[700] : Colors.red,
+                            fontWeight:
+                                stock > 0 ? FontWeight.w600 : FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
               ],
             ),
           ),
@@ -854,9 +959,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Get stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity ?? 0
-        : (_selectedOption as ProductVariantModel).stock ?? 0;
+    final stock = _currentStock();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -921,6 +1024,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   value: widget.product.is_archived ? 'Archived' : 'Active',
                   valueColor:
                       widget.product.is_archived ? Colors.orange : Colors.green,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildModernInfoCard(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Stock',
+                  value: stock > 0 ? '$stock available' : 'Out of stock',
+                  valueColor: stock > 0 ? primaryGreen : Colors.red,
                 ),
               ),
             ],
@@ -1448,13 +1560,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue[300]!),
+            color: primaryGreen.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: primaryGreen.withOpacity(0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.shopping_bag, color: Colors.blue[800]),
+              Icon(Icons.shopping_bag, color: primaryGreen),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1465,7 +1577,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
+                        color: primaryGreen,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1529,11 +1641,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: ElevatedButton(
                       onPressed: null, // Disabled
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                  backgroundColor: Colors.grey[300],
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                       ),
                       child: Text(
                         'Submit Rating',
@@ -1623,8 +1735,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: _submittingRating ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  backgroundColor: primaryGreen,
+                  disabledBackgroundColor: Colors.grey,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 child: _submittingRating
@@ -1664,10 +1778,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity ?? 0
-        : (_selectedOption as ProductVariantModel).stock ?? 0;
+    // Get stock based on selected option (live)
+    final stock = _currentStock();
 
     return Scaffold(
       body: CustomScrollView(

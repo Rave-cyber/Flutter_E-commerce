@@ -147,7 +147,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
           return Column(
             children: [
-              _buildGreenFilterChips(),
               _buildOrdersList(filteredOrders, context),
             ],
           );
@@ -156,54 +155,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildGreenFilterChips() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _statusFilters.map((status) {
-            final isSelected = _selectedStatus == status;
-            final label = status == 'all' ? 'All' : _capitalize(status);
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : primaryGreen,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedStatus = selected ? status : 'all';
-                  });
-                },
-                backgroundColor: lightGreen,
-                selectedColor: primaryGreen,
-                side: BorderSide(
-                  color:
-                      isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
-                  width: 1,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                elevation: 0,
-                shadowColor: Colors.transparent,
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
 
   String _capitalize(String text) {
     if (text.isEmpty) return text;

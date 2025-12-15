@@ -1026,29 +1026,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          '4.5',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          product.stock_quantity! > 0
-                              ? Icons.check_circle_outline
-                              : Icons.remove_circle_outline,
-                          color: product.stock_quantity! > 0
-                              ? Colors.green
-                              : Colors.red,
-                          size: 14,
-                        ),
-                      ],
-                    ),
+                    _buildRatingRow(product),
                   ],
                 ),
               ),
@@ -1056,6 +1034,57 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRatingRow(ProductModel product) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getProductRatingsStream(product.id),
+      builder: (context, snapshot) {
+        final ratings = snapshot.data ?? [];
+        double avg = 0;
+        if (ratings.isNotEmpty) {
+          avg = ratings
+                  .map((r) => (r['stars'] as num?)?.toDouble() ?? 0)
+                  .fold<double>(0, (a, b) => a + b) /
+              ratings.length;
+        }
+
+        final display = ratings.isEmpty ? 'New' : avg.toStringAsFixed(1);
+
+        return Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              display,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (ratings.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text(
+                '(${ratings.length})',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+            const Spacer(),
+            Icon(
+              product.stock_quantity! > 0
+                  ? Icons.check_circle_outline
+                  : Icons.remove_circle_outline,
+              color: product.stock_quantity! > 0 ? Colors.green : Colors.red,
+              size: 14,
+            ),
+          ],
+        );
+      },
     );
   }
 

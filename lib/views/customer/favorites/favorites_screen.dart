@@ -5,6 +5,7 @@ import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../models/product.dart';
 import '../../../services/auth_service.dart';
+import '../../../firestore_service.dart';
 import '../../auth/login_screen.dart';
 import '../product/product_detail_screen.dart';
 
@@ -24,6 +25,7 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final Color primaryGreen = const Color(0xFF2C8610);
+  String _selectedCategoryId = 'All';
 
   @override
   Widget build(BuildContext context) {
@@ -249,18 +251,58 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               );
             }
 
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.7,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return _buildProductCard(products[index]);
-              },
+            final filtered = _selectedCategoryId == 'All'
+                ? products
+                : products
+                    .where((p) => p.category_id == _selectedCategoryId)
+                    .toList();
+
+            if (filtered.isEmpty) {
+              return Column(
+                children: [
+                  _buildCategoryFilter(),
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.filter_list, size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No favorites in this category',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                _buildCategoryFilter(),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.7,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      return _buildProductCard(filtered[index]);
+                    },
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -417,6 +459,54 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         color: Colors.grey[400],
         size: 40,
       ),
+    );
+  }
+
+  Widget _buildCategoryFilter() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirestoreService.getAllCategories(),
+      builder: (context, snapshot) {
+        final categories = snapshot.data ?? [];
+        final options = [
+          {'id': 'All', 'name': 'All'},
+          ...categories.map((c) => {
+                'id': c['id'] ?? '',
+                'name': c['name'] ?? 'Unnamed',
+              }),
+        ];
+
+        return SizedBox(
+          height: 56,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              final cat = options[index];
+              final isSelected = cat['id'] == _selectedCategoryId;
+              return ChoiceChip(
+                label: Text(cat['name']),
+                selected: isSelected,
+                selectedColor: primaryGreen.withOpacity(0.15),
+                labelStyle: TextStyle(
+                  color: isSelected ? primaryGreen : Colors.grey[800],
+                  fontWeight: FontWeight.w600,
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    _selectedCategoryId = cat['id'] as String;
+                  });
+                },
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: isSelected ? primaryGreen : Colors.grey[300]!,
+                ),
+              );
+            },
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemCount: options.length,
+          ),
+        );
+      },
     );
   }
 }
