@@ -136,7 +136,11 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
         );
 
         if (confirm == true) {
-          await _attributeService.archiveAttribute(attribute.id);
+          if (action == 'archive') {
+            await _attributeService.archiveAttribute(attribute.id);
+          } else {
+            await _attributeService.unarchiveAttribute(attribute.id);
+          }
         }
         break;
       case 'delete':
@@ -391,7 +395,8 @@ class _AdminAttributesIndexState extends State<AdminAttributesIndex> {
             // ATTRIBUTE LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<List<AttributeModel>>(
-                stream: _attributeService.getAttributesStream(),
+                stream: _attributeService.getAttributesStream(
+                    includeArchived: true),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
