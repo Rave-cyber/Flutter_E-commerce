@@ -198,6 +198,7 @@ class _AdminSuppliersIndexState extends State<AdminSuppliersIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/suppliers',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -212,6 +212,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/dashboard',
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

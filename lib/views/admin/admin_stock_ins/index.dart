@@ -285,6 +285,7 @@ class _AdminStockInIndexState extends State<AdminStockInIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/stock-ins',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

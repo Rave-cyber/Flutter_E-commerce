@@ -238,6 +238,7 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/stock-outs',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

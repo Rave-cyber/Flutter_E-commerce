@@ -250,6 +250,7 @@ class _AdminProductsIndexState extends State<AdminProductsIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/products',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

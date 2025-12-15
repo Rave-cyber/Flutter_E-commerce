@@ -197,6 +197,7 @@ class _AdminCategoriesIndexState extends State<AdminCategoriesIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/categories',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

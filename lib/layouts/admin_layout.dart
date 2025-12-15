@@ -7,15 +7,22 @@ import '../widgets/admin_sidebar_widget.dart';
 
 class AdminLayout extends StatelessWidget {
   final Widget child;
+  final String title;
+  final String? selectedRoute;
 
-  const AdminLayout({Key? key, required this.child}) : super(key: key);
+  const AdminLayout({
+    Key? key,
+    required this.child,
+    this.title = 'Admin',
+    this.selectedRoute,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AdminSidebarWidget(),
+      drawer: AdminSidebarWidget(selectedRoute: selectedRoute),
       appBar: AppBar(
-        title: const Text('Admin'),
+        title: Text(title),
         backgroundColor: Colors.green.shade600,
         elevation: 0,
         foregroundColor: Colors.white,

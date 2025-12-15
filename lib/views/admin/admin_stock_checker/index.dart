@@ -203,6 +203,7 @@ class _AdminStockCheckersIndexState extends State<AdminStockCheckersIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/stock-checkers',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
