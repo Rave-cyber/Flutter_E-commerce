@@ -8,8 +8,6 @@ import 'package:firebase/services/shipping_service.dart';
 import 'package:firebase/services/philippine_address_service.dart';
 import 'order_confirmation_screen.dart';
 
-enum PaymentMethod { gcash, bankCard, grabPay }
-
 class CheckoutScreen extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
   final bool isSelectedItems;
@@ -39,9 +37,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       TextEditingController();
   bool _isLoading = false;
   String? _customerId;
-  String? _customerName;
 
-// Shipping calculation variables
+  // Shipping calculation variables
   double _shippingFee = 0.0;
   double _distance = 0.0;
   int _estimatedDays = 3;
@@ -60,8 +57,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (customer != null) {
       setState(() {
         _customerId = customer.id;
-        _customerName =
-            '${customer.firstname} ${customer.lastname}'.trim(); // ADD THIS
         _shippingAddressController.text = customer.address;
         _contactNumberController.text = customer.contact;
       });
@@ -132,7 +127,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme: IconThemeData(color: primaryGreen),
+        foregroundColor: darkGreen,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
@@ -209,58 +204,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
+                  color: lightGreen,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
                   color: primaryGreen,
-                  size: 22,
+                  size: 20,
                 ),
               ),
               const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Shipping Address',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: _showEditAddressSheet,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: const Text(
+                    'Edit',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Shipping Address',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _showEditAddressSheet,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: primaryGreen.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.edit_rounded,
-                              size: 18,
-                              color: primaryGreen,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     Text(
                       _shippingAddressController.text.isEmpty
                           ? 'Add your shipping address'
@@ -270,22 +264,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         color: _shippingAddressController.text.isEmpty
                             ? Colors.grey[400]
                             : Colors.grey[800],
-                        height: 1.4,
                       ),
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (_contactNumberController.text.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           _contactNumberController.text,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                   ],
@@ -829,7 +820,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final orderId = await FirestoreService.createOrder(
         userId: user.uid,
         customerId: _customerId!,
-        customerName: _customerName ?? 'Customer',
         items: orderItems,
         subtotal: _subtotal,
         shipping: _shippingFee,
@@ -881,8 +871,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _showEditAddressSheet() {
     final TextEditingController houseController = TextEditingController();
     bool saving = false;
-    bool modalClosed = false;
 
+    // Cascading dropdown state
     List<Map<String, dynamic>> regions = [];
     List<Map<String, dynamic>> provinces = [];
     List<Map<String, dynamic>> cities = [];
@@ -907,25 +897,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setModalState) {
-          // Helper function to safely update state
-          void safeSetState(VoidCallback fn) {
-            if (!modalClosed && mounted) {
-              setModalState(fn);
-            }
-          }
-
           // Initial load for regions
           if (!initialized) {
             initialized = true;
             Future.microtask(() async {
               try {
                 final r = await PhilippineAddressService.getRegions();
-                safeSetState(() {
+                setModalState(() {
                   regions = r;
                   loadingRegions = false;
                 });
               } catch (_) {
-                safeSetState(() {
+                setModalState(() {
                   loadingRegions = false;
                 });
               }
@@ -947,24 +930,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const Expanded(
                       child: Text(
                         'Edit Shipping Address',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () {
-                        modalClosed = true;
-                        Navigator.pop(ctx);
-                      },
+                      onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
 
-                // Region Dropdown
+                // Region
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
                   value: selectedRegion,
                   decoration: const InputDecoration(
                     labelText: 'Region',
@@ -981,14 +959,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       : regions
                           .map((region) => DropdownMenuItem(
                                 value: region,
-                                child: Text(
-                                    region['regionName'] ?? region['name']),
+                                child: Text(region['regionName'] ?? region['name']),
                               ))
                           .toList(),
                   onChanged: loadingRegions
                       ? null
                       : (value) async {
-                          safeSetState(() {
+                          setModalState(() {
                             selectedRegion = value;
                             selectedProvince = null;
                             selectedCity = null;
@@ -1000,27 +977,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final p =
-                                  await PhilippineAddressService.getProvinces(
-                                      value['code']);
-                              safeSetState(() {
+                              final p = await PhilippineAddressService.getProvinces(value['code']);
+                              setModalState(() {
                                 provinces = p;
                                 loadingProvinces = false;
                               });
                             } catch (_) {
-                              safeSetState(() => loadingProvinces = false);
+                              setModalState(() => loadingProvinces = false);
                             }
                           } else {
-                            safeSetState(() => loadingProvinces = false);
+                            setModalState(() => loadingProvinces = false);
                           }
                         },
                 ),
-
                 const SizedBox(height: 12),
 
-                // Province Dropdown
+                // Province
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
                   value: selectedProvince,
                   decoration: const InputDecoration(
                     labelText: 'Province',
@@ -1043,7 +1016,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingProvinces
                       ? null
                       : (value) async {
-                          safeSetState(() {
+                          setModalState(() {
                             selectedProvince = value;
                             selectedCity = null;
                             selectedBarangay = null;
@@ -1053,26 +1026,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final c = await PhilippineAddressService
-                                  .getCitiesMunicipalities(value['code']);
-                              safeSetState(() {
+                              final c = await PhilippineAddressService.getCitiesMunicipalities(value['code']);
+                              setModalState(() {
                                 cities = c;
                                 loadingCities = false;
                               });
                             } catch (_) {
-                              safeSetState(() => loadingCities = false);
+                              setModalState(() => loadingCities = false);
                             }
                           } else {
-                            safeSetState(() => loadingCities = false);
+                            setModalState(() => loadingCities = false);
                           }
                         },
                 ),
-
                 const SizedBox(height: 12),
 
-                // City/Municipality Dropdown
+                // City/Municipality
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
                   value: selectedCity,
                   decoration: const InputDecoration(
                     labelText: 'City/Municipality',
@@ -1095,7 +1065,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingCities
                       ? null
                       : (value) async {
-                          safeSetState(() {
+                          setModalState(() {
                             selectedCity = value;
                             selectedBarangay = null;
                             barangays = [];
@@ -1103,27 +1073,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                           if (value != null) {
                             try {
-                              final b =
-                                  await PhilippineAddressService.getBarangays(
-                                      value['code']);
-                              safeSetState(() {
+                              final b = await PhilippineAddressService.getBarangays(value['code']);
+                              setModalState(() {
                                 barangays = b;
                                 loadingBarangays = false;
                               });
                             } catch (_) {
-                              safeSetState(() => loadingBarangays = false);
+                              setModalState(() => loadingBarangays = false);
                             }
                           } else {
-                            safeSetState(() => loadingBarangays = false);
+                            setModalState(() => loadingBarangays = false);
                           }
                         },
                 ),
-
                 const SizedBox(height: 12),
 
-                // Barangay Dropdown (Optional)
+                // Barangay (optional)
                 DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
                   value: selectedBarangay,
                   decoration: const InputDecoration(
                     labelText: 'Barangay (Optional)',
@@ -1146,12 +1112,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onChanged: loadingBarangays
                       ? null
                       : (value) {
-                          safeSetState(() {
+                          setModalState(() {
                             selectedBarangay = value;
                           });
                         },
                 ),
-
                 const SizedBox(height: 12),
 
                 // House/Street
@@ -1165,7 +1130,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -1173,53 +1137,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ? null
                         : () async {
                             final house = houseController.text.trim();
-                            if (selectedRegion == null ||
-                                selectedProvince == null ||
-                                selectedCity == null) {
-                              _showSnackBar(
-                                  'Please select your region, province, and city/municipality');
+                            if (selectedRegion == null || selectedProvince == null || selectedCity == null) {
+                              _showSnackBar('Please select your region, province, and city/municipality');
                               return;
                             }
                             if (house.isEmpty || house.length < 3) {
-                              _showSnackBar(
-                                  'Please enter house/unit and street');
+                              _showSnackBar('Please enter house/unit and street');
                               return;
                             }
-
-                            safeSetState(() => saving = true);
-
+                            setModalState(() => saving = true);
                             try {
                               final parts = <String>[];
                               parts.add(house);
-                              if (selectedBarangay != null)
-                                parts.add(selectedBarangay!['name']);
+                              if (selectedBarangay != null) parts.add(selectedBarangay!['name']);
                               parts.add(selectedCity!['name']);
                               parts.add(selectedProvince!['name']);
-                              parts.add(selectedRegion!['regionName'] ??
-                                  selectedRegion!['name']);
+                              parts.add(selectedRegion!['regionName'] ?? selectedRegion!['name']);
                               final finalAddress = parts.join(', ');
 
-                              // Update in Firestore
-                              final auth = Provider.of<AuthService>(context,
-                                  listen: false);
+                              // Update in Firestore: single address string in customers collection
+                              final auth = Provider.of<AuthService>(context, listen: false);
                               final user = auth.currentUser;
                               if (user == null) {
                                 throw 'Not logged in';
                               }
-
+                              // find customer by user_id
                               final fs = FirebaseFirestore.instance;
                               final query = await fs
                                   .collection('customers')
                                   .where('user_id', isEqualTo: user.uid)
                                   .limit(1)
                                   .get();
-
                               if (query.docs.isNotEmpty) {
-                                await fs
-                                    .collection('customers')
-                                    .doc(query.docs.first.id)
-                                    .update({'address': finalAddress});
+                                await fs.collection('customers').doc(query.docs.first.id).update({'address': finalAddress});
                               } else {
+                                // create minimal customer doc if missing
                                 await fs.collection('customers').add({
                                   'id': '',
                                   'user_id': user.uid,
@@ -1232,24 +1184,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 });
                               }
 
-                              // Update local state and close modal
-                              if (mounted) {
-                                setState(() {
-                                  _shippingAddressController.text =
-                                      finalAddress;
-                                });
-                                await _calculateShippingFee(
-                                    finalAddress, _subtotal);
-                              }
-
-                              modalClosed = true;
-                              Navigator.pop(ctx);
+                              // update local state
+                              setState(() {
+                                _shippingAddressController.text = finalAddress;
+                              });
+                              // recalc shipping
+                              await _calculateShippingFee(finalAddress, _subtotal);
+                              if (mounted) Navigator.pop(ctx);
                               _showSnackBar('Address updated');
                             } catch (e) {
-                              if (mounted) {
-                                _showSnackBar('Failed to update address: $e');
-                              }
-                              safeSetState(() => saving = false);
+                              _showSnackBar('Failed to update address: $e');
+                            } finally {
+                              if (mounted) setModalState(() => saving = false);
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -1277,8 +1223,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         });
       },
-    ).then((_) {
-      modalClosed = true;
-    });
+    );
   }
 }

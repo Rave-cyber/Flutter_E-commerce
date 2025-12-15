@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import '../../../services/auth_service.dart';
-import '../../../firestore_service.dart';
-import 'order_detail_screen.dart';
+import 'package:firebase/services/auth_service.dart';
+import 'package:firebase/firestore_service.dart';
+import 'package:firebase/views/customer/orders/order_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:flutter/services.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 class OrdersScreen extends StatefulWidget {
-  const OrdersScreen({super.key});
+  const OrdersScreen({Key? key}) : super(key: key);
 
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
@@ -69,8 +65,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Local Lottie animation for auth required state
               Lottie.asset(
-                'assets/lottie/auth_required.json',
+                'assets/lottie/auth_required.json', // Your local file
                 height: 150,
                 width: 150,
                 fit: BoxFit.contain,
@@ -150,6 +147,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
           return Column(
             children: [
+              // Green filter chips
               _buildGreenFilterChips(),
               _buildOrdersList(filteredOrders, context),
             ],
@@ -189,16 +187,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 backgroundColor: lightGreen,
                 selectedColor: primaryGreen,
                 side: BorderSide(
-                  color: isSelected
-                      ? primaryGreen
-                      : primaryGreen.withValues(alpha: 0.3),
+                  color: isSelected ? primaryGreen : primaryGreen.withOpacity(0.3),
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 elevation: 0,
                 shadowColor: Colors.transparent,
               ),
@@ -221,8 +216,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Local error animation
             Lottie.asset(
-              'assets/animations/box_empty.json',
+              'assets/animations/box_empty.json', // Your local file
               height: 120,
               width: 120,
             ),
@@ -256,10 +252,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Local Lottie animation for empty orders
             Lottie.asset(
               noOrders
-                  ? 'assets/animations/Box empty.json'
-                  : 'assets/animations/Empty Cart.json',
+                  ? 'assets/animations/Box empty.json' // Your local file
+                  : 'assets/animations/Empty Cart.json', // Your local file
               height: 200,
               width: 200,
               repeat: true,
@@ -331,11 +328,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final dateText = createdAt != null
         ? DateFormat('MMM dd, yyyy').format(createdAt.toDate())
         : '';
-    final deliveredAt = order['deliveredAt'] as Timestamp?;
 
+    // Using consistent green theme for all statuses
     final statusText = _capitalize(status);
-    final isDelivered = status.toLowerCase() == 'delivered';
-    final isConfirmed = status.toLowerCase() == 'confirmed';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -344,7 +339,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -406,30 +401,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
               const SizedBox(height: 16),
 
-              // Delivery date if delivered
-              if (isDelivered && deliveredAt != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delivery_dining,
-                        size: 14,
-                        color: primaryGreen,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Delivered on ${DateFormat('MMM dd, yyyy').format(deliveredAt.toDate())}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: primaryGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Footer with status, total, and receipt button
+              // Footer with status and total - ALL GREEN
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -437,7 +409,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: primaryGreen.withValues(alpha: 0.1),
+                      color: primaryGreen.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -460,66 +432,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ],
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        '\$${total.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: primaryGreen,
-                        ),
-                      ),
-                      // Changed from isDelivered to isConfirmed
-                      if (isConfirmed) ...[
-                        const SizedBox(width: 12),
-                        _buildReceiptButton(order),
-                      ],
-                    ],
+                  Text(
+                    '\$${total.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: primaryGreen,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReceiptButton(Map<String, dynamic> order) {
-    return GestureDetector(
-      onTap: () => _showReceiptOptions(context, order),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: primaryGreen,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: primaryGreen.withValues(alpha: 0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.receipt_long,
-              color: Colors.white,
-              size: 14,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'Receipt',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -593,548 +517,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
       default:
         return Icons.info;
     }
-  }
-
-  void _showReceiptOptions(BuildContext context, Map<String, dynamic> order) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Receipt Options',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // View Receipt Option
-              _buildReceiptOption(
-                icon: Icons.remove_red_eye,
-                title: 'View Receipt',
-                subtitle: 'View detailed receipt for this order',
-                onTap: () => _viewReceipt(context, order),
-                color: primaryGreen,
-              ),
-
-              const SizedBox(height: 16),
-
-              // Download Receipt Option
-              _buildReceiptOption(
-                icon: Icons.download,
-                title: 'Download Receipt',
-                subtitle: 'Save receipt as PDF file',
-                onTap: () => _downloadReceipt(context, order),
-                color: primaryGreen,
-              ),
-
-              const SizedBox(height: 16),
-
-              // Share Receipt Option
-              _buildReceiptOption(
-                icon: Icons.share,
-                title: 'Share Receipt',
-                subtitle: 'Share via email or other apps',
-                onTap: () => _shareReceipt(context, order),
-                color: primaryGreen,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Close Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: textPrimary,
-                    side: BorderSide(color: Colors.grey[300]!),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildReceiptOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required Color color,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: color,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _viewReceipt(BuildContext context, Map<String, dynamic> order) {
-    Navigator.pop(context); // Close bottom sheet
-
-    // Navigate to a receipt view screen or show dialog
-    showDialog(
-      context: context,
-      builder: (context) => _buildReceiptDialog(context, order),
-    );
-  }
-
-  Widget _buildReceiptDialog(BuildContext context, Map<String, dynamic> order) {
-    final items = order['items'] as List<dynamic>? ?? [];
-    final total = (order['total'] ?? 0.0).toDouble();
-    final orderId = order['id'] ?? '';
-    final createdAt = order['createdAt'] as Timestamp?;
-    final deliveredAt = order['deliveredAt'] as Timestamp?;
-    final confirmedAt =
-        order['confirmedAt'] as Timestamp?; // Added confirmed timestamp
-
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Order Receipt',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close, color: textSecondary),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Receipt Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: primaryGreen.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Order #${orderId.toString().substring(0, 8).toUpperCase()}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: primaryGreen,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Order Date: ${createdAt != null ? DateFormat('MMM dd, yyyy - hh:mm a').format(createdAt.toDate()) : 'N/A'}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                  ),
-                  if (confirmedAt != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Confirmed: ${DateFormat('MMM dd, yyyy').format(confirmedAt.toDate())}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: primaryGreen, // Green color for confirmation
-                      ),
-                    ),
-                  ],
-                  if (deliveredAt != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Delivered: ${DateFormat('MMM dd, yyyy').format(deliveredAt.toDate())}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Order Items
-            Text(
-              'Items',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            ...items.map<Widget>((item) {
-              final itemMap = item as Map<String, dynamic>;
-              final price = (itemMap['price'] ?? 0.0).toDouble();
-              final quantity = itemMap['quantity'] ?? 1;
-              final subtotal = price * quantity;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${itemMap['productName'] ?? 'Item'} x$quantity',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textPrimary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '\$${subtotal.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-
-            const Divider(height: 24),
-
-            // Total
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: primaryGreen,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: textPrimary,
-                      side: BorderSide(color: Colors.grey[300]!),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Close'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _downloadReceipt(context, order),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Download PDF'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _downloadReceipt(
-      BuildContext context, Map<String, dynamic> order) async {
-    Navigator.pop(context); // Close any open dialogs
-
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: primaryGreen),
-              const SizedBox(height: 16),
-              Text(
-                'Generating receipt...',
-                style: TextStyle(
-                  color: textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    try {
-      // In a real app, you would generate a PDF here
-      // For now, we'll create a simple text file
-      final receiptText = _generateReceiptText(order);
-
-      if (Platform.isAndroid || Platform.isIOS) {
-        final Directory tempDir = await getTemporaryDirectory();
-        final File file =
-            File('${tempDir.path}/receipt_order_${order['id']}.txt');
-        await file.writeAsString(receiptText);
-
-        Navigator.pop(context); // Close loading dialog
-
-        // Share the file
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text:
-              'Receipt for Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
-        );
-      } else {
-        Navigator.pop(context); // Close loading dialog
-
-        // For web/desktop, copy to clipboard
-        await Clipboard.setData(ClipboardData(text: receiptText));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Receipt copied to clipboard'),
-            backgroundColor: primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context); // Close loading dialog
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to download receipt: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  Future<void> _shareReceipt(
-      BuildContext context, Map<String, dynamic> order) async {
-    Navigator.pop(context); // Close bottom sheet
-
-    final receiptText = _generateReceiptText(order);
-
-    if (Platform.isAndroid || Platform.isIOS) {
-      final Directory tempDir = await getTemporaryDirectory();
-      final File file = File('${tempDir.path}/receipt_${order['id']}.txt');
-      await file.writeAsString(receiptText);
-
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject:
-            'Receipt for Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
-        text: 'Here is your receipt for your recent order.',
-      );
-    } else {
-      await Clipboard.setData(ClipboardData(text: receiptText));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Receipt copied to clipboard'),
-          backgroundColor: primaryGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  String _generateReceiptText(Map<String, dynamic> order) {
-    final items = order['items'] as List<dynamic>? ?? [];
-    final total = (order['total'] ?? 0.0).toDouble();
-    final orderId = order['id'] ?? '';
-    final createdAt = order['createdAt'] as Timestamp?;
-    final deliveredAt = order['deliveredAt'] as Timestamp?;
-    final confirmedAt = order['confirmedAt'] as Timestamp?;
-
-    StringBuffer sb = StringBuffer();
-
-    sb.writeln('=' * 40);
-    sb.writeln('            ORDER RECEIPT');
-    sb.writeln('=' * 40);
-    sb.writeln();
-    sb.writeln(
-        'Order ID: #${orderId.toString().substring(0, 8).toUpperCase()}');
-    sb.writeln(
-        'Date: ${createdAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt.toDate()) : 'N/A'}');
-    if (confirmedAt != null) {
-      sb.writeln(
-          'Confirmed: ${DateFormat('yyyy-MM-dd').format(confirmedAt.toDate())}');
-    }
-    if (deliveredAt != null) {
-      sb.writeln(
-          'Delivered: ${DateFormat('yyyy-MM-dd').format(deliveredAt.toDate())}');
-    }
-    sb.writeln();
-    sb.writeln('-' * 40);
-    sb.writeln('Items');
-    sb.writeln('-' * 40);
-
-    for (var item in items) {
-      final itemMap = item as Map<String, dynamic>;
-      final price = (itemMap['price'] ?? 0.0).toDouble();
-      final quantity = itemMap['quantity'] ?? 1;
-      final subtotal = price * quantity;
-
-      sb.writeln('${itemMap['productName']}');
-      sb.writeln(
-          '  ${quantity.toString().padLeft(2)} x \$${price.toStringAsFixed(2)} = \$${subtotal.toStringAsFixed(2)}');
-    }
-
-    sb.writeln();
-    sb.writeln('-' * 40);
-    sb.writeln('Total: \$${total.toStringAsFixed(2)}');
-    sb.writeln('=' * 40);
-    sb.writeln();
-    sb.writeln('Thank you for your purchase!');
-    sb.writeln(
-        'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
-
-    return sb.toString();
   }
 
   void _showFilterBottomSheet(BuildContext context) {

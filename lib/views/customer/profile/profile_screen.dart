@@ -2,10 +2,10 @@ import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../customer/checkout/checkout_screen.dart';
 import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../services/auth_service.dart';
-import '../../../services/theme_provider.dart';
 import '../../../services/philippine_address_service.dart';
 import '../orders/orders_screen.dart';
 
@@ -30,11 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Color cardColor = Colors.white;
   final Color textPrimary = const Color(0xFF1A1A1A);
   final Color textSecondary = const Color(0xFF64748B);
-  final Color borderColor = const Color(0xFFE2E8F0);
-  final Color successColor = const Color(0xFF10B981);
-  final Color errorColor = const Color(0xFFEF4444);
-  final Color warningColor = const Color(0xFFF59E0B);
-
   String _addressText = '';
 
   @override
@@ -46,33 +41,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.isDark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : backgroundColor,
+      backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            backgroundColor: isDark ? const Color(0xFF111111) : cardColor,
-            expandedHeight: 120,
+            backgroundColor: cardColor,
+            expandedHeight: 160,
             floating: false,
             pinned: true,
             elevation: 1,
             shape: const ContinuousRectangleBorder(
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
               title: Text(
                 'My Profile',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : textPrimary,
+                  color: textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -87,22 +80,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
                 ),
               ),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _buildProfileHeader(),
-                const SizedBox(height: 24),
-                _buildMenuItems(authService),
                 const SizedBox(height: 32),
-                _buildVersionInfo(),
+                _buildMenuItems(authService),
               ]),
             ),
           ),
@@ -112,22 +103,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
-    final authService = Provider.of<AuthService>(context);
-    final currentUser = authService.currentUser;
-
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 16,
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Row(
         children: [
           Container(
@@ -141,19 +129,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               boxShadow: [
                 BoxShadow(
                   color: primaryGreen.withOpacity(0.3),
-                  blurRadius: 8,
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: CircleAvatar(
-              radius: 42,
+              radius: 48,
               backgroundColor: Colors.white,
-              backgroundImage: (currentUser?.photoURL != null &&
-                      currentUser!.photoURL!.isNotEmpty)
-                  ? NetworkImage(currentUser.photoURL!)
+              backgroundImage: (Provider.of<AuthService>(context)
+                              .currentUser
+                              ?.photoURL !=
+                          null &&
+                      Provider.of<AuthService>(context)
+                          .currentUser!
+                          .photoURL!
+                          .isNotEmpty)
+                  ? NetworkImage(
+                      Provider.of<AuthService>(context).currentUser!.photoURL!)
                   : null,
-              child: (currentUser?.photoURL ?? '').isEmpty
+              child: (Provider.of<AuthService>(context).currentUser?.photoURL ??
+                          '')
+                      .isEmpty
                   ? Text(
                       (widget.user.display_name?.isNotEmpty == true
                               ? widget.user.display_name!
@@ -165,15 +162,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           .take(2)
                           .join(),
                       style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
                     )
                   : null,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,31 +177,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   widget.user.email.split('@').first,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                     letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   widget.user.email,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: textSecondary,
                     fontWeight: FontWeight.w400,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 5,
+                    horizontal: 16,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: primaryGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: primaryGreen.withOpacity(0.3),
                       width: 1,
@@ -257,7 +253,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             _buildDivider(),
-            _buildAddressSection(),
+            _buildMenuItem(
+              icon: Icons.location_on_outlined,
+              title: 'Address',
+              subtitle: _addressText.isNotEmpty
+                  ? _addressText
+                  : 'Add your delivery address',
+              onTap: _showEditAddressSheet,
+            ),
+            _buildDivider(),
+            _buildMenuItem(
+              icon: Icons.payment_outlined,
+              title: 'Payment Methods',
+              subtitle: 'Secure payment options',
+              onTap: () => _showGuestMessage(context, 'Payment Methods'),
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -265,7 +275,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildMenuItemCard(
           children: [
-            _buildAppearanceTile(),
+            _buildMenuItem(
+              icon: Icons.notifications_outlined,
+              title: 'Notifications',
+              subtitle: 'Customize alerts',
+              onTap: () => _showGuestMessage(context, 'Notification Settings'),
+            ),
+            _buildDivider(),
+            _buildMenuItem(
+              icon: Icons.security_outlined,
+              title: 'Privacy & Security',
+              subtitle: 'Manage your data',
+              onTap: () => _showGuestMessage(context, 'Privacy Settings'),
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -274,10 +296,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildMenuItemCard(
           children: [
             _buildMenuItem(
-              icon: Icons.info_outline_rounded,
-              title: 'About',
-              subtitle: 'App information and version',
-              onTap: () => _showAboutDialog(context),
+              icon: Icons.help_outline_rounded,
+              title: 'Help & Support',
+              subtitle: 'Get assistance',
+              onTap: () => _showGuestMessage(context, 'Help Center'),
             ),
             _buildDivider(),
             _buildMenuItem(
@@ -290,49 +312,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildAppearanceTile() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDark = themeProvider.isDark;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      leading: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: primaryGreen.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Icon(
-          Icons.dark_mode_outlined,
-          color: primaryGreen,
-          size: 22,
-        ),
-      ),
-      title: Text(
-        'Appearance',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: textPrimary,
-        ),
-      ),
-      subtitle: Text(
-        'Toggle light / dark mode',
-        style: TextStyle(
-          fontSize: 13,
-          color: textSecondary,
-        ),
-      ),
-      trailing: Switch(
-        value: isDark,
-        activeColor: primaryGreen,
-        onChanged: (value) {
-          themeProvider.toggle(value);
-        },
-      ),
     );
   }
 
@@ -387,13 +366,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: 48,
         decoration: BoxDecoration(
           color: isLogout
-              ? errorColor.withOpacity(0.1)
+              ? Colors.red.withOpacity(0.1)
               : primaryGreen.withOpacity(0.1),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(
           icon,
-          color: isLogout ? errorColor : primaryGreen,
+          color: isLogout ? Colors.red : primaryGreen,
           size: 22,
         ),
       ),
@@ -402,14 +381,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: isLogout ? errorColor : textPrimary,
+          color: isLogout ? Colors.red : textPrimary,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 13,
-          color: isLogout ? errorColor.withOpacity(0.7) : textSecondary,
+          color: isLogout ? Colors.red.withOpacity(0.7) : textSecondary,
         ),
       ),
       trailing: Container(
@@ -422,139 +401,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Icon(
           Icons.arrow_forward_ios_rounded,
           size: 16,
-          color: isLogout ? errorColor : Colors.grey[600],
+          color: isLogout ? Colors.red : Colors.grey[600],
         ),
       ),
       onTap: onTap,
-    );
-  }
-
-  Widget _buildAddressSection() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.location_on_outlined,
-                  color: primaryGreen,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Delivery Address',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (_addressText.isNotEmpty) _buildAddressPreview(),
-                    if (_addressText.isEmpty)
-                      Text(
-                        'Add your delivery address',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: _showEditAddressSheet,
-                icon: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: primaryGreen.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.edit_rounded,
-                    size: 18,
-                    color: primaryGreen,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddressPreview() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_rounded,
-                    size: 14,
-                    color: primaryGreen,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Current Address',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: primaryGreen,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _addressText,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textPrimary,
-                  height: 1.4,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Tap edit icon to update',
-          style: TextStyle(
-            fontSize: 11,
-            color: textSecondary,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ],
     );
   }
 
@@ -565,18 +415,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: 1,
         thickness: 1,
         color: Colors.grey[100],
-      ),
-    );
-  }
-
-  Widget _buildVersionInfo() {
-    return Center(
-      child: Text(
-        'Version 1.0.0 • © 2024',
-        style: TextStyle(
-          fontSize: 12,
-          color: textSecondary.withOpacity(0.6),
-        ),
       ),
     );
   }
@@ -634,15 +472,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Role',
                 value: widget.user.role.toUpperCase(),
                 valueColor:
-                    widget.user.role == 'admin' ? warningColor : successColor,
+                    widget.user.role == 'admin' ? Colors.orange : primaryGreen,
               ),
-              if (widget.customer != null &&
-                  widget.customer!.contact.isNotEmpty)
-                _buildInfoTile(
-                  icon: Icons.phone_rounded,
-                  title: 'Contact',
-                  value: widget.customer!.contact,
-                ),
               const SizedBox(height: 24),
               Padding(
                 padding:
@@ -723,7 +554,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showAboutDialog(BuildContext context) {
+  void _showGuestMessage(BuildContext context, String feature) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -745,36 +576,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.shopping_bag_rounded,
+                    Icons.construction_rounded,
                     size: 40,
                     color: primaryGreen,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Why we built this app',
+                  'Coming Soon',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
-                  'This app was crafted to give customers a smooth, modern shopping experience with reliable delivery, transparent pricing, and easy account management.',
+                  '$feature is under development and will be available in the next update!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
                     color: textSecondary,
                     height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Version 1.0.0',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -788,7 +611,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Close',
+                    'Got it',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -824,25 +647,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool loadingBarangays = false;
     bool initialized = false;
 
-    // Parse existing address
-    void parseExistingAddress() {
-      if (_addressText.isNotEmpty) {
-        final parts = _addressText.split(', ');
-        if (parts.isNotEmpty) {
-          houseController.text = parts[0];
-        }
-      }
-    }
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setModalState) {
           if (!initialized) {
             initialized = true;
-            parseExistingAddress();
             Future.microtask(() async {
               try {
                 final r = await PhilippineAddressService.getRegions();
@@ -850,179 +664,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   regions = r;
                   loadingRegions = false;
                 });
-              } catch (e) {
+              } catch (_) {
                 setModalState(() => loadingRegions = false);
-                _showErrorSnackbar('Failed to load regions');
               }
             });
           }
 
-          return GestureDetector(
-            onTap: () => FocusScope.of(ctx).unfocus(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(32),
-                  topRight: Radius.circular(32),
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Edit Address',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 30,
-                    offset: const Offset(0, -5),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedRegion,
+                  decoration: const InputDecoration(
+                    labelText: 'Region',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  top: 24,
-                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Edit Address',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: textPrimary,
-                                ),
-                              ),
-                              Text(
-                                'Update your delivery location',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: textSecondary,
-                                ),
-                              ),
-                            ],
+                  items: loadingRegions
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Loading regions...'),
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            icon: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 20,
-                                color: textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Current Address Preview
-                      if (_addressText.isNotEmpty) ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: primaryGreen.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: primaryGreen.withOpacity(0.2)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_rounded,
-                                    size: 16,
-                                    color: primaryGreen,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Current Address',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: primaryGreen,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _addressText,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: textPrimary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Divider(color: borderColor),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // Form Title
-                      Text(
-                        'New Delivery Address',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Fill in your complete address details',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // House/Unit and Street
-                      _buildFormField(
-                        controller: houseController,
-                        label: 'House/Unit and Street',
-                        hint: 'e.g., Unit 3B, 123 Sample Street',
-                        icon: Icons.home_rounded,
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Region Dropdown
-                      _buildDropdownFormField(
-                        value: selectedRegion,
-                        label: 'Region',
-                        hint: 'Select region',
-                        icon: Icons.map_rounded,
-                        isLoading: loadingRegions,
-                        items: regions
-                            .map((region) => DropdownMenuItem(
-                                  value: region,
-                                  child: Text(
-                                      region['regionName'] ?? region['name']),
-                                ))
-                            .toList(),
-                        onChanged: (value) async {
+                        ]
+                      : regions
+                          .map((region) => DropdownMenuItem(
+                                value: region,
+                                child: Text(
+                                    region['regionName'] ?? region['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingRegions
+                      ? null
+                      : (value) async {
                           setModalState(() {
                             selectedRegion = value;
                             selectedProvince = null;
@@ -1042,31 +741,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 provinces = p;
                                 loadingProvinces = false;
                               });
-                            } catch (e) {
+                            } catch (_) {
                               setModalState(() => loadingProvinces = false);
-                              _showErrorSnackbar('Failed to load provinces');
                             }
                           } else {
                             setModalState(() => loadingProvinces = false);
                           }
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Province Dropdown
-                      _buildDropdownFormField(
-                        value: selectedProvince,
-                        label: 'Province',
-                        hint: 'Select province',
-                        icon: Icons.place_rounded,
-                        isLoading: loadingProvinces,
-                        items: provinces
-                            .map((province) => DropdownMenuItem(
-                                  value: province,
-                                  child: Text(province['name']),
-                                ))
-                            .toList(),
-                        onChanged: (value) async {
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedProvince,
+                  decoration: const InputDecoration(
+                    labelText: 'Province',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: provinces.isEmpty && !loadingProvinces
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a region first'),
+                          ),
+                        ]
+                      : provinces
+                          .map((province) => DropdownMenuItem(
+                                value: province,
+                                child: Text(province['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingProvinces
+                      ? null
+                      : (value) async {
                           setModalState(() {
                             selectedProvince = value;
                             selectedCity = null;
@@ -1083,31 +790,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 cities = c;
                                 loadingCities = false;
                               });
-                            } catch (e) {
+                            } catch (_) {
                               setModalState(() => loadingCities = false);
-                              _showErrorSnackbar('Failed to load cities');
                             }
                           } else {
                             setModalState(() => loadingCities = false);
                           }
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // City/Municipality Dropdown
-                      _buildDropdownFormField(
-                        value: selectedCity,
-                        label: 'City/Municipality',
-                        hint: 'Select city or municipality',
-                        icon: Icons.location_city_rounded,
-                        isLoading: loadingCities,
-                        items: cities
-                            .map((city) => DropdownMenuItem(
-                                  value: city,
-                                  child: Text(city['name']),
-                                ))
-                            .toList(),
-                        onChanged: (value) async {
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedCity,
+                  decoration: const InputDecoration(
+                    labelText: 'City/Municipality',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: cities.isEmpty && !loadingCities
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a province first'),
+                          ),
+                        ]
+                      : cities
+                          .map((city) => DropdownMenuItem(
+                                value: city,
+                                child: Text(city['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingCities
+                      ? null
+                      : (value) async {
                           setModalState(() {
                             selectedCity = value;
                             selectedBarangay = null;
@@ -1123,389 +838,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 barangays = b;
                                 loadingBarangays = false;
                               });
-                            } catch (e) {
+                            } catch (_) {
                               setModalState(() => loadingBarangays = false);
-                              _showErrorSnackbar('Failed to load barangays');
                             }
                           } else {
                             setModalState(() => loadingBarangays = false);
                           }
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Barangay Dropdown (API-powered)
-                      _buildDropdownFormField(
-                        value: selectedBarangay,
-                        label: 'Barangay',
-                        hint: 'Select barangay',
-                        icon: Icons.home_work_rounded,
-                        isLoading: loadingBarangays,
-                        items: barangays
-                            .map((brgy) => DropdownMenuItem(
-                                  value: brgy,
-                                  child: Text(brgy['name']),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<Map<String, dynamic>>(
+                  isExpanded: true,
+                  value: selectedBarangay,
+                  decoration: const InputDecoration(
+                    labelText: 'Barangay (Optional)',
+                    prefixIcon: Icon(Icons.location_on),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: barangays.isEmpty && !loadingBarangays
+                      ? [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Select a city/municipality first'),
+                          ),
+                        ]
+                      : barangays
+                          .map((brgy) => DropdownMenuItem(
+                                value: brgy,
+                                child: Text(brgy['name']),
+                              ))
+                          .toList(),
+                  onChanged: loadingBarangays
+                      ? null
+                      : (value) {
                           setModalState(() {
                             selectedBarangay = value;
                           });
                         },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(0, 52),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                side: BorderSide(color: borderColor),
-                              ),
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: saving
-                                  ? null
-                                  : () async {
-                                      final house = houseController.text.trim();
-
-                                      if (selectedRegion == null ||
-                                          selectedProvince == null ||
-                                          selectedCity == null ||
-                                          selectedBarangay == null) {
-                                        _showErrorSnackbar(
-                                            'Please select all address fields');
-                                        return;
-                                      }
-                                      if (house.isEmpty) {
-                                        _showErrorSnackbar(
-                                            'Please enter house/unit and street');
-                                        return;
-                                      }
-
-                                      setModalState(() => saving = true);
-                                      try {
-                                        final parts = <String>[];
-                                        parts.add(house);
-
-                                        if (selectedBarangay != null) {
-                                          parts.add(
-                                              'Brgy. ${selectedBarangay!['name']}');
-                                        }
-
-                                        parts.add(selectedCity!['name']);
-                                        parts.add(selectedProvince!['name']);
-                                        parts.add(
-                                            selectedRegion!['regionName'] ??
-                                                selectedRegion!['name']);
-
-                                        final finalAddress = parts.join(', ');
-
-                                        final auth = Provider.of<AuthService>(
-                                            context,
-                                            listen: false);
-                                        final user = auth.currentUser;
-                                        if (user == null) throw 'Not logged in';
-
-                                        final fs = FirebaseFirestore.instance;
-                                        final query = await fs
-                                            .collection('customers')
-                                            .where('user_id',
-                                                isEqualTo: user.uid)
-                                            .limit(1)
-                                            .get();
-
-                                        if (query.docs.isNotEmpty) {
-                                          await fs
-                                              .collection('customers')
-                                              .doc(query.docs.first.id)
-                                              .update({
-                                            'address': finalAddress,
-                                            'updated_at':
-                                                FieldValue.serverTimestamp(),
-                                          });
-                                        } else {
-                                          await fs.collection('customers').add({
-                                            'user_id': user.uid,
-                                            'firstname': '',
-                                            'middlename': '',
-                                            'lastname': '',
-                                            'address': finalAddress,
-                                            'contact': user.email ?? '',
-                                            'created_at':
-                                                FieldValue.serverTimestamp(),
-                                            'updated_at':
-                                                FieldValue.serverTimestamp(),
-                                          });
-                                        }
-
-                                        setState(() {
-                                          _addressText = finalAddress;
-                                        });
-
-                                        if (mounted) Navigator.pop(ctx);
-                                        _showSuccessSnackbar(
-                                            '✅ Address updated successfully!');
-                                      } catch (e) {
-                                        _showErrorSnackbar(
-                                            '❌ Failed to update address: ${e.toString()}');
-                                      } finally {
-                                        if (mounted) {
-                                          setModalState(() => saving = false);
-                                        }
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryGreen,
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size(0, 52),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: saving
-                                  ? SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(
-                                            Colors.white),
-                                      ),
-                                    )
-                                  : Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.check_rounded, size: 20),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Save Address',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: houseController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'House/Unit and Street',
+                    hintText: 'e.g., Unit 3B, 123 Sample St',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final house = houseController.text.trim();
+                            if (selectedRegion == null ||
+                                selectedProvince == null ||
+                                selectedCity == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please select your region, province, and city/municipality')),
+                              );
+                              return;
+                            }
+                            if (house.isEmpty || house.length < 3) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please enter house/unit and street')),
+                              );
+                              return;
+                            }
+                            setModalState(() => saving = true);
+                            try {
+                              final parts = <String>[];
+                              parts.add(house);
+                              if (selectedBarangay != null)
+                                parts.add(selectedBarangay!['name']);
+                              parts.add(selectedCity!['name']);
+                              parts.add(selectedProvince!['name']);
+                              parts.add(selectedRegion!['regionName'] ??
+                                  selectedRegion!['name']);
+                              final finalAddress = parts.join(', ');
+
+                              final auth = Provider.of<AuthService>(context,
+                                  listen: false);
+                              final user = auth.currentUser;
+                              if (user == null) {
+                                throw 'Not logged in';
+                              }
+
+                              final fs = FirebaseFirestore.instance;
+                              final query = await fs
+                                  .collection('customers')
+                                  .where('user_id', isEqualTo: user.uid)
+                                  .limit(1)
+                                  .get();
+                              if (query.docs.isNotEmpty) {
+                                await fs
+                                    .collection('customers')
+                                    .doc(query.docs.first.id)
+                                    .update({'address': finalAddress});
+                              } else {
+                                await fs.collection('customers').add({
+                                  'id': '',
+                                  'user_id': user.uid,
+                                  'firstname': '',
+                                  'middlename': '',
+                                  'lastname': '',
+                                  'address': finalAddress,
+                                  'contact': user.email ?? '',
+                                  'created_at': DateTime.now(),
+                                });
+                              }
+
+                              setState(() {
+                                _addressText = finalAddress;
+                              });
+
+                              if (mounted) Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Address updated')),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Failed to update address: $e')),
+                              );
+                            } finally {
+                              if (mounted) setModalState(() => saving = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Text('Save Address'),
+                  ),
+                ),
+              ],
             ),
           );
         });
       },
-    );
-  }
-
-  Widget _buildFormField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool isRequired = false,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-            if (isRequired)
-              Text(
-                ' *',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: errorColor,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
-              border: InputBorder.none,
-              prefixIcon: Icon(icon, color: primaryGreen),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-            style: TextStyle(
-              fontSize: 15,
-              color: textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownFormField({
-    required Map<String, dynamic>? value,
-    required String label,
-    required String hint,
-    required IconData icon,
-    required bool isLoading,
-    required List<DropdownMenuItem<Map<String, dynamic>>> items,
-    required Function(Map<String, dynamic>?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: DropdownButtonFormField<Map<String, dynamic>>(
-              value: value,
-              isExpanded: true,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: isLoading
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(primaryGreen),
-                        ),
-                      )
-                    : Icon(icon, color: primaryGreen),
-              ),
-              hint: Text(
-                isLoading ? 'Loading...' : hint,
-                style: TextStyle(
-                  color:
-                      isLoading ? primaryGreen : textSecondary.withOpacity(0.6),
-                ),
-              ),
-              items: items,
-              onChanged: onChanged,
-              dropdownColor: cardColor,
-              style: TextStyle(
-                fontSize: 15,
-                color: textPrimary,
-              ),
-              icon: Icon(
-                Icons.arrow_drop_down_rounded,
-                color: primaryGreen,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: errorColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: successColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        duration: const Duration(seconds: 3),
-      ),
     );
   }
 
@@ -1527,13 +1020,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: errorColor.withOpacity(0.1),
+                    color: Colors.red.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.logout_rounded,
                     size: 40,
-                    color: errorColor,
+                    color: Colors.red,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1566,7 +1059,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          side: BorderSide(color: borderColor),
+                          side: BorderSide(color: Colors.grey[300]!),
                         ),
                         child: Text(
                           'Cancel',
@@ -1595,7 +1088,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: errorColor,
+                          backgroundColor: Colors.red,
                           minimumSize: const Size(0, 56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

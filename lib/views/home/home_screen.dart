@@ -94,6 +94,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         // Notification Icon
+        _buildActionButton(
+          Icons.notifications_none_outlined,
+          'Notifications',
+          onPressed: () {},
+          showBadge: false,
+        ),
+        const SizedBox(width: 4),
 
         // Orders Icon with dynamic badge
         StreamBuilder<List<Map<String, dynamic>>>(

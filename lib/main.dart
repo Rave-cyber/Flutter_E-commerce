@@ -8,7 +8,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
-import 'services/theme_provider.dart';
 import 'firebase_options.dart';
 
 import 'views/splash/splash_screen.dart';
@@ -37,49 +36,26 @@ class MyApp extends StatelessWidget {
         Provider<AuthService>(
           create: (_) => AuthService(),
         ),
-        ChangeNotifierProvider<ThemeProvider>(
-          create: (_) => ThemeProvider(),
-        ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
-          final primary = const Color(0xFF2C8610);
-          final lightTheme = ThemeData(
-            primaryColor: primary,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: primary,
-              primary: primary,
-              secondary: Colors.grey[600]!,
-            ),
-            fontFamily: 'Inter',
-            appBarTheme: const AppBarTheme(
-              elevation: 0,
-              backgroundColor: Color(0xFF2C8610),
-              iconTheme: IconThemeData(color: Colors.white),
-            ),
-            scaffoldBackgroundColor: Colors.white,
-          );
-
-          final darkTheme = ThemeData.dark().copyWith(
-            colorScheme: ThemeData.dark()
-                .colorScheme
-                .copyWith(primary: primary, secondary: primary),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF111111),
-              iconTheme: IconThemeData(color: Colors.white),
-              elevation: 1,
-            ),
-          );
-
-          return MaterialApp(
-            title: 'Dimdi Home',
-            theme: lightTheme,
-            darkTheme: darkTheme,
-            themeMode: themeProvider.themeMode,
-            home: const AppStartup(),
-            debugShowCheckedModeBanner: false,
-          );
-        },
+      child: MaterialApp(
+        title: 'Dimdi Home',
+        theme: ThemeData(
+          primaryColor: const Color(0xFF2C8610),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF2C8610),
+            primary: const Color(0xFF2C8610),
+            secondary: Colors.grey[600]!,
+          ),
+          fontFamily: 'Inter',
+          appBarTheme: const AppBarTheme(
+            elevation: 0,
+            backgroundColor: Color(0xFF2C8610),
+            iconTheme: IconThemeData(color: Colors.white),
+          ),
+          scaffoldBackgroundColor: Colors.white,
+        ),
+        home: const AppStartup(),
+        debugShowCheckedModeBanner: false,
       ),
     );
   }

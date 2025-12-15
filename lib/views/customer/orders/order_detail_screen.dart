@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../firestore_service.dart';
+import 'package:firebase/firestore_service.dart';
+import 'package:firebase/models/order_model.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
-import 'dart:io';
 
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
@@ -17,6 +15,7 @@ class OrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryGreen = const Color(0xFF2C8610);
+    final Color accentBlue = const Color(0xFF4A90E2);
     final Color backgroundColor = const Color(0xFFF8FAFC);
     final Color cardColor = Colors.white;
     final Color textPrimary = const Color(0xFF1A1A1A);
@@ -233,8 +232,6 @@ class OrderDetailScreen extends StatelessWidget {
                 // Order Summary
                 _buildOrderSummary(
                     order, primaryGreen, cardColor, textPrimary, textSecondary),
-                const SizedBox(height: 12),
-                _buildReceiptActions(context, order, primaryGreen, textPrimary),
                 const SizedBox(height: 20),
 
                 // Shipping Information
@@ -255,32 +252,6 @@ class OrderDetailScreen extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildReceiptActions(BuildContext context, Map<String, dynamic> order,
-      Color primaryGreen, Color textPrimary) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () =>
-              _copyReceiptToClipboard(context, order, primaryGreen),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryGreen,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          icon: const Icon(Icons.copy, size: 18),
-          label: const Text(
-            'Copy Receipt',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1096,7 +1067,7 @@ class OrderDetailScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
               ),
               side: BorderSide(color: Colors.grey[300]!),
             ),
@@ -1120,7 +1091,7 @@ class OrderDetailScreen extends StatelessWidget {
               backgroundColor: primaryGreen,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
               ),
             ),
             child: const Text(
@@ -1246,83 +1217,5 @@ class OrderDetailScreen extends StatelessWidget {
       default:
         return paymentMethod;
     }
-  }
-
-  Future<void> _copyReceiptToClipboard(BuildContext context,
-      Map<String, dynamic> order, Color primaryGreen) async {
-    try {
-      final receiptText = _generateReceiptText(order);
-
-      await Clipboard.setData(ClipboardData(text: receiptText));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Receipt copied to clipboard'),
-          backgroundColor: primaryGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to copy receipt: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  String _generateReceiptText(Map<String, dynamic> order) {
-    final items = order['items'] as List<dynamic>? ?? [];
-    final total = (order['total'] ?? 0.0).toDouble();
-    final orderId = order['id'] ?? '';
-    final createdAt = order['createdAt'] as Timestamp?;
-    final deliveredAt = order['deliveredAt'] as Timestamp?;
-    final confirmedAt = order['confirmedAt'] as Timestamp?;
-
-    StringBuffer sb = StringBuffer();
-
-    sb.writeln('=' * 40);
-    sb.writeln('            ORDER RECEIPT');
-    sb.writeln('=' * 40);
-    sb.writeln();
-    sb.writeln(
-        'Order ID: #${orderId.toString().substring(0, 8).toUpperCase()}');
-    sb.writeln(
-        'Date: ${createdAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt.toDate()) : 'N/A'}');
-    if (confirmedAt != null) {
-      sb.writeln(
-          'Confirmed: ${DateFormat('yyyy-MM-dd').format(confirmedAt.toDate())}');
-    }
-    if (deliveredAt != null) {
-      sb.writeln(
-          'Delivered: ${DateFormat('yyyy-MM-dd').format(deliveredAt.toDate())}');
-    }
-    sb.writeln();
-    sb.writeln('-' * 40);
-    sb.writeln('Items');
-    sb.writeln('-' * 40);
-
-    for (var item in items) {
-      final itemMap = item as Map<String, dynamic>;
-      final price = (itemMap['price'] ?? 0.0).toDouble();
-      final quantity = itemMap['quantity'] ?? 1;
-      final subtotal = price * quantity;
-
-      sb.writeln('${itemMap['productName']}');
-      sb.writeln(
-          '  ${quantity.toString().padLeft(2)} x \$${price.toStringAsFixed(2)} = \$${subtotal.toStringAsFixed(2)}');
-    }
-
-    sb.writeln();
-    sb.writeln('-' * 40);
-    sb.writeln('Total: \$${total.toStringAsFixed(2)}');
-    sb.writeln('=' * 40);
-    sb.writeln();
-    sb.writeln('Thank you for your purchase!');
-    sb.writeln(
-        'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
-
-    return sb.toString();
   }
 }

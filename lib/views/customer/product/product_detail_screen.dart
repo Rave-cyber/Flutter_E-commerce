@@ -1600,9 +1600,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[300],
                         minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                       ),
                       child: Text(
                         'Submit Rating',
@@ -1659,10 +1656,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: ElevatedButton(
                 onPressed: _submittingRating ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  minimumSize: const Size.fromHeight(50),
+                  backgroundColor: primaryGreen,
+                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: _submittingRating
                     ? const SizedBox(
@@ -1672,10 +1667,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             strokeWidth: 2,
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white)))
-                    : Text(
-                        'Submit Rating',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                    : const Text('Submit Rating'),
               ),
             ),
           ],
