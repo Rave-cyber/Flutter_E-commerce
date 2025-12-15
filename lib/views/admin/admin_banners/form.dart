@@ -14,14 +14,14 @@ class AdminBannerForm extends StatefulWidget {
 
 class _AdminBannerFormState extends State<AdminBannerForm> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form controllers
   late TextEditingController _titleController;
   late TextEditingController _subtitleController;
   late TextEditingController _imageController;
   late TextEditingController _buttonTextController;
   late TextEditingController _orderController;
-  
+
   String? _selectedCategory;
   final ImagePicker _picker = ImagePicker();
   final CloudinaryPublic _cloudinary = CloudinaryPublic(
@@ -29,7 +29,7 @@ class _AdminBannerFormState extends State<AdminBannerForm> {
     'presets',
     cache: false,
   );
-  
+
   bool _isUploading = false;
   bool _isSaving = false;
   int _currentStep = 0;
@@ -39,10 +39,13 @@ class _AdminBannerFormState extends State<AdminBannerForm> {
     super.initState();
     final banner = widget.banner;
     _titleController = TextEditingController(text: banner?['title'] ?? '');
-    _subtitleController = TextEditingController(text: banner?['subtitle'] ?? '');
+    _subtitleController =
+        TextEditingController(text: banner?['subtitle'] ?? '');
     _imageController = TextEditingController(text: banner?['image'] ?? '');
-    _buttonTextController = TextEditingController(text: banner?['buttonText'] ?? '');
-    _orderController = TextEditingController(text: (banner?['order'] ?? 0).toString());
+    _buttonTextController =
+        TextEditingController(text: banner?['buttonText'] ?? '');
+    _orderController =
+        TextEditingController(text: (banner?['order'] ?? 0).toString());
     _selectedCategory = banner?['categoryId'];
   }
 
@@ -108,8 +111,8 @@ class _AdminBannerFormState extends State<AdminBannerForm> {
       case 1: // Image step
         return _imageController.text.isNotEmpty;
       case 2: // Action Settings step
-        return _buttonTextController.text.isNotEmpty && 
-               _orderController.text.isNotEmpty;
+        return _buttonTextController.text.isNotEmpty &&
+            _orderController.text.isNotEmpty;
       default:
         return true;
     }
@@ -307,8 +310,8 @@ class _AdminBannerFormState extends State<AdminBannerForm> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-          source: ImageSource.gallery);
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile == null) return;
 
       setState(() => _isUploading = true);
@@ -417,10 +420,12 @@ class _AdminBannerFormState extends State<AdminBannerForm> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Icon(Icons.upload_file_rounded, color: Colors.white),
+                      : const Icon(Icons.upload_file_rounded,
+                          color: Colors.white),
                   onPressed: _isUploading ? null : _pickImage,
                   tooltip: 'Upload from Gallery',
                 ),
