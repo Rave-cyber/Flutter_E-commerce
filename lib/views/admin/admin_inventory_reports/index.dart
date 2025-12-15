@@ -291,6 +291,8 @@ class _AdminInventoryReportsState extends State<AdminInventoryReports>
     const primaryColor = Color(0xFF2C8610);
     final lightBg = const Color(0xFFF0F9EE).withOpacity(0.3);
     return AdminLayout(
+      selectedRoute: '/admin/inventory-reports',
+      title: 'Inventory Reports',
       child: Container(
         color: lightBg,
         child: Padding(

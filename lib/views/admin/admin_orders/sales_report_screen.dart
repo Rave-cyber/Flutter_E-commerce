@@ -194,6 +194,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/sales-report',
       child: Container(
         color: _primaryLight.withOpacity(0.3),
         child: Padding(
@@ -621,13 +622,15 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                                       .format(date))),
                                               DataCell(Text(
                                                   data['count'].toString())),
-                                              DataCell(Text(
-                                                '\$${(data['revenue'] as double).toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _accentColor,
+                                              DataCell(
+                                                Text(
+                                                  '\$${(data['revenue'] as double).toStringAsFixed(2)}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: _accentColor,
+                                                  ),
                                                 ),
-                                              )),
+                                              ),
                                             ],
                                           );
                                         }).toList(),

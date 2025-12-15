@@ -297,6 +297,7 @@ class _AdminOrdersIndexState extends State<AdminOrdersIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/orders',
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

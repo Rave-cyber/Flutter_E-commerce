@@ -442,6 +442,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
+      selectedRoute: '/admin/banners',
       child: Container(
         color: _primaryLight.withOpacity(0.3),
         child: Padding(
