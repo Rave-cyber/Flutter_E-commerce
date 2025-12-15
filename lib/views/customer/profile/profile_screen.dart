@@ -2,10 +2,10 @@ import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../customer/checkout/checkout_screen.dart';
 import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/theme_provider.dart';
 import '../../../services/philippine_address_service.dart';
 import '../orders/orders_screen.dart';
 
@@ -46,13 +46,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDark;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: isDark ? Colors.black : backgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            backgroundColor: cardColor,
+            backgroundColor: isDark ? const Color(0xFF111111) : cardColor,
             expandedHeight: 120,
             floating: false,
             pinned: true,
@@ -70,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
-                  color: textPrimary,
+                  color: isDark ? Colors.white : textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -256,13 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             _buildDivider(),
             _buildAddressSection(),
-            _buildDivider(),
-            _buildMenuItem(
-              icon: Icons.payment_outlined,
-              title: 'Payment Methods',
-              subtitle: 'Secure payment options',
-              onTap: () => _showComingSoonDialog('Payment Methods'),
-            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -270,26 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildMenuItemCard(
           children: [
-            _buildMenuItem(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              subtitle: 'Customize alerts',
-              onTap: () => _showComingSoonDialog('Notification Settings'),
-            ),
-            _buildDivider(),
-            _buildMenuItem(
-              icon: Icons.security_outlined,
-              title: 'Privacy & Security',
-              subtitle: 'Manage your data',
-              onTap: () => _showComingSoonDialog('Privacy Settings'),
-            ),
-            _buildDivider(),
-            _buildMenuItem(
-              icon: Icons.palette_outlined,
-              title: 'Appearance',
-              subtitle: 'Theme and display settings',
-              onTap: () => _showComingSoonDialog('Appearance Settings'),
-            ),
+            _buildAppearanceTile(),
           ],
         ),
         const SizedBox(height: 24),
@@ -297,13 +273,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildMenuItemCard(
           children: [
-            _buildMenuItem(
-              icon: Icons.help_outline_rounded,
-              title: 'Help & Support',
-              subtitle: 'Get assistance',
-              onTap: () => _showComingSoonDialog('Help Center'),
-            ),
-            _buildDivider(),
             _buildMenuItem(
               icon: Icons.info_outline_rounded,
               title: 'About',
@@ -321,6 +290,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildAppearanceTile() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.isDark;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: primaryGreen.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(
+          Icons.dark_mode_outlined,
+          color: primaryGreen,
+          size: 22,
+        ),
+      ),
+      title: Text(
+        'Appearance',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+        ),
+      ),
+      subtitle: Text(
+        'Toggle light / dark mode',
+        style: TextStyle(
+          fontSize: 13,
+          color: textSecondary,
+        ),
+      ),
+      trailing: Switch(
+        value: isDark,
+        activeColor: primaryGreen,
+        onChanged: (value) {
+          themeProvider.toggle(value);
+        },
+      ),
     );
   }
 
@@ -711,79 +723,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showComingSoonDialog(String feature) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: cardColor,
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: warningColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.construction_rounded,
-                    size: 40,
-                    color: warningColor,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Coming Soon',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '$feature is under development and will be available in the next update!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryGreen,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Got it',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -813,7 +752,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'E-Commerce App',
+                  'Why we built this app',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
@@ -822,20 +761,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Version 1.0.0',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'A modern e-commerce application with seamless shopping experience.',
+                  'This app was crafted to give customers a smooth, modern shopping experience with reliable delivery, transparent pricing, and easy account management.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
                     color: textSecondary,
                     height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Version 1.0.0',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -867,9 +806,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showEditAddressSheet() {
     final TextEditingController houseController = TextEditingController();
-    final TextEditingController zipController = TextEditingController();
-    final TextEditingController barangayController = TextEditingController();
-
     bool saving = false;
 
     List<Map<String, dynamic>> regions = [];
@@ -1072,16 +1008,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Barangay
-                      _buildFormField(
-                        controller: barangayController,
-                        label: 'Barangay',
-                        hint: 'Enter barangay name',
-                        icon: Icons.location_city_rounded,
-                        isRequired: false,
-                      ),
-                      const SizedBox(height: 16),
-
                       // Region Dropdown
                       _buildDropdownFormField(
                         value: selectedRegion,
@@ -1208,40 +1134,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Barangay Dropdown (Optional - can use text field above)
-                      if (barangays.isNotEmpty)
-                        _buildDropdownFormField(
-                          value: selectedBarangay,
-                          label: 'Barangay (Select)',
-                          hint: 'Select barangay',
-                          icon: Icons.home_work_rounded,
-                          isLoading: loadingBarangays,
-                          items: barangays
-                              .map((brgy) => DropdownMenuItem(
-                                    value: brgy,
-                                    child: Text(brgy['name']),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setModalState(() {
-                              selectedBarangay = value;
-                              if (value != null) {
-                                barangayController.text = value['name'];
-                              }
-                            });
-                          },
-                        ),
-
-                      if (barangays.isNotEmpty) const SizedBox(height: 16),
-
-                      // Zip Code
-                      _buildFormField(
-                        controller: zipController,
-                        label: 'Zip Code',
-                        hint: 'Enter zip code',
-                        icon: Icons.numbers_rounded,
-                        keyboardType: TextInputType.number,
-                        isRequired: false,
+                      // Barangay Dropdown (API-powered)
+                      _buildDropdownFormField(
+                        value: selectedBarangay,
+                        label: 'Barangay',
+                        hint: 'Select barangay',
+                        icon: Icons.home_work_rounded,
+                        isLoading: loadingBarangays,
+                        items: barangays
+                            .map((brgy) => DropdownMenuItem(
+                                  value: brgy,
+                                  child: Text(brgy['name']),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setModalState(() {
+                            selectedBarangay = value;
+                          });
+                        },
                       ),
                       const SizedBox(height: 24),
 
@@ -1275,15 +1185,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ? null
                                   : () async {
                                       final house = houseController.text.trim();
-                                      final barangay =
-                                          barangayController.text.trim();
-                                      final zip = zipController.text.trim();
 
                                       if (selectedRegion == null ||
                                           selectedProvince == null ||
-                                          selectedCity == null) {
+                                          selectedCity == null ||
+                                          selectedBarangay == null) {
                                         _showErrorSnackbar(
-                                            'Please select region, province, and city');
+                                            'Please select all address fields');
                                         return;
                                       }
                                       if (house.isEmpty) {
@@ -1297,9 +1205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         final parts = <String>[];
                                         parts.add(house);
 
-                                        if (barangay.isNotEmpty) {
-                                          parts.add('Brgy. $barangay');
-                                        } else if (selectedBarangay != null) {
+                                        if (selectedBarangay != null) {
                                           parts.add(
                                               'Brgy. ${selectedBarangay!['name']}');
                                         }
@@ -1309,10 +1215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         parts.add(
                                             selectedRegion!['regionName'] ??
                                                 selectedRegion!['name']);
-
-                                        if (zip.isNotEmpty) {
-                                          parts.add(zip);
-                                        }
 
                                         final finalAddress = parts.join(', ');
 

@@ -1114,19 +1114,12 @@ class __CartItemState extends State<_CartItem> {
                         ),
                       ),
                       const Spacer(),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: IconButton(
-                          icon: Icon(Icons.delete_outline, size: 18),
-                          onPressed: () => widget.removeFromCart(widget.itemId),
-                          color: Colors.red[400],
-                          padding: EdgeInsets.zero,
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        onPressed: () => widget.removeFromCart(widget.itemId),
+                        color: Colors.red[400],
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
