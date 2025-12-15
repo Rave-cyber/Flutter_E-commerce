@@ -160,15 +160,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             if (variantsList.isEmpty) {
               _selectedOption = widget.product;
               _isSelectingMainProduct = true;
-            } else if (_isSelectingMainProduct && !hadVariantSelected) {
-              // Auto-select first variant by default (existing behavior)
-              _selectedOption = updatedSelection ?? variantsList.first;
-              _isSelectingMainProduct = false;
-            } else if (hadVariantSelected) {
-              _selectedOption = updatedSelection ?? variantsList.first;
-              _isSelectingMainProduct = _selectedOption is! ProductVariantModel
-                  ? true
-                  : false;
+            } else {
+              // Don't auto-select variant - let user choose
+              // Only update if a variant was previously selected
+              if (hadVariantSelected) {
+                _selectedOption = updatedSelection ?? variantsList.first;
+                _isSelectingMainProduct = _selectedOption is! ProductVariantModel
+                    ? true
+                    : false;
+              } else {
+                // Keep main product selected by default
+                _selectedOption = widget.product;
+                _isSelectingMainProduct = true;
+              }
             }
 
             // Safety: ensure there's always a selected option
@@ -325,11 +329,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    // Use the currently selected option (main product or variant)
+    dynamic selectedOption = _selectedOption;
+    bool isSelectingMain = _isSelectingMainProduct;
+
     // Determine stock based on selected option (live)
-    final stock = _currentStock();
+    int stock;
+    if (isSelectingMain) {
+      stock = _mainStock;
+    } else if (selectedOption is ProductVariantModel) {
+      stock = selectedOption.stock ?? 0;
+    } else {
+      stock = 0;
+    }
 
     if (stock <= 0) {
-      _showSnackBar('Selected option is out of stock', Colors.red);
+      _showSnackBar('Cannot add to cart: This item is out of stock', Colors.red);
       return;
     }
 
@@ -341,42 +356,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       String productName;
       String productImage;
       double price;
-      String productId;
 
-      if (_isSelectingMainProduct) {
+      String? variantId;
+      if (isSelectingMain) {
         // Buying main product
         productName = widget.product.name;
         productImage = widget.product.image;
         price = widget.product.sale_price;
-        productId = widget.product.id!;
       } else {
-        // Buying variant
-        final variant = _selectedOption as ProductVariantModel;
-        productName = '${widget.product.name} - ${variant.name}';
+        // Buying variant - show only variant name
+        final variant = selectedOption as ProductVariantModel;
+        productName = variant.name; // Show only variant name
         productImage =
             variant.image.isNotEmpty ? variant.image : widget.product.image;
         price = variant.sale_price;
-        productId = variant.id; // Use variant ID for cart
+        variantId = variant.id;
       }
 
       if (user != null) {
         await FirestoreService.addToCart(
           userId: user.uid,
-          productId: productId,
+          productId: widget.product.id!, // Always use original product ID
           productName: productName,
           productImage: productImage,
           price: price,
           quantity: 1, // Default quantity to 1
+          variantId: variantId, // Pass variantId if it's a variant
         );
       } else {
         // Guest Cart
-        await LocalCartService.addToCart({
-          'productId': productId,
+        final cartItem = {
+          'productId': widget.product.id!, // Always use original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': 1,
-        });
+        };
+        if (variantId != null) {
+          cartItem['variantId'] = variantId;
+        }
+        await LocalCartService.addToCart(cartItem);
       }
 
       if (mounted) {
@@ -414,11 +433,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
+    // Use the currently selected option (main product or variant)
+    dynamic selectedOption = _selectedOption;
+    bool isSelectingMain = _isSelectingMainProduct;
+
     // Determine stock based on selected option (live)
-    final stock = _currentStock();
+    int stock;
+    if (isSelectingMain) {
+      stock = _mainStock;
+    } else if (selectedOption is ProductVariantModel) {
+      stock = selectedOption.stock ?? 0;
+    } else {
+      stock = 0;
+    }
 
     if (stock <= 0) {
-      _showSnackBar('Selected option is out of stock', Colors.red);
+      _showSnackBar('Cannot proceed: This item is out of stock', Colors.red);
       return;
     }
 
@@ -430,43 +460,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       String productName;
       String productImage;
       double price;
-      String productId;
 
-      if (_isSelectingMainProduct) {
+      String? variantId;
+      if (isSelectingMain) {
         // Buying main product
         productName = widget.product.name;
         productImage = widget.product.image;
         price = widget.product.sale_price;
-        productId = widget.product.id!;
       } else {
-        // Buying variant
-        final variant = _selectedOption as ProductVariantModel;
-        productName = '${widget.product.name} - ${variant.name}';
+        // Buying variant - show only variant name
+        final variant = selectedOption as ProductVariantModel;
+        productName = variant.name; // Show only variant name
         productImage =
             variant.image.isNotEmpty ? variant.image : widget.product.image;
         price = variant.sale_price;
-        productId = variant.id; // Use variant ID for cart
+        variantId = variant.id;
       }
 
-      // Add to cart first
       // Add to cart first
       if (user != null) {
         await FirestoreService.addToCart(
           userId: user.uid,
-          productId: productId,
+          productId: widget.product.id!, // Always use original product ID
           productName: productName,
           productImage: productImage,
           price: price,
           quantity: 1,
+          variantId: variantId, // Pass variantId if it's a variant
         );
       } else {
-        await LocalCartService.addToCart({
-          'productId': productId,
+        final cartItem = {
+          'productId': widget.product.id!, // Always use original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': 1,
-        });
+        };
+        if (variantId != null) {
+          cartItem['variantId'] = variantId;
+        }
+        await LocalCartService.addToCart(cartItem);
       }
 
       // Navigate directly to checkout
@@ -474,13 +507,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         // Navigate directly to checkout
         if (mounted) {
           if (user != null) {
+            // Use variantId as document ID if it exists, otherwise use productId
+            final cartItemId = variantId ?? widget.product.id!;
+            
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => CheckoutScreen(
                   cartItems: [
                     {
-                      'productId': productId,
+                      'productId': widget.product.id!,
                       'productName': productName,
                       'productImage': productImage,
                       'price': price,
@@ -488,7 +524,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     }
                   ],
                   isSelectedItems: false,
-                  selectedItemIds: [productId],
+                  selectedItemIds: [cartItemId],
                 ),
               ),
             );
@@ -854,7 +890,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
-    // Only show variants when they exist, never show main product as "Standard"
+    // Only show variants when they exist
     if (_variants.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -875,7 +911,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Icon(Icons.style_outlined, size: 18, color: primaryGreen),
               const SizedBox(width: 8),
               Text(
-                'Select Variant',
+                'Select Option',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -888,16 +924,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: List.generate(_variants.length, (index) {
-              final variant = _variants[index];
-              final isSelected = (_selectedOption is ProductVariantModel &&
-                  variant.id == (_selectedOption as ProductVariantModel).id);
-
-              return GestureDetector(
+            children: [
+              // Original Product Option
+              GestureDetector(
                 onTap: () {
                   setState(() {
-                    _selectedOption = variant;
-                    _isSelectingMainProduct = false;
+                    _selectedOption = widget.product;
+                    _isSelectingMainProduct = true;
                   });
                 },
                 child: AnimatedContainer(
@@ -907,7 +940,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    gradient: isSelected
+                    gradient: _isSelectingMainProduct
                         ? LinearGradient(
                             colors: [
                               primaryGreen,
@@ -915,13 +948,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ],
                           )
                         : null,
-                    color: isSelected ? null : Colors.white,
+                    color: _isSelectingMainProduct ? null : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? primaryGreen : Colors.grey[300]!,
-                      width: isSelected ? 2 : 1,
+                      color: _isSelectingMainProduct ? primaryGreen : Colors.grey[300]!,
+                      width: _isSelectingMainProduct ? 2 : 1,
                     ),
-                    boxShadow: isSelected
+                    boxShadow: _isSelectingMainProduct
                         ? [
                             BoxShadow(
                               color: primaryGreen.withOpacity(0.3),
@@ -931,23 +964,79 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ]
                         : null,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        variant.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isSelected ? Colors.white : Colors.grey[800],
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Original',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _isSelectingMainProduct ? Colors.white : Colors.grey[800],
+                      fontWeight:
+                          _isSelectingMainProduct ? FontWeight.bold : FontWeight.w500,
+                    ),
                   ),
                 ),
-              );
-            }),
+              ),
+              // Variant Options
+              ...List.generate(_variants.length, (index) {
+                final variant = _variants[index];
+                final isSelected = (_selectedOption is ProductVariantModel &&
+                    variant.id == (_selectedOption as ProductVariantModel).id);
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedOption = variant;
+                      _isSelectingMainProduct = false;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                primaryGreen,
+                                primaryGreen.withOpacity(0.8)
+                              ],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? primaryGreen : Colors.grey[300]!,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: primaryGreen.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          variant.name,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isSelected ? Colors.white : Colors.grey[800],
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
         ],
       ),

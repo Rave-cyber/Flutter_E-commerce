@@ -21,15 +21,22 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       print('Featured products snapshot: ${snapshot.docs.length} documents');
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        print('Featured product data: $data');
-        // ProductModel.fromMap expects the id in the map
-        return ProductModel.fromMap({
-          'id': doc.id,
-          ...data,
-        });
-      }).toList();
+      return snapshot.docs
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            print('Featured product data: $data');
+            // ProductModel.fromMap expects the id in the map
+            return ProductModel.fromMap({
+              'id': doc.id,
+              ...data,
+            });
+          })
+          .toList();
     }).handleError((error) {
       print('Error fetching featured products: $error');
       // Return empty list if query fails
@@ -45,6 +52,11 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
           .map((doc) {
             final data = doc.data();
             return ProductModel.fromMap({
@@ -73,16 +85,23 @@ class FirestoreService {
           .snapshots()
           .map((snapshot) {
         print('All products snapshot: ${snapshot.docs.length} documents');
-        return snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          print(
-              'DEBUG: Product ${doc.id} category field: "${data['category']}"');
-          print('DEBUG: Product ${doc.id} full data: $data');
-          return ProductModel.fromMap({
-            'id': doc.id,
-            ...data,
-          });
-        }).toList();
+        return snapshot.docs
+            .where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              // Filter out variants - variants have 'product_id' field, base products don't
+              return !data.containsKey('product_id');
+            })
+            .map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              print(
+                  'DEBUG: Product ${doc.id} category field: "${data['category']}"');
+              print('DEBUG: Product ${doc.id} full data: $data');
+              return ProductModel.fromMap({
+                'id': doc.id,
+                ...data,
+              });
+            })
+            .toList();
       }).handleError((error) {
         print('Error fetching all products: $error');
         throw error;
@@ -99,10 +118,18 @@ class FirestoreService {
         .map((snapshot) {
       print('Category products snapshot: ${snapshot.docs.length} documents');
       return snapshot.docs
-          .map((doc) => ProductModel.fromMap({
-                'id': doc.id,
-                ...doc.data() as Map<String, dynamic>,
-              }))
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return ProductModel.fromMap({
+              'id': doc.id,
+              ...data,
+            });
+          })
           .toList();
     }).handleError((error) {
       print('Error fetching category products: $error');
@@ -164,13 +191,16 @@ class FirestoreService {
     required String productImage,
     required double price,
     required int quantity,
+    String? variantId,
   }) async {
     try {
+      // Use variantId as document ID if it exists, otherwise use productId
+      final docId = variantId ?? productId;
       final cartRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('cart')
-          .doc(productId);
+          .doc(docId);
 
       final doc = await cartRef.get();
       if (doc.exists) {
@@ -181,15 +211,22 @@ class FirestoreService {
         });
       } else {
         // Add new item to cart
-        await cartRef.set({
-          'productId': productId,
+        final cartData = {
+          'productId': productId, // Original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': quantity,
           'addedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        };
+        
+        // Add variantId if it's a variant
+        if (variantId != null && variantId.isNotEmpty) {
+          cartData['variantId'] = variantId;
+        }
+        
+        await cartRef.set(cartData);
       }
     } catch (e) {
       print('Error adding to cart: $e');

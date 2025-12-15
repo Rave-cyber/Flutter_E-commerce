@@ -156,19 +156,37 @@ class _AdminProductFormState extends State<AdminProductForm> {
         _brands = brands;
 
         if (widget.product != null) {
-          _selectedCategory = categories.isNotEmpty
-              ? categories.firstWhere(
-                  (c) => c.id == widget.product!.category_id,
-                  orElse: () => categories[0],
-                )
-              : null;
+          // Find category by ID, only from non-archived categories
+          try {
+            _selectedCategory = categories.firstWhere(
+              (c) => c.id == widget.product!.category_id && !c.is_archived,
+            );
+          } catch (_) {
+            // If not found or archived, try to find any matching category
+            try {
+              _selectedCategory = categories.firstWhere(
+                (c) => c.id == widget.product!.category_id,
+              );
+            } catch (_) {
+              _selectedCategory = null;
+            }
+          }
 
-          _selectedBrand = brands.isNotEmpty
-              ? brands.firstWhere(
-                  (b) => b.id == widget.product!.brand_id,
-                  orElse: () => brands[0],
-                )
-              : null;
+          // Find brand by ID, only from non-archived brands
+          try {
+            _selectedBrand = brands.firstWhere(
+              (b) => b.id == widget.product!.brand_id && !b.is_archived,
+            );
+          } catch (_) {
+            // If not found or archived, try to find any matching brand
+            try {
+              _selectedBrand = brands.firstWhere(
+                (b) => b.id == widget.product!.brand_id,
+              );
+            } catch (_) {
+              _selectedBrand = null;
+            }
+          }
         }
       });
     }
@@ -704,18 +722,23 @@ class _AdminProductFormState extends State<AdminProductForm> {
             readOnly: true,
           ),
           const SizedBox(height: 16),
-          _buildDropdown<CategoryModel>(
+          _buildDropdown<String>(
             labelText: 'Category',
-            value: _selectedCategory,
+            value: _selectedCategory?.id,
             items: _categories
+                .where((c) => !c.is_archived) // Filter out archived categories
                 .map((c) => DropdownMenuItem(
-                      value: c,
+                      value: c.id,
                       child: Text(c.name),
                     ))
                 .toList(),
             onChanged: (val) {
               if (mounted) {
-                setState(() => _selectedCategory = val);
+                setState(() {
+                  _selectedCategory = val != null
+                      ? _categories.firstWhere((c) => c.id == val)
+                      : null;
+                });
                 _updateSKU();
               }
             },
@@ -724,18 +747,23 @@ class _AdminProductFormState extends State<AdminProductForm> {
             required: true,
           ),
           const SizedBox(height: 16),
-          _buildDropdown<BrandModel>(
+          _buildDropdown<String>(
             labelText: 'Brand',
-            value: _selectedBrand,
+            value: _selectedBrand?.id,
             items: _brands
+                .where((b) => !b.is_archived) // Filter out archived brands
                 .map((b) => DropdownMenuItem(
-                      value: b,
+                      value: b.id,
                       child: Text(b.name),
                     ))
                 .toList(),
             onChanged: (val) {
               if (mounted) {
-                setState(() => _selectedBrand = val);
+                setState(() {
+                  _selectedBrand = val != null
+                      ? _brands.firstWhere((b) => b.id == val)
+                      : null;
+                });
                 _updateSKU();
               }
             },

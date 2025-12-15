@@ -255,6 +255,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _updateQuantity(String itemId, int newQuantity) async {
     if (newQuantity < 1) return;
+    if (!mounted) return;
 
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) return;
@@ -268,6 +269,7 @@ class _CartScreenState extends State<CartScreen> {
           .doc(itemId)
           .get();
 
+      if (!mounted) return;
       if (!cartItemDoc.exists) return;
 
       final cartData = cartItemDoc.data() as Map<String, dynamic>;
@@ -277,6 +279,8 @@ class _CartScreenState extends State<CartScreen> {
       // Check available stock
       final availableStock = await _getAvailableStock(productId, variantId);
 
+      if (!mounted) return;
+      
       if (newQuantity > availableStock) {
         _showSnackBar('Cannot exceed available stock ($availableStock items)');
         return;
@@ -292,14 +296,16 @@ class _CartScreenState extends State<CartScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      _showSnackBar('Error updating quantity');
+      if (mounted) {
+        _showSnackBar('Error updating quantity');
+      }
     }
   }
 
   Future<int> _getAvailableStock(String productId, String? variantId) async {
     try {
+      // First check if variantId is explicitly provided
       if (variantId != null && variantId.isNotEmpty) {
-        // Get variant stock
         final variantDoc = await FirebaseFirestore.instance
             .collection('product_variants')
             .doc(variantId)
@@ -309,18 +315,31 @@ class _CartScreenState extends State<CartScreen> {
           final variantData = variantDoc.data() as Map<String, dynamic>;
           return variantData['stock'] ?? 0;
         }
-      } else {
-        // Get product stock
-        final productDoc = await FirebaseFirestore.instance
-            .collection('products')
-            .doc(productId)
-            .get();
-
-        if (productDoc.exists) {
-          final productData = productDoc.data() as Map<String, dynamic>;
-          return productData['stock_quantity'] ?? 0;
-        }
       }
+      
+      // Check if productId is actually a variant ID (when variant is added, productId = variant.id)
+      final variantCheckDoc = await FirebaseFirestore.instance
+          .collection('product_variants')
+          .doc(productId)
+          .get();
+      
+      if (variantCheckDoc.exists) {
+        // It's a variant
+        final variantData = variantCheckDoc.data() as Map<String, dynamic>;
+        return variantData['stock'] ?? 0;
+      }
+      
+      // Otherwise, it's a product
+      final productDoc = await FirebaseFirestore.instance
+          .collection('products')
+          .doc(productId)
+          .get();
+
+      if (productDoc.exists) {
+        final productData = productDoc.data() as Map<String, dynamic>;
+        return productData['stock_quantity'] ?? 0;
+      }
+      
       return 0;
     } catch (e) {
       print('Error fetching stock: $e');
@@ -329,6 +348,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _removeFromCart(String itemId) async {
+    if (!mounted) return;
+    
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) return;
 
@@ -340,12 +361,16 @@ class _CartScreenState extends State<CartScreen> {
           .doc(itemId)
           .delete();
 
+      if (!mounted) return;
+      
       _selectedItems.remove(itemId);
       _updateSelectAllState();
 
       _showSnackBar('Item removed from cart');
     } catch (e) {
-      _showSnackBar('Error removing item');
+      if (mounted) {
+        _showSnackBar('Error removing item');
+      }
     }
   }
 
@@ -353,15 +378,50 @@ class _CartScreenState extends State<CartScreen> {
       List<QueryDocumentSnapshot> selectedItems) async {
     if (selectedItems.isEmpty) return;
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // Check stock for all selected items before proceeding
+    final List<String> outOfStockItems = [];
+    for (final item in selectedItems) {
+      final data = item.data() as Map<String, dynamic>;
+      final productId = data['productId'] ?? item.id;
+      final variantId = data['variantId'];
+      final quantity = data['quantity'] ?? 1;
+      
+      final availableStock = await _getAvailableStock(productId, variantId);
+      if (availableStock <= 0 || quantity > availableStock) {
+        final productName = data['productName'] ?? 'Unknown Product';
+        outOfStockItems.add(productName);
+      }
+    }
+
+    if (!mounted) return;
+    
+    if (outOfStockItems.isNotEmpty) {
       setState(() {
         _isLoading = false;
       });
+      
+      final itemList = outOfStockItems.length == 1 
+          ? outOfStockItems.first 
+          : '${outOfStockItems.length} items';
+      
+      _showSnackBar(
+        'Cannot proceed to checkout: $itemList ${outOfStockItems.length == 1 ? 'is' : 'are'} out of stock',
+      );
       return;
     }
 
@@ -376,34 +436,72 @@ class _CartScreenState extends State<CartScreen> {
       };
     }).toList();
 
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutScreen(
-          cartItems: items,
-          isSelectedItems: true,
-          selectedItemIds: selectedItems.map((item) => item.id).toList(),
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CheckoutScreen(
+            cartItems: items,
+            isSelectedItems: true,
+            selectedItemIds: selectedItems.map((item) => item.id).toList(),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _checkoutAll(List<QueryDocumentSnapshot> cartItems) async {
     if (cartItems.isEmpty) return;
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // Check stock for all items before proceeding
+    final List<String> outOfStockItems = [];
+    for (final item in cartItems) {
+      final data = item.data() as Map<String, dynamic>;
+      final productId = data['productId'] ?? item.id;
+      final variantId = data['variantId'];
+      final quantity = data['quantity'] ?? 1;
+      
+      final availableStock = await _getAvailableStock(productId, variantId);
+      if (availableStock <= 0 || quantity > availableStock) {
+        final productName = data['productName'] ?? 'Unknown Product';
+        outOfStockItems.add(productName);
+      }
+    }
+
+    if (!mounted) return;
+    
+    if (outOfStockItems.isNotEmpty) {
       setState(() {
         _isLoading = false;
       });
+      
+      final itemList = outOfStockItems.length == 1 
+          ? outOfStockItems.first 
+          : '${outOfStockItems.length} items';
+      
+      _showSnackBar(
+        'Cannot proceed to checkout: $itemList ${outOfStockItems.length == 1 ? 'is' : 'are'} out of stock',
+      );
       return;
     }
 
@@ -418,23 +516,27 @@ class _CartScreenState extends State<CartScreen> {
       };
     }).toList();
 
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutScreen(
-          cartItems: items,
-          isSelectedItems: false,
-          selectedItemIds: cartItems.map((item) => item.id).toList(),
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CheckoutScreen(
+            cartItems: items,
+            isSelectedItems: false,
+            selectedItemIds: cartItems.map((item) => item.id).toList(),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void _showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -831,6 +933,8 @@ class __CartItemState extends State<_CartItem> {
             .doc(variantId)
             .get();
 
+        if (!mounted) return;
+        
         if (variantDoc.exists) {
           final variantData = variantDoc.data() as Map<String, dynamic>;
           setState(() {
@@ -850,6 +954,8 @@ class __CartItemState extends State<_CartItem> {
             .doc(productId)
             .get();
 
+        if (!mounted) return;
+        
         if (productDoc.exists) {
           final productData = productDoc.data() as Map<String, dynamic>;
           setState(() {
@@ -865,10 +971,12 @@ class __CartItemState extends State<_CartItem> {
       }
     } catch (e) {
       print('Error loading stock: $e');
-      setState(() {
-        _availableStock = 0;
-        _isLoadingStock = false;
-      });
+      if (mounted) {
+        setState(() {
+          _availableStock = 0;
+          _isLoadingStock = false;
+        });
+      }
     }
   }
 
@@ -884,6 +992,8 @@ class __CartItemState extends State<_CartItem> {
   }
 
   void _stopEditingQuantity() {
+    if (!mounted) return;
+    
     setState(() {
       _isEditingQuantity = false;
     });
@@ -895,17 +1005,23 @@ class __CartItemState extends State<_CartItem> {
       widget.updateQuantity(widget.itemId, newQuantity);
     } else if (newQuantity > _availableStock) {
       // Show error and revert to previous quantity
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Cannot exceed available stock ($_availableStock items)'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      _quantityController.text = (widget.data['quantity'] ?? 1).toString();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Cannot exceed available stock ($_availableStock items)'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      if (mounted) {
+        _quantityController.text = (widget.data['quantity'] ?? 1).toString();
+      }
     } else {
       // Minimum quantity is 1
-      _quantityController.text = '1';
+      if (mounted) {
+        _quantityController.text = '1';
+      }
       widget.updateQuantity(widget.itemId, 1);
     }
   }

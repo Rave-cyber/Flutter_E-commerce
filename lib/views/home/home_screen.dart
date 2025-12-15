@@ -411,36 +411,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Content
               Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      banner['title'],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    Flexible(
+                      child: Text(
+                        banner['title'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      banner['subtitle'],
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                    const SizedBox(height: 6),
+                    Flexible(
+                      child: Text(
+                        banner['subtitle'],
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
+                        horizontal: 16,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -449,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         banner['buttonText'] ?? 'Shop Now',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: primaryGreen,
                           fontWeight: FontWeight.bold,
                         ),
@@ -890,7 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 0.7,
+                childAspectRatio: 0.62,
               ),
               itemCount: products.length,
               itemBuilder: (context, index) {
@@ -936,6 +941,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Product Image
             Expanded(
@@ -996,39 +1002,50 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                    Flexible(
+                      flex: 2,
+                      child: Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       '₱${NumberFormat('#,##0.00').format(product.sale_price)}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 14,
                         color: primaryGreen,
                       ),
                     ),
                     if (hasDiscount)
-                      Text(
-                        '₱${NumberFormat('#,##0.00').format(product.base_price)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                          decoration: TextDecoration.lineThrough,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '₱${NumberFormat('#,##0.00').format(product.base_price)}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                            decoration: TextDecoration.lineThrough,
+                          ),
                         ),
                       ),
-                    _buildRatingRow(product),
+                    const SizedBox(height: 3),
+                    Flexible(
+                      flex: 1,
+                      child: _buildRatingRow(product),
+                    ),
                   ],
                 ),
               ),
@@ -1055,24 +1072,31 @@ class _HomeScreenState extends State<HomeScreen> {
         final display = ratings.isEmpty ? 'New' : avg.toStringAsFixed(1);
 
         return Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.star, color: Colors.amber, size: 14),
-            const SizedBox(width: 4),
-            Text(
-              display,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w600,
+            Icon(Icons.star, color: Colors.amber, size: 12),
+            const SizedBox(width: 2),
+            Flexible(
+              child: Text(
+                display,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (ratings.isNotEmpty) ...[
-              const SizedBox(width: 6),
-              Text(
-                '(${ratings.length})',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[500],
+              const SizedBox(width: 3),
+              Flexible(
+                child: Text(
+                  '(${ratings.length})',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey[500],
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1082,7 +1106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? Icons.check_circle_outline
                   : Icons.remove_circle_outline,
               color: product.stock_quantity! > 0 ? Colors.green : Colors.red,
-              size: 14,
+              size: 12,
             ),
           ],
         );
@@ -1099,7 +1123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.7,
+        childAspectRatio: 0.65,
       ),
       itemCount: 4,
       itemBuilder: (context, index) {

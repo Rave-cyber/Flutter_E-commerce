@@ -204,6 +204,7 @@ class AdminSidebarWidget extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -224,11 +225,12 @@ class AdminSidebarWidget extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
                               "Admin Panel",
                               style: TextStyle(
-                                fontSize: 22,
+                                fontSize: 21,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 shadows: [
@@ -240,14 +242,16 @@ class AdminSidebarWidget extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               "E-Commerce Management",
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w300,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
