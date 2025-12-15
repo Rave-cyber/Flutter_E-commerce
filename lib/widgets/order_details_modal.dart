@@ -18,6 +18,7 @@ class OrderDetailsModal extends StatefulWidget {
 class _OrderDetailsModalState extends State<OrderDetailsModal> {
   Map<String, dynamic>? _deliveryStaffData;
   bool _isLoadingDeliveryStaff = false;
+  String? _deliveryStaffError;
 
   @override
   void initState() {
@@ -27,21 +28,40 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
 
   Future<void> _loadDeliveryStaffData() async {
     final deliveryStaffId = widget.order['deliveryStaffId'];
-    if (deliveryStaffId != null && widget.order['status'] == 'delivered') {
+    print('🔍 Attempting to load delivery staff data for ID: $deliveryStaffId');
+    print('📦 Order status: ${widget.order['status']}');
+
+    // Show delivery staff info for both shipped and delivered orders
+    if (deliveryStaffId != null &&
+        (widget.order['status'] == 'shipped' ||
+            widget.order['status'] == 'delivered')) {
       setState(() {
         _isLoadingDeliveryStaff = true;
+        _deliveryStaffError = null;
       });
 
       try {
         final staffData =
             await FirestoreService.getDeliveryStaffData(deliveryStaffId);
+        print('📊 Raw delivery staff data received: $staffData');
+
         if (staffData != null) {
           setState(() {
             _deliveryStaffData = staffData;
           });
+          print(
+              '✅ Delivery staff data successfully set: ${staffData.toString()}');
+        } else {
+          print('⚠️ No delivery staff data found for ID: $deliveryStaffId');
+          setState(() {
+            _deliveryStaffError = 'Delivery staff data not found';
+          });
         }
       } catch (e) {
-        print('Error loading delivery staff data: $e');
+        print('❌ Error loading delivery staff data: $e');
+        setState(() {
+          _deliveryStaffError = 'Error loading delivery staff: $e';
+        });
       } finally {
         if (mounted) {
           setState(() {
@@ -49,6 +69,8 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
           });
         }
       }
+    } else {
+      print('🚫 Not loading delivery staff data - missing ID or wrong status');
     }
   }
 
@@ -259,7 +281,7 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
                                     Text(
                                       'Quantity: ${item['quantity']}',
                                       style: TextStyle(
-                                        color: Colors.grey[600],
+                                        color: Colors.grey.shade600,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -299,8 +321,8 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
                     ]),
                     const SizedBox(height: 20),
 
-                    // Delivery Information (only for delivered orders)
-                    if (status == 'delivered') ...[
+                    // Delivery Information (for shipped and delivered orders)
+                    if (status == 'shipped' || status == 'delivered') ...[
                       _buildSectionTitle('Delivery Information'),
                       _buildDeliveryInfo(),
                       const SizedBox(height: 20),
@@ -345,25 +367,90 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
   Widget _buildDeliveryInfo() {
     final deliveryProofImage = widget.order['deliveryProofImage'];
     final deliveryNotes = widget.order['deliveryNotes'];
+    final status = widget.order['status'] ?? 'pending';
 
     return _buildInfoContainer([
       // Delivery Staff Information
-      if (_isLoadingDeliveryStaff)
-        const Padding(
-          padding: EdgeInsets.all(16),
-          child: Center(child: CircularProgressIndicator()),
-        )
-      else if (_deliveryStaffData != null) ...[
-        _buildInfoRow(
-          icon: Icons.person,
-          label: 'Full Name',
-          value: _buildFullName(),
+      if (_isLoadingDeliveryStaff) ...[
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: Column(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 8),
+                Text(
+                  'Loading delivery staff information...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ] else if (_deliveryStaffData != null) ...[
+        // Display the delivery staff name prominently
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.person,
+                    color: Colors.blue.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'DELIVERY STAFF',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _buildFullName(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
+
         _buildInfoRow(
           icon: Icons.phone,
           label: 'Contact Number',
           value: _deliveryStaffData!['contact'] ?? 'No contact',
+        ),
+        const SizedBox(height: 12),
+        _buildInfoRow(
+          icon: Icons.directions_bike,
+          label: 'Vehicle Type',
+          value: _deliveryStaffData!['vehicle_type'] ?? 'Not specified',
+        ),
+        const SizedBox(height: 12),
+        _buildInfoRow(
+          icon: Icons.info_outline,
+          label: 'Status',
+          value: status == 'shipped' ? 'Out for Delivery' : 'Delivered',
         ),
         if (deliveryNotes != null && deliveryNotes.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -375,15 +462,59 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
         ],
       ] else ...[
         // Fallback if no delivery staff data
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.local_shipping,
+                    color: Colors.orange.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'DELIVERY STAFF',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _deliveryStaffError ?? 'Assigned',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         _buildInfoRow(
-          icon: Icons.local_shipping,
-          label: 'Delivery Staff',
-          value: 'Assigned',
+          icon: Icons.info_outline,
+          label: 'Status',
+          value: status == 'shipped' ? 'Out for Delivery' : 'Delivered',
         ),
       ],
 
-      // Delivery Proof Image
-      if (deliveryProofImage != null && deliveryProofImage.isNotEmpty) ...[
+      // Delivery Proof Image (only for delivered orders)
+      if (status == 'delivered' &&
+          deliveryProofImage != null &&
+          deliveryProofImage.isNotEmpty) ...[
         const SizedBox(height: 16),
         const Text(
           'Delivery Proof:',
@@ -509,7 +640,7 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
         Icon(
           icon,
           size: 20,
-          color: Colors.grey[600],
+          color: Colors.grey.shade600,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -520,7 +651,7 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: Colors.grey.shade600,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -549,7 +680,7 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-            color: isTotal ? Colors.black : Colors.grey[700],
+            color: isTotal ? Colors.black : Colors.grey.shade700,
           ),
         ),
         Text(
@@ -565,17 +696,50 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
   }
 
   String _buildFullName() {
-    if (_deliveryStaffData == null) return 'Unknown Staff';
+    print(
+        '🔤 Building full name from delivery staff data: $_deliveryStaffData');
 
-    final firstname = _deliveryStaffData!['firstname'] ?? '';
-    final middlename = _deliveryStaffData!['middlename'] ?? '';
-    final lastname = _deliveryStaffData!['lastname'] ?? '';
+    if (_deliveryStaffData == null) {
+      print('⚠️ No delivery staff data available');
+      return 'Unknown Staff';
+    }
+
+    // Try multiple possible field name variations
+    final firstname = _deliveryStaffData!['firstname'] ??
+        _deliveryStaffData!['first_name'] ??
+        _deliveryStaffData!['fname'] ??
+        '';
+
+    final middlename = _deliveryStaffData!['middlename'] ??
+        _deliveryStaffData!['middle_name'] ??
+        _deliveryStaffData!['mname'] ??
+        '';
+
+    final lastname = _deliveryStaffData!['lastname'] ??
+        _deliveryStaffData!['last_name'] ??
+        _deliveryStaffData!['lname'] ??
+        '';
+
+    // Alternative: try full_name field
+    final fullName = _deliveryStaffData!['full_name'] ??
+        _deliveryStaffData!['fullname'] ??
+        '';
 
     List<String> nameParts = [];
-    if (firstname.isNotEmpty) nameParts.add(firstname);
-    if (middlename.isNotEmpty) nameParts.add(middlename);
-    if (lastname.isNotEmpty) nameParts.add(lastname);
+    if (fullName.isNotEmpty) {
+      nameParts.add(fullName);
+      print('📝 Using full_name field: $fullName');
+    } else {
+      if (firstname.isNotEmpty) nameParts.add(firstname);
+      if (middlename.isNotEmpty) nameParts.add(middlename);
+      if (lastname.isNotEmpty) nameParts.add(lastname);
+      print(
+          '📝 Using individual name fields - First: $firstname, Middle: $middlename, Last: $lastname');
+    }
 
-    return nameParts.isNotEmpty ? nameParts.join(' ') : 'Unknown Staff';
+    final result = nameParts.isNotEmpty ? nameParts.join(' ') : 'Unknown Staff';
+    print('✅ Final name result: $result');
+
+    return result;
   }
 }
