@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../layouts/delivery_staff_layout.dart';
 import '../../../firestore_service.dart';
+import '../delivery_staff_order_history/index.dart';
 
 class DeliveryProofForm extends StatefulWidget {
   final Map<String, dynamic> delivery;
@@ -574,8 +575,12 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
           ),
         );
 
-        // Navigate back to deliveries list
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Navigate to order history screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const DeliveryStaffOrderHistoryScreen(),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

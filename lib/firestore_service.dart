@@ -905,4 +905,64 @@ class FirestoreService {
       throw Exception('Failed to upload image: $e');
     }
   }
+
+  // Get delivered orders for delivery staff order history
+  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrderHistory() {
+    return _firestore
+        .collection('orders')
+        .where('status', isEqualTo: 'delivered')
+        .snapshots()
+        .map((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+        };
+      }).toList();
+
+      // Sort by deliveredAt in memory (descending - newest first)
+      orders.sort((a, b) {
+        final aTime = a['deliveredAt'] as Timestamp?;
+        final bTime = b['deliveredAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return orders;
+    }).handleError((error) {
+      print('Error fetching delivery staff order history: $error');
+      return Stream.value(<Map<String, dynamic>>[]);
+    });
+  }
+
+  // Archive an order
+  static Future<void> archiveOrder(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'isArchived': true,
+        'archivedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error archiving order: $e');
+      throw e;
+    }
+  }
+
+  // Unarchive an order
+  static Future<void> unarchiveOrder(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'isArchived': false,
+        'archivedAt': FieldValue.delete(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error unarchiving order: $e');
+      throw e;
+    }
+  }
 }

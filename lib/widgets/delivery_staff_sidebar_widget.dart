@@ -6,6 +6,7 @@ import '../views/auth/login_screen.dart';
 import '../views/delivery_staff/delivery_staff_dashboard/index.dart';
 import '../views/delivery_staff/delivery_staff_orders/index.dart';
 import '../views/delivery_staff/delivery_staff_deliveries/index.dart';
+import '../views/delivery_staff/delivery_staff_order_history/index.dart';
 
 class DeliveryStaffSidebarWidget extends StatelessWidget {
   final String? selectedRoute;
@@ -63,6 +64,14 @@ class DeliveryStaffSidebarWidget extends StatelessWidget {
                     title: 'Deliveries',
                     route: '/delivery-staff/deliveries',
                     isSelected: selectedRoute == '/delivery-staff/deliveries',
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.history,
+                    title: 'Order History',
+                    route: '/delivery-staff/order-history',
+                    isSelected:
+                        selectedRoute == '/delivery-staff/order-history',
                   ),
                 ],
               ),
@@ -354,6 +363,9 @@ class DeliveryStaffSidebarWidget extends StatelessWidget {
         break;
       case '/delivery-staff/deliveries':
         targetWidget = const DeliveryStaffDeliveriesScreen();
+        break;
+      case '/delivery-staff/order-history':
+        targetWidget = const DeliveryStaffOrderHistoryScreen();
         break;
       default:
         return;
