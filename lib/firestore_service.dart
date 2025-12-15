@@ -1,4 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/services/admin/stock_out_service.dart';
@@ -728,6 +732,7 @@ class FirestoreService {
         return {
           'id': doc.id,
           ...data,
+          ...data,
         };
       }).toList();
 
@@ -784,6 +789,62 @@ class FirestoreService {
     } catch (e) {
       print('Error marking order as delivered: $e');
       throw e;
+    }
+  }
+
+  // Get delivery staff data by user ID
+  static Future<Map<String, dynamic>?> getDeliveryStaffData(
+      String userId) async {
+    try {
+      final query = await _firestore
+          .collection('delivery_staff')
+          .where('user_id', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        return {
+          'id': query.docs.first.id,
+          ...query.docs.first.data(),
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting delivery staff data: $e');
+      return null;
+    }
+  }
+
+  // Upload delivery proof image to Cloudinary
+  static Future<String> uploadDeliveryProofImage(
+      String orderId, File imageFile) async {
+    try {
+      // Initialize Cloudinary with same config as product service
+      final CloudinaryPublic _cloudinary = CloudinaryPublic(
+        'drwoht0pd',
+        'presets',
+        cache: false,
+      );
+
+      // Create unique public ID with timestamp
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final publicId = 'delivery_proofs/${orderId}_${timestamp}';
+
+      // Upload file to Cloudinary
+      final response = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          imageFile.path,
+          resourceType: CloudinaryResourceType.Image,
+          publicId: publicId,
+        ),
+      );
+
+      print(
+          'Delivery proof image uploaded successfully: ${response.secureUrl}');
+      return response.secureUrl;
+    } catch (e) {
+      print('Error uploading delivery proof image: $e');
+      throw Exception('Failed to upload image: $e');
     }
   }
 }

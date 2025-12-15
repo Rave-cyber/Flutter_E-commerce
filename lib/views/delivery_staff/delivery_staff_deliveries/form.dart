@@ -535,14 +535,27 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
     });
 
     try {
-      // In a real app, you would upload the image to Firebase Storage
-      // For now, we'll simulate with a placeholder URL
-      final String proofImageUrl =
-          'https://example.com/proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      // Convert XFile to File for upload
+      final File imageFile = File(_selectedImage!.path);
 
-      // Get current delivery staff ID (you'll need to implement user authentication)
-      // For now, using a placeholder - replace with actual user ID
-      const String deliveryStaffId = 'current_delivery_staff_id';
+      // Upload image to Firebase Storage
+      final String proofImageUrl =
+          await FirestoreService.uploadDeliveryProofImage(
+        widget.delivery['id'],
+        imageFile,
+      );
+
+      // Get current delivery staff ID
+      // In a real app, you would get this from your auth service
+      // For now, we'll try to get it from the delivery data or use a placeholder
+      String deliveryStaffId = widget.delivery['deliveryStaffId'] ?? '';
+
+      // If no delivery staff ID is assigned, you might need to get it from current user
+      // This would typically come from your authentication service
+      if (deliveryStaffId.isEmpty) {
+        // TODO: Get current user ID from authentication service
+        deliveryStaffId = 'current_delivery_staff_id'; // Placeholder
+      }
 
       await FirestoreService.markOrderAsDelivered(
         widget.delivery['id'],

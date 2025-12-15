@@ -33,10 +33,11 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
       });
 
       try {
-        final userData = await FirestoreService.getUserData(deliveryStaffId);
-        if (userData != null) {
+        final staffData =
+            await FirestoreService.getDeliveryStaffData(deliveryStaffId);
+        if (staffData != null) {
           setState(() {
-            _deliveryStaffData = userData.toMap();
+            _deliveryStaffData = staffData;
           });
         }
       } catch (e) {
@@ -355,14 +356,14 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
       else if (_deliveryStaffData != null) ...[
         _buildInfoRow(
           icon: Icons.person,
-          label: 'Delivery Staff',
-          value: _deliveryStaffData!['name'] ?? 'Unknown Staff',
+          label: 'Full Name',
+          value: _buildFullName(),
         ),
         const SizedBox(height: 12),
         _buildInfoRow(
           icon: Icons.phone,
-          label: 'Contact',
-          value: _deliveryStaffData!['contactNumber'] ?? 'No contact',
+          label: 'Contact Number',
+          value: _deliveryStaffData!['contact'] ?? 'No contact',
         ),
         if (deliveryNotes != null && deliveryNotes.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -402,34 +403,67 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              deliveryProofImage,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.image_not_supported,
-                      size: 48,
-                      color: Colors.grey.shade400,
+            child: deliveryProofImage.contains('example.com')
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Image not available',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.photo_camera,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Delivery proof photo captured',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '(Photo URL: ${deliveryProofImage.substring(0, 30)}...)',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Image.network(
+                    deliveryProofImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_not_supported,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Image not available',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ),
       ],
@@ -528,5 +562,20 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
         ),
       ],
     );
+  }
+
+  String _buildFullName() {
+    if (_deliveryStaffData == null) return 'Unknown Staff';
+
+    final firstname = _deliveryStaffData!['firstname'] ?? '';
+    final middlename = _deliveryStaffData!['middlename'] ?? '';
+    final lastname = _deliveryStaffData!['lastname'] ?? '';
+
+    List<String> nameParts = [];
+    if (firstname.isNotEmpty) nameParts.add(firstname);
+    if (middlename.isNotEmpty) nameParts.add(middlename);
+    if (lastname.isNotEmpty) nameParts.add(lastname);
+
+    return nameParts.isNotEmpty ? nameParts.join(' ') : 'Unknown Staff';
   }
 }

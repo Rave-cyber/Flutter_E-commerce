@@ -67,6 +67,10 @@ class OrderModel {
   final String? contactNumber;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? deliveryProofImage;
+  final String? deliveryNotes;
+  final String? deliveryStaffId;
+  final DateTime? deliveredAt;
 
   OrderModel({
     required this.id,
@@ -82,6 +86,10 @@ class OrderModel {
     this.contactNumber,
     this.createdAt,
     this.updatedAt,
+    this.deliveryProofImage,
+    this.deliveryNotes,
+    this.deliveryStaffId,
+    this.deliveredAt,
   });
 
   // Convert OrderModel to Map for Firestore
@@ -104,6 +112,11 @@ class OrderModel {
       'updatedAt': updatedAt != null
           ? Timestamp.fromDate(updatedAt!)
           : FieldValue.serverTimestamp(),
+      'deliveryProofImage': deliveryProofImage,
+      'deliveryNotes': deliveryNotes,
+      'deliveryStaffId': deliveryStaffId,
+      'deliveredAt':
+          deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
     };
   }
 
@@ -132,7 +145,10 @@ class OrderModel {
       contactNumber: map['contactNumber'],
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate(),
+      deliveryProofImage: map['deliveryProofImage'],
+      deliveryNotes: map['deliveryNotes'],
+      deliveryStaffId: map['deliveryStaffId'],
+      deliveredAt: (map['deliveredAt'] as Timestamp?)?.toDate(),
     );
   }
 }
-
