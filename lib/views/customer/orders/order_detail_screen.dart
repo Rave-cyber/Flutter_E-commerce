@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
 
@@ -316,124 +317,134 @@ class OrderDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order #${orderId.substring(0, 8).toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 16,
+                          Text(
+                            'Order #${orderId.substring(0, 8).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 16,
+                                color: textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  dateText,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildStatusBadge(order['status'] ?? 'pending'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.grey[100]!,
+                        Colors.grey[300]!,
+                        Colors.grey[100]!,
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // FIXED: Changed Row to Column for smaller screens
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            fontSize: 13,
                             color: textSecondary,
                           ),
-                          const SizedBox(width: 6),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '₱${NumberFormat('#,##0.00').format((order['total'] ?? 0.0).toDouble())}',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: primaryGreen,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: primaryGreen,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _getPaymentIcon(order['paymentMethod'] ?? 'gcash'),
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
                           Flexible(
                             child: Text(
-                              dateText,
-                              overflow: TextOverflow.ellipsis,
+                              _formatPaymentMethod(order['paymentMethod'] ?? 'gcash'),
                               style: TextStyle(
                                 fontSize: 14,
-                                color: textSecondary,
+                                fontWeight: FontWeight.w600,
+                                color: primaryGreen,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                _buildStatusBadge(order['status'] ?? 'pending'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.grey[100]!,
-                    Colors.grey[300]!,
-                    Colors.grey[100]!,
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Amount',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₱${NumberFormat('#,##0.00').format((order['total'] ?? 0.0).toDouble())}',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: primaryGreen,
-                        letterSpacing: -0.5,
-                      ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primaryGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: primaryGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _getPaymentIcon(order['paymentMethod'] ?? 'gcash'),
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _formatPaymentMethod(order['paymentMethod'] ?? 'gcash'),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: primaryGreen,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -783,11 +794,14 @@ class OrderDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '₱${NumberFormat('#,##0.00').format(price)} each',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textSecondary,
+                    Flexible(
+                      child: Text(
+                        '₱${NumberFormat('#,##0.00').format(price)} each',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1280,7 +1294,7 @@ class OrderDetailScreen extends StatelessWidget {
       if (Platform.isAndroid || Platform.isIOS) {
         final Directory tempDir = await getTemporaryDirectory();
         final File file =
-            File('${tempDir.path}/receipt_order_${order['id']}.txt');
+            File('${tempDir.path}/receipt_order_${orderId.substring(0, 8).toUpperCase()}.txt');
         await file.writeAsString(receiptText);
 
         Navigator.pop(context); // close loading
@@ -1288,7 +1302,7 @@ class OrderDetailScreen extends StatelessWidget {
         await Share.shareXFiles(
           [XFile(file.path)],
           text:
-              'Receipt for Order #${order['id'].toString().substring(0, 8).toUpperCase()}',
+              'Receipt for Order #${orderId.substring(0, 8).toUpperCase()}',
         );
       } else {
         Navigator.pop(context); // close loading
@@ -1316,55 +1330,68 @@ class OrderDetailScreen extends StatelessWidget {
 
   String _generateReceiptText(Map<String, dynamic> order) {
     final items = order['items'] as List<dynamic>? ?? [];
+    final subtotal = (order['subtotal'] ?? 0.0).toDouble();
+    final shipping = (order['shipping'] ?? 0.0).toDouble();
     final total = (order['total'] ?? 0.0).toDouble();
-    final orderId = order['id'] ?? '';
     final createdAt = order['createdAt'] as Timestamp?;
-    final deliveredAt = order['deliveredAt'] as Timestamp?;
-    final confirmedAt = order['confirmedAt'] as Timestamp?;
+    final orderDate = createdAt != null 
+        ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt.toDate())
+        : 'N/A';
+    final shippingAddress = order['shippingAddress'] ?? 'Not provided';
+    final contactNumber = order['contactNumber'] ?? 'Not provided';
+    final paymentMethod = _formatPaymentMethod(order['paymentMethod'] ?? 'gcash');
 
     StringBuffer sb = StringBuffer();
 
     sb.writeln('=' * 40);
-    sb.writeln('            ORDER RECEIPT');
+    sb.writeln('           ORDER RECEIPT');
     sb.writeln('=' * 40);
     sb.writeln();
-    sb.writeln(
-        'Order ID: #${orderId.toString().substring(0, 8).toUpperCase()}');
-    sb.writeln(
-        'Date: ${createdAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(createdAt.toDate()) : 'N/A'}');
-    if (confirmedAt != null) {
-      sb.writeln(
-          'Confirmed: ${DateFormat('yyyy-MM-dd').format(confirmedAt.toDate())}');
-    }
-    if (deliveredAt != null) {
-      sb.writeln(
-          'Delivered: ${DateFormat('yyyy-MM-dd').format(deliveredAt.toDate())}');
-    }
+    sb.writeln('Order ID: #${orderId.substring(0, 8).toUpperCase()}');
+    sb.writeln('Date: $orderDate');
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('Items');
+    sb.writeln('SHIPPING INFORMATION');
+    sb.writeln('-' * 40);
+    sb.writeln('Address: $shippingAddress');
+    sb.writeln('Contact: $contactNumber');
+    sb.writeln();
+    sb.writeln('-' * 40);
+    sb.writeln('ORDER ITEMS');
     sb.writeln('-' * 40);
 
     for (var item in items) {
       final itemMap = item as Map<String, dynamic>;
+      final productName = itemMap['productName'] ?? 'Unknown Product';
       final price = (itemMap['price'] ?? 0.0).toDouble();
       final quantity = itemMap['quantity'] ?? 1;
-      final subtotal = price * quantity;
+      final itemTotal = price * quantity;
 
-      sb.writeln('${itemMap['productName']}');
-      sb.writeln(
-          '  ${quantity.toString().padLeft(2)} x \₱${price.toStringAsFixed(2)} = \₱${subtotal.toStringAsFixed(2)}');
+      // Truncate long product names
+      final displayName = productName.length > 30 
+          ? '${productName.substring(0, 27)}...' 
+          : productName;
+
+      sb.writeln(displayName.padRight(35));
+      sb.writeln('  ${quantity.toString().padLeft(2)} x ₱${price.toStringAsFixed(2).padLeft(8)} = ₱${itemTotal.toStringAsFixed(2).padLeft(10)}');
     }
 
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
-    sb.writeln('=' * 40);
-    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
+    sb.writeln('ORDER SUMMARY');
+    sb.writeln('-' * 40);
+    sb.writeln('Subtotal:'.padRight(30) + '₱${subtotal.toStringAsFixed(2).padLeft(10)}');
+    sb.writeln('Shipping:'.padRight(30) + '₱${shipping.toStringAsFixed(2).padLeft(10)}');
+    sb.writeln('-' * 40);
+    sb.writeln('TOTAL:'.padRight(30) + '₱${total.toStringAsFixed(2).padLeft(10)}');
     sb.writeln();
+    sb.writeln('Payment Method: $paymentMethod');
+    sb.writeln();
+    sb.writeln('=' * 40);
     sb.writeln('Thank you for your purchase!');
-    sb.writeln(
-        'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+    sb.writeln('=' * 40);
+    sb.writeln();
+    sb.writeln('Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
 
     return sb.toString();
   }
