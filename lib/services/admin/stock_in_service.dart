@@ -240,4 +240,19 @@ class StockInService {
       throw Exception('Failed to get stock summary: $e');
     }
   }
+
+  /// FETCH all stock-ins once
+  Future<List<StockInModel>> fetchAllStockIns() async {
+    try {
+      final snapshot = await _stockInCollection
+          .orderBy('created_at', descending: true)
+          .get();
+      return snapshot.docs
+          .map(
+              (doc) => StockInModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch all stock-ins: $e');
+    }
+  }
 }

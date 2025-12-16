@@ -281,4 +281,19 @@ class StockOutService {
       throw Exception('Failed to fetch stock-outs for variant: $e');
     }
   }
+
+  /// FETCH all stock-outs once
+  Future<List<StockOutModel>> fetchAllStockOuts() async {
+    try {
+      final snapshot = await _stockOutCollection
+          .orderBy('created_at', descending: true)
+          .get();
+      return snapshot.docs
+          .map((doc) =>
+              StockOutModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch all stock-outs: $e');
+    }
+  }
 }

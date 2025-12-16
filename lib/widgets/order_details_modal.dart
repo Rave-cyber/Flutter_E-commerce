@@ -442,10 +442,11 @@ class _OrderDetailsModalState extends State<OrderDetailsModal> {
         ),
         const SizedBox(height: 12),
         _buildInfoRow(
-          icon: Icons.directions_bike,
+          icon: Icons.local_shipping, // van icon
           label: 'Vehicle Type',
           value: _deliveryStaffData!['vehicle_type'] ?? 'Not specified',
         ),
+
         const SizedBox(height: 12),
         _buildInfoRow(
           icon: Icons.info_outline,
