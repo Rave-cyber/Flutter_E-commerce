@@ -285,7 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Logout',
               subtitle: 'Sign out from account',
               isLogout: true,
-              onTap: () => _showLogoutConfirmation(context, authService),
+              onTap: () => _showLogoutConfirmation(context, authService), // Fixed: Pass authService
             ),
           ],
         ),
@@ -1514,7 +1514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showLogoutConfirmation(BuildContext context, AuthService authService) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -1562,7 +1562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 56),
                           shape: RoundedRectangleBorder(
@@ -1584,7 +1584,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           await authService.signOut();
                           if (mounted) {
                             Navigator.pushAndRemoveUntil(
