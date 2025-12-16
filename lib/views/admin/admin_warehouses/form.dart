@@ -45,13 +45,69 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     super.initState();
     final warehouse = widget.warehouse;
     _nameController = TextEditingController(text: warehouse?.name ?? '');
-    _streetAddressController = TextEditingController(text: '');
+    _streetAddressController =
+        TextEditingController(text: warehouse?.street_address ?? '');
     _latitudeController =
         TextEditingController(text: warehouse?.latitude.toString() ?? '');
     _longitudeController =
         TextEditingController(text: warehouse?.longitude.toString() ?? '');
 
     _loadRegions();
+
+    // Set selected address values if editing existing warehouse
+    if (warehouse != null) {
+      _setAddressFromWarehouse(warehouse);
+    }
+  }
+
+  void _setAddressFromWarehouse(WarehouseModel warehouse) async {
+    // This will be called after regions are loaded to set the selected values
+    Future.delayed(Duration(milliseconds: 100), () async {
+      if (warehouse.region != null) {
+        final region = _regions.firstWhere(
+          (r) =>
+              r['regionName'] == warehouse.region ||
+              r['name'] == warehouse.region,
+          orElse: () => {},
+        );
+        if (region.isNotEmpty) {
+          setState(() => _selectedRegion = region);
+          await _onRegionChanged(region);
+
+          if (warehouse.province != null) {
+            final province = _provinces.firstWhere(
+              (p) => p['name'] == warehouse.province,
+              orElse: () => {},
+            );
+            if (province.isNotEmpty) {
+              setState(() => _selectedProvince = province);
+              await _onProvinceChanged(province);
+
+              if (warehouse.city_municipality != null) {
+                final cityMunicipality = _citiesMunicipalities.firstWhere(
+                  (c) => c['name'] == warehouse.city_municipality,
+                  orElse: () => {},
+                );
+                if (cityMunicipality.isNotEmpty) {
+                  setState(() => _selectedCityMunicipality = cityMunicipality);
+                  await _onCityMunicipalityChanged(cityMunicipality);
+
+                  if (warehouse.barangay != null) {
+                    final barangay = _barangays.firstWhere(
+                      (b) => b['name'] == warehouse.barangay,
+                      orElse: () => {},
+                    );
+                    if (barangay.isNotEmpty) {
+                      setState(() => _selectedBarangay = barangay);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   @override
@@ -730,6 +786,16 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
       final warehouse = WarehouseModel(
         id: id,
         name: _nameController.text.trim(),
+        street_address: _streetAddressController.text.trim().isNotEmpty
+            ? _streetAddressController.text.trim()
+            : null,
+        region: _selectedRegion?['regionName'] ?? _selectedRegion?['name'],
+        province: _selectedProvince?['name'],
+        city_municipality: _selectedCityMunicipality?['name'],
+        barangay: _selectedBarangay?['name'],
+        complete_address: _buildWarehouseAddress().isNotEmpty
+            ? _buildWarehouseAddress()
+            : null,
         latitude: double.parse(_latitudeController.text.trim()),
         longitude: double.parse(_longitudeController.text.trim()),
         is_archived: false,

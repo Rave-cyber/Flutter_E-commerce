@@ -3,6 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class WarehouseModel {
   final String id;
   final String name;
+  final String? street_address;
+  final String? region;
+  final String? province;
+  final String? city_municipality;
+  final String? barangay;
+  final String? complete_address;
   final double latitude;
   final double longitude;
   final bool is_archived;
@@ -15,6 +21,12 @@ class WarehouseModel {
     required this.latitude,
     required this.longitude,
     required this.is_archived,
+    this.street_address,
+    this.region,
+    this.province,
+    this.city_municipality,
+    this.barangay,
+    this.complete_address,
     this.created_at,
     this.updated_at,
   });
@@ -24,6 +36,12 @@ class WarehouseModel {
     return {
       'id': id,
       'name': name,
+      'street_address': street_address,
+      'region': region,
+      'province': province,
+      'city_municipality': city_municipality,
+      'barangay': barangay,
+      'complete_address': complete_address,
       'latitude': latitude,
       'longitude': longitude,
       'is_archived': is_archived,
@@ -41,6 +59,12 @@ class WarehouseModel {
     return WarehouseModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
+      street_address: map['street_address'],
+      region: map['region'],
+      province: map['province'],
+      city_municipality: map['city_municipality'],
+      barangay: map['barangay'],
+      complete_address: map['complete_address'],
       latitude: (map['latitude'] ?? 0.0).toDouble(),
       longitude: (map['longitude'] ?? 0.0).toDouble(),
       is_archived: map['is_archived'] ?? false,
