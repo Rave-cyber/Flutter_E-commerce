@@ -20,15 +20,9 @@ class AdminLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
       drawer: AdminSidebarWidget(selectedRoute: selectedRoute),
       appBar: AppBar(
         title: Text(title),
-=======
-      drawer: const AdminSidebarWidget(),
-      appBar: AppBar(
-        title: const Text('Admin'),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         backgroundColor: Colors.green.shade600,
         elevation: 0,
         foregroundColor: Colors.white,

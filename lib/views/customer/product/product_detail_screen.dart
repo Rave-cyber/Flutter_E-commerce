@@ -1,19 +1,14 @@
 // product_detail_screen.dart
-<<<<<<< HEAD
-=======
 import 'dart:async';
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'package:firebase/models/product.dart';
 import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/views/customer/favorites/favorites_screen.dart';
 import 'package:firebase/views/auth/login_screen.dart';
+import 'package:intl/intl.dart';
 
 import 'package:firebase/views/customer/checkout/checkout_screen.dart';
-<<<<<<< HEAD
-=======
 import 'package:firebase/views/customer/orders/orders_screen.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase/services/auth_service.dart';
@@ -41,22 +36,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _loadingVariants = true;
   bool _loadingBrandCategory = true;
   final Color primaryGreen = const Color(0xFF2C8610);
-<<<<<<< HEAD
-=======
   int _mainStock = 0;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _productSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _variantsSub;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   // Rating state
   int _selectedStars = 5;
   final TextEditingController _ratingController = TextEditingController();
   bool _submittingRating = false;
-<<<<<<< HEAD
-=======
   bool _hasUserRated = false;
   Map<String, dynamic>? _userRating;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   List<ProductVariantModel> _variants = [];
   // Two possible selections: main product or variant
@@ -69,33 +58,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
-    _checkIfFavorite();
-    _loadProductDetails();
-    _canRateFuture = _checkIfUserCanRate();
-=======
     _selectedOption = widget.product;
     _mainStock = widget.product.stock_quantity ?? 0;
     _checkIfFavorite();
     _loadProductDetails();
     _canRateFuture = _checkIfUserCanRate();
     _listenToProductStock();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   void dispose() {
-<<<<<<< HEAD
-=======
     _productSub?.cancel();
     _variantsSub?.cancel();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     _ratingController.dispose();
     super.dispose();
   }
 
-<<<<<<< HEAD
-=======
   int _currentStock() {
     if (_isSelectingMainProduct) {
       return _mainStock;
@@ -106,7 +84,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return 0;
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _checkIfFavorite() async {
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user != null && widget.product.id != null) {
@@ -140,38 +117,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-<<<<<<< HEAD
-    try {
-      final variants = await FirebaseFirestore.instance
-          .collection('product_variants')
-          .where('product_id', isEqualTo: widget.product.id)
-          .where('is_archived', isEqualTo: false)
-          .get();
-
-      final variantsList = variants.docs
-          .map((doc) => ProductVariantModel.fromMap({
-                'id': doc.id,
-                ...doc.data(),
-              }))
-          .toList();
-
-      if (mounted) {
-        setState(() {
-          _variants = variantsList;
-          _loadingVariants = false;
-
-          // If product has variants, select first variant by default
-          // Otherwise, select main product
-          if (variantsList.isNotEmpty) {
-            _selectedOption = variantsList.first;
-            _isSelectingMainProduct = false;
-          } else {
-            _selectedOption = widget.product;
-            _isSelectingMainProduct = true;
-          }
-        });
-      }
-=======
     final completer = Completer<void>();
 
     try {
@@ -215,15 +160,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             if (variantsList.isEmpty) {
               _selectedOption = widget.product;
               _isSelectingMainProduct = true;
-            } else if (_isSelectingMainProduct && !hadVariantSelected) {
-              // Auto-select first variant by default (existing behavior)
-              _selectedOption = updatedSelection ?? variantsList.first;
-              _isSelectingMainProduct = false;
-            } else if (hadVariantSelected) {
-              _selectedOption = updatedSelection ?? variantsList.first;
-              _isSelectingMainProduct = _selectedOption is! ProductVariantModel
-                  ? true
-                  : false;
+            } else {
+              // Don't auto-select variant - let user choose
+              // Only update if a variant was previously selected
+              if (hadVariantSelected) {
+                _selectedOption = updatedSelection ?? variantsList.first;
+                _isSelectingMainProduct = _selectedOption is! ProductVariantModel
+                    ? true
+                    : false;
+              } else {
+                // Keep main product selected by default
+                _selectedOption = widget.product;
+                _isSelectingMainProduct = true;
+              }
             }
 
             // Safety: ensure there's always a selected option
@@ -246,7 +195,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         }
         if (!completer.isCompleted) completer.complete();
       });
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } catch (e) {
       print('Error loading variants: $e');
       if (mounted) {
@@ -256,9 +204,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _isSelectingMainProduct = true;
         });
       }
-<<<<<<< HEAD
-    }
-=======
       if (!completer.isCompleted) completer.complete();
     }
 
@@ -287,7 +232,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }, onError: (error) {
       print('Error listening to product stock: $error');
     });
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   Future<void> _loadBrandAndCategory() async {
@@ -385,20 +329,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-<<<<<<< HEAD
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    // Use the currently selected option (main product or variant)
+    dynamic selectedOption = _selectedOption;
+    bool isSelectingMain = _isSelectingMainProduct;
 
-    if (stock! <= 0) {
-=======
     // Determine stock based on selected option (live)
-    final stock = _currentStock();
+    int stock;
+    if (isSelectingMain) {
+      stock = _mainStock;
+    } else if (selectedOption is ProductVariantModel) {
+      stock = selectedOption.stock ?? 0;
+    } else {
+      stock = 0;
+    }
 
     if (stock <= 0) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
-      _showSnackBar('Selected option is out of stock', Colors.red);
+      _showSnackBar('Cannot add to cart: This item is out of stock', Colors.red);
       return;
     }
 
@@ -410,42 +356,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       String productName;
       String productImage;
       double price;
-      String productId;
 
-      if (_isSelectingMainProduct) {
+      String? variantId;
+      if (isSelectingMain) {
         // Buying main product
         productName = widget.product.name;
         productImage = widget.product.image;
         price = widget.product.sale_price;
-        productId = widget.product.id!;
       } else {
-        // Buying variant
-        final variant = _selectedOption as ProductVariantModel;
-        productName = '${widget.product.name} - ${variant.name}';
+        // Buying variant - show only variant name
+        final variant = selectedOption as ProductVariantModel;
+        productName = variant.name; // Show only variant name
         productImage =
             variant.image.isNotEmpty ? variant.image : widget.product.image;
         price = variant.sale_price;
-        productId = variant.id; // Use variant ID for cart
+        variantId = variant.id;
       }
 
       if (user != null) {
         await FirestoreService.addToCart(
           userId: user.uid,
-          productId: productId,
+          productId: widget.product.id!, // Always use original product ID
           productName: productName,
           productImage: productImage,
           price: price,
           quantity: 1, // Default quantity to 1
+          variantId: variantId, // Pass variantId if it's a variant
         );
       } else {
         // Guest Cart
-        await LocalCartService.addToCart({
-          'productId': productId,
+        final cartItem = {
+          'productId': widget.product.id!, // Always use original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': 1,
-        });
+        };
+        if (variantId != null) {
+          cartItem['variantId'] = variantId;
+        }
+        await LocalCartService.addToCart(cartItem);
       }
 
       if (mounted) {
@@ -483,20 +433,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-<<<<<<< HEAD
-    // Determine stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
+    // Use the currently selected option (main product or variant)
+    dynamic selectedOption = _selectedOption;
+    bool isSelectingMain = _isSelectingMainProduct;
 
-    if (stock! <= 0) {
-=======
     // Determine stock based on selected option (live)
-    final stock = _currentStock();
+    int stock;
+    if (isSelectingMain) {
+      stock = _mainStock;
+    } else if (selectedOption is ProductVariantModel) {
+      stock = selectedOption.stock ?? 0;
+    } else {
+      stock = 0;
+    }
 
     if (stock <= 0) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
-      _showSnackBar('Selected option is out of stock', Colors.red);
+      _showSnackBar('Cannot proceed: This item is out of stock', Colors.red);
       return;
     }
 
@@ -508,43 +460,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       String productName;
       String productImage;
       double price;
-      String productId;
 
-      if (_isSelectingMainProduct) {
+      String? variantId;
+      if (isSelectingMain) {
         // Buying main product
         productName = widget.product.name;
         productImage = widget.product.image;
         price = widget.product.sale_price;
-        productId = widget.product.id!;
       } else {
-        // Buying variant
-        final variant = _selectedOption as ProductVariantModel;
-        productName = '${widget.product.name} - ${variant.name}';
+        // Buying variant - show only variant name
+        final variant = selectedOption as ProductVariantModel;
+        productName = variant.name; // Show only variant name
         productImage =
             variant.image.isNotEmpty ? variant.image : widget.product.image;
         price = variant.sale_price;
-        productId = variant.id; // Use variant ID for cart
+        variantId = variant.id;
       }
 
-      // Add to cart first
       // Add to cart first
       if (user != null) {
         await FirestoreService.addToCart(
           userId: user.uid,
-          productId: productId,
+          productId: widget.product.id!, // Always use original product ID
           productName: productName,
           productImage: productImage,
           price: price,
           quantity: 1,
+          variantId: variantId, // Pass variantId if it's a variant
         );
       } else {
-        await LocalCartService.addToCart({
-          'productId': productId,
+        final cartItem = {
+          'productId': widget.product.id!, // Always use original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': 1,
-        });
+        };
+        if (variantId != null) {
+          cartItem['variantId'] = variantId;
+        }
+        await LocalCartService.addToCart(cartItem);
       }
 
       // Navigate directly to checkout
@@ -552,13 +507,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         // Navigate directly to checkout
         if (mounted) {
           if (user != null) {
+            // Use variantId as document ID if it exists, otherwise use productId
+            final cartItemId = variantId ?? widget.product.id!;
+            
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => CheckoutScreen(
                   cartItems: [
                     {
-                      'productId': productId,
+                      'productId': widget.product.id!,
                       'productName': productName,
                       'productImage': productImage,
                       'price': price,
@@ -566,7 +524,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     }
                   ],
                   isSelectedItems: false,
-                  selectedItemIds: [productId],
+                  selectedItemIds: [cartItemId],
                 ),
               ),
             );
@@ -648,11 +606,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _shareProduct() {
     final shareText =
-<<<<<<< HEAD
-        'Check out ${widget.product.name} for \$${widget.product.sale_price.toStringAsFixed(2)}';
-=======
         'Check out ${widget.product.name} for ₱${widget.product.sale_price.toStringAsFixed(2)}';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -843,21 +797,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? widget.product.base_price
         : (_selectedOption as ProductVariantModel).base_price;
 
-<<<<<<< HEAD
-    final hasDiscount = price < originalPrice;
-    final discountPercent = hasDiscount
-        ? ((originalPrice - price) / originalPrice * 100).toStringAsFixed(0)
-        : '0';
-    final discountValue = int.parse(discountPercent);
-
-    // Only show discount UI if there's a meaningful discount (at least 1%)
-    final showDiscount = hasDiscount && discountValue > 0;
-=======
     final discountPercent = originalPrice > price
         ? ((originalPrice - price) / originalPrice * 100).round()
         : 0;
     final stock = _currentStock();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -877,85 +820,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Sale price
-<<<<<<< HEAD
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\$',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                      ),
-                    ),
-                    Text(
-                      price.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: primaryGreen,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Original price - only show if meaningful discount
-                if (showDiscount)
-                  Row(
-                    children: [
-                      Text(
-                        '\$${originalPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          // Discount badge - only show if meaningful discount
-          if (showDiscount)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryGreen, primaryGreen.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryGreen.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$discountPercent% OFF',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-=======
                 Text(
-                  '₱${price.toStringAsFixed(2)}',
+                  '₱${NumberFormat('#,##0.00').format(price)}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -966,7 +832,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 // Original price (crossed out) if there's a discount
                 if (originalPrice > price)
                   Text(
-                    '₱${originalPrice.toStringAsFixed(2)}',
+                    '₱${NumberFormat('#,##0.##').format(originalPrice)}',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[500],
@@ -1008,7 +874,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
             ),
         ],
@@ -1025,7 +890,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
 
-    // Only show variants when they exist, never show main product as "Standard"
+    // Only show variants when they exist
     if (_variants.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -1046,7 +911,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Icon(Icons.style_outlined, size: 18, color: primaryGreen),
               const SizedBox(width: 8),
               Text(
-                'Select Variant',
+                'Select Option',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -1059,16 +924,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: List.generate(_variants.length, (index) {
-              final variant = _variants[index];
-              final isSelected = (_selectedOption is ProductVariantModel &&
-                  variant.id == (_selectedOption as ProductVariantModel).id);
-
-              return GestureDetector(
+            children: [
+              // Original Product Option
+              GestureDetector(
                 onTap: () {
                   setState(() {
-                    _selectedOption = variant;
-                    _isSelectingMainProduct = false;
+                    _selectedOption = widget.product;
+                    _isSelectingMainProduct = true;
                   });
                 },
                 child: AnimatedContainer(
@@ -1078,7 +940,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    gradient: isSelected
+                    gradient: _isSelectingMainProduct
                         ? LinearGradient(
                             colors: [
                               primaryGreen,
@@ -1086,13 +948,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ],
                           )
                         : null,
-                    color: isSelected ? null : Colors.white,
+                    color: _isSelectingMainProduct ? null : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? primaryGreen : Colors.grey[300]!,
-                      width: isSelected ? 2 : 1,
+                      color: _isSelectingMainProduct ? primaryGreen : Colors.grey[300]!,
+                      width: _isSelectingMainProduct ? 2 : 1,
                     ),
-                    boxShadow: isSelected
+                    boxShadow: _isSelectingMainProduct
                         ? [
                             BoxShadow(
                               color: primaryGreen.withOpacity(0.3),
@@ -1102,23 +964,79 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ]
                         : null,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        variant.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isSelected ? Colors.white : Colors.grey[800],
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Original',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _isSelectingMainProduct ? Colors.white : Colors.grey[800],
+                      fontWeight:
+                          _isSelectingMainProduct ? FontWeight.bold : FontWeight.w500,
+                    ),
                   ),
                 ),
-              );
-            }),
+              ),
+              // Variant Options
+              ...List.generate(_variants.length, (index) {
+                final variant = _variants[index];
+                final isSelected = (_selectedOption is ProductVariantModel &&
+                    variant.id == (_selectedOption as ProductVariantModel).id);
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedOption = variant;
+                      _isSelectingMainProduct = false;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                primaryGreen,
+                                primaryGreen.withOpacity(0.8)
+                              ],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? primaryGreen : Colors.grey[300]!,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: primaryGreen.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          variant.name,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isSelected ? Colors.white : Colors.grey[800],
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
         ],
       ),
@@ -1131,13 +1049,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     // Get stock based on selected option
-<<<<<<< HEAD
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
-=======
     final stock = _currentStock();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -1197,18 +1109,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               Expanded(
                 child: _buildModernInfoCard(
-<<<<<<< HEAD
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Stock',
-                  value: '$stock available',
-                  valueColor: stock! > 0 ? Colors.green : Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildModernInfoCard(
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   icon: Icons.verified_outlined,
                   label: 'Status',
                   value: widget.product.is_archived ? 'Archived' : 'Active',
@@ -1216,8 +1116,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       widget.product.is_archived ? Colors.orange : Colors.green,
                 ),
               ),
-<<<<<<< HEAD
-=======
               const SizedBox(width: 12),
               Expanded(
                 child: _buildModernInfoCard(
@@ -1227,7 +1125,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   valueColor: stock > 0 ? primaryGreen : Colors.red,
                 ),
               ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ],
           ),
         ],
@@ -1298,11 +1195,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     try {
-<<<<<<< HEAD
-      await FirestoreService.addProductRating(
-=======
       await FirestoreService.addOrUpdateProductRating(
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         productId: widget.product.id!,
         userId: authUser.uid,
         stars: _selectedStars,
@@ -1313,14 +1206,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           authUser.uid, widget.product.id!);
 
       if (mounted) {
-<<<<<<< HEAD
-        _ratingController.clear();
-        setState(() {
-          _selectedStars = 5;
-        });
-
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         _showSnackBar(
           activated
               ? 'Thanks! Your rating is now active.'
@@ -1522,10 +1407,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
-<<<<<<< HEAD
-=======
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           // Check if user can rate
           FutureBuilder<bool>(
             future: _canRateFuture,
@@ -1555,44 +1437,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               return _buildRatingForm();
             },
           ),
-<<<<<<< HEAD
-          TextField(
-            controller: _ratingController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Write a comment (optional)',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _submittingRating ? null : _submitRating,
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: primaryGreen),
-                  child: _submittingRating
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white)))
-                      : const Text('Submit Rating'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text('Note: Ratings become active after your order is delivered.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ],
       ),
     );
@@ -1706,12 +1550,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     try {
       // Check if user has delivered order for this product
-<<<<<<< HEAD
-      return await FirestoreService.hasUserDeliveredOrderForProduct(
-        authUser.uid,
-        widget.product.id!,
-      );
-=======
       final canRate = await FirestoreService.hasUserDeliveredOrderForProduct(
         authUser.uid,
         widget.product.id!,
@@ -1735,7 +1573,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
 
       return canRate;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     } catch (e) {
       print('Error checking if user can rate: $e');
       return false;
@@ -1813,15 +1650,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-<<<<<<< HEAD
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue[300]!),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.shopping_bag, color: Colors.blue[800]),
-=======
             color: primaryGreen.withOpacity(0.08),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: primaryGreen.withOpacity(0.3)),
@@ -1829,7 +1657,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Row(
             children: [
               Icon(Icons.shopping_bag, color: primaryGreen),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -1840,11 +1667,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-<<<<<<< HEAD
-                        color: Colors.blue[800],
-=======
                         color: primaryGreen,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1908,16 +1731,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: ElevatedButton(
                       onPressed: null, // Disabled
                       style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
-                        backgroundColor: Colors.grey[300],
-                        minimumSize: const Size(double.infinity, 50),
-=======
                   backgroundColor: Colors.grey[300],
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                       child: Text(
                         'Submit Rating',
@@ -1938,9 +1756,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-<<<<<<< HEAD
-        Text('Leave a rating', style: TextStyle(fontWeight: FontWeight.w600)),
-=======
         Text(
           _hasUserRated ? 'Edit your rating' : 'Leave a rating',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -1971,7 +1786,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ],
             ),
           ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         const SizedBox(height: 8),
         Row(
           children: List.generate(5, (i) {
@@ -1993,18 +1807,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         TextField(
           controller: _ratingController,
           maxLines: 3,
-<<<<<<< HEAD
-          decoration: InputDecoration(
-            hintText: 'Write a comment (optional)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-=======
           style: TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Write a comment (optional)',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             filled: true,
             fillColor: Colors.white,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
@@ -2016,17 +1824,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: ElevatedButton(
                 onPressed: _submittingRating ? null : _submitRating,
                 style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
-                  backgroundColor: primaryGreen,
-                  minimumSize: const Size(double.infinity, 50),
-=======
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   backgroundColor: primaryGreen,
                   disabledBackgroundColor: Colors.grey,
                   minimumSize: const Size.fromHeight(50),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 ),
                 child: _submittingRating
                     ? const SizedBox(
@@ -2036,14 +1839,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             strokeWidth: 2,
                             valueColor:
                                 AlwaysStoppedAnimation<Color>(Colors.white)))
-<<<<<<< HEAD
-                    : const Text('Submit Rating'),
-=======
                     : Text(
                         _hasUserRated ? 'Update Rating' : 'Submit Rating',
                         style: TextStyle(color: Colors.white),
                       ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
             ),
           ],
@@ -2069,15 +1868,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    // Get stock based on selected option
-    final stock = _isSelectingMainProduct
-        ? widget.product.stock_quantity
-        : (_selectedOption as ProductVariantModel).stock;
-=======
     // Get stock based on selected option (live)
     final stock = _currentStock();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
     return Scaffold(
       body: CustomScrollView(
@@ -2143,53 +1935,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     // Variant Selector
                     _buildVariantSelector(),
 
-<<<<<<< HEAD
-                    // Stock Status
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: stock! > 0
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: stock > 0
-                              ? Colors.green.withOpacity(0.3)
-                              : Colors.red.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            stock! > 0
-                                ? Icons.check_circle_rounded
-                                : Icons.cancel_rounded,
-                            color: stock > 0 ? Colors.green : Colors.red,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            stock > 0
-                                ? '$stock items in stock'
-                                : 'Out of stock',
-                            style: TextStyle(
-                              color: stock > 0
-                                  ? Colors.green[800]
-                                  : Colors.red[800],
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     // Product Information
                     _buildProductInfoSection(),
 
@@ -2271,11 +2016,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Row(
         children: [
-<<<<<<< HEAD
-          Expanded(
-            child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _addToCart : null,
-=======
           // Cart Icon Button (small, outlined)
           Container(
             decoration: BoxDecoration(
@@ -2309,81 +2049,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Expanded(
             child: ElevatedButton(
               onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 backgroundColor: primaryGreen,
                 disabledBackgroundColor: Colors.grey,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-<<<<<<< HEAD
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-              child: _addingToCart
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined),
-                        SizedBox(width: 8),
-                        Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: stock > 0 && !_addingToCart ? _buyNow : null,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                backgroundColor: Colors.orange,
-                disabledBackgroundColor: Colors.grey,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-=======
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 3,
                 shadowColor: primaryGreen.withOpacity(0.3),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-<<<<<<< HEAD
-                  Icon(Icons.flash_on),
-                  SizedBox(width: 8),
-                  Text(
-                    'Buy Now',
-                    style: TextStyle(
-                      fontSize: 16,
-=======
                   Icon(Icons.flash_on, size: 22),
                   SizedBox(width: 10),
                   Text(
                     'Buy Now',
                     style: TextStyle(
                       fontSize: 18,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       fontWeight: FontWeight.bold,
                     ),
                   ),

@@ -95,13 +95,10 @@ class AttributeService {
     await _attributeCollection.doc(id).update({'is_archived': true});
   }
 
-<<<<<<< HEAD
   Future<void> unarchiveAttribute(String id) async {
     await _attributeCollection.doc(id).update({'is_archived': false});
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Future<void> archiveAttributeValue(String id) async {
     await _attributeValueCollection.doc(id).update({'is_archived': true});
   }

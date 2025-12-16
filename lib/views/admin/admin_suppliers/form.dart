@@ -20,12 +20,8 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
   late TextEditingController _contactController;
   late TextEditingController _contactPersonController;
 
-<<<<<<< HEAD
   bool _isSaving = false;
   int _currentStep = 0;
-=======
-  bool _isArchived = false;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   @override
   void initState() {
@@ -38,7 +34,6 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
     _contactController = TextEditingController(text: supplier?.contact ?? '');
     _contactPersonController =
         TextEditingController(text: supplier?.contact_person ?? '');
-<<<<<<< HEAD
   }
 
   @override
@@ -259,16 +254,11 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
         ],
       ),
     );
-=======
-
-    _isArchived = supplier?.is_archived ?? false;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   Future<void> _saveSupplier() async {
     if (!_formKey.currentState!.validate()) return;
 
-<<<<<<< HEAD
     setState(() => _isSaving = true);
 
     try {
@@ -311,34 +301,10 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-=======
-    final id =
-        widget.supplier?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-
-    final supplier = SupplierModel(
-      id: id,
-      name: _nameController.text.trim(),
-      address: _addressController.text.trim(),
-      contact: _contactController.text.trim(),
-      contact_person: _contactPersonController.text.trim(),
-      is_archived: _isArchived,
-      created_at: widget.supplier?.created_at ?? DateTime.now(),
-      updated_at: DateTime.now(),
-    );
-
-    if (widget.supplier == null) {
-      await _supplierService.createSupplier(supplier);
-    } else {
-      await _supplierService.updateSupplier(supplier);
-    }
-
-    if (context.mounted) Navigator.pop(context);
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     List<Step> steps = [
       Step(
         title: const Text('Basic Info'),
@@ -451,82 +417,6 @@ class _AdminSupplierFormState extends State<AdminSupplierForm> {
               steps: steps,
             ),
           ),
-=======
-    return AdminLayout(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // BACK BUTTON
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context),
-            ),
-
-            const SizedBox(height: 8),
-
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  // NAME
-                  TextFormField(
-                    controller: _nameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Supplier Name'),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ADDRESS
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(labelText: 'Address'),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // CONTACT
-                  TextFormField(
-                    controller: _contactController,
-                    decoration:
-                        const InputDecoration(labelText: 'Contact Number'),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // CONTACT PERSON
-                  TextFormField(
-                    controller: _contactPersonController,
-                    decoration:
-                        const InputDecoration(labelText: 'Contact Person'),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  /// ARCHIVED SWITCH
-                  SwitchListTile(
-                    title: const Text('Archived'),
-                    value: _isArchived,
-                    onChanged: (val) => setState(() => _isArchived = val),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: _saveSupplier,
-                    child: Text(widget.supplier == null ? 'Create' : 'Update'),
-                  ),
-                ],
-              ),
-            ),
-          ],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );

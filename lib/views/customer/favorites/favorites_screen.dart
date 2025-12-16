@@ -5,12 +5,10 @@ import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../models/product.dart';
 import '../../../services/auth_service.dart';
-<<<<<<< HEAD
-=======
 import '../../../firestore_service.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import '../../auth/login_screen.dart';
 import '../product/product_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class FavoritesScreen extends StatefulWidget {
   final UserModel? user;
@@ -28,10 +26,7 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final Color primaryGreen = const Color(0xFF2C8610);
-<<<<<<< HEAD
-=======
   String _selectedCategoryId = 'All';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   @override
   Widget build(BuildContext context) {
@@ -257,20 +252,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               );
             }
 
-<<<<<<< HEAD
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.7,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return _buildProductCard(products[index]);
-              },
-=======
             final filtered = _selectedCategoryId == 'All'
                 ? products
                 : products
@@ -323,7 +304,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   ),
                 ),
               ],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             );
           },
         );
@@ -434,11 +414,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-<<<<<<< HEAD
-                        '\$${product.sale_price.toStringAsFixed(2)}',
-=======
-                        '\₱${product.sale_price.toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                        '₱${NumberFormat('#,##0.00').format(product.sale_price)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -448,11 +424,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       if (product.base_price > product.sale_price) ...[
                         const SizedBox(width: 8),
                         Text(
-<<<<<<< HEAD
-                          '\$${product.base_price.toStringAsFixed(2)}',
-=======
-                          '\₱${product.base_price.toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                          '₱${NumberFormat('#,##0.00').format(product.base_price)}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -490,8 +462,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-<<<<<<< HEAD
-=======
 
   Widget _buildCategoryFilter() {
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -540,5 +510,4 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       },
     );
   }
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 }

@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-<<<<<<< HEAD
 import 'package:flutter/services.dart';
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'package:printing/printing.dart';
 import '../../../firestore_service.dart';
 import '../../../layouts/admin_layout.dart';
@@ -109,13 +106,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   ) async {
     final pdf = pw.Document();
 
-<<<<<<< HEAD
-=======
-    // Font for PDF (standard)
-    final font = await PdfGoogleFonts.openSansRegular();
-    final fontBold = await PdfGoogleFonts.openSansBold();
-
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -124,12 +114,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
             pw.Header(
               level: 0,
               child: pw.Text('Sales Report',
-<<<<<<< HEAD
                   style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold, fontSize: 24)),
-=======
-                  style: pw.TextStyle(font: fontBold, fontSize: 24)),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ),
             pw.SizedBox(height: 20),
             pw.Row(
@@ -137,13 +123,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
               children: [
                 pw.Text(
                     'Generated on: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
-<<<<<<< HEAD
                     style:
                         pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
-=======
-                    style: pw.TextStyle(
-                        font: font, fontSize: 12, color: PdfColors.grey700)),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ],
             ),
             pw.SizedBox(height: 20),
@@ -157,34 +138,18 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
                   pw.Column(children: [
-<<<<<<< HEAD
                     pw.Text('Total Revenue', style: pw.TextStyle(fontSize: 12)),
                     pw.Text('\$${totalRevenue.toStringAsFixed(2)}',
                         style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
-=======
-                    pw.Text('Total Revenue',
-                        style: pw.TextStyle(font: font, fontSize: 12)),
-                    pw.Text('\$${totalRevenue.toStringAsFixed(2)}',
-                        style: pw.TextStyle(
-                            font: fontBold,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             fontSize: 18,
                             color: PdfColors.green700)),
                   ]),
                   pw.Column(children: [
-<<<<<<< HEAD
                     pw.Text('Total Orders', style: pw.TextStyle(fontSize: 12)),
                     pw.Text('$totalOrders',
                         style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
-=======
-                    pw.Text('Total Orders',
-                        style: pw.TextStyle(font: font, fontSize: 12)),
-                    pw.Text('$totalOrders',
-                        style: pw.TextStyle(
-                            font: fontBold,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             fontSize: 18,
                             color: PdfColors.blue700)),
                   ]),
@@ -193,12 +158,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
             ),
             pw.SizedBox(height: 30),
             pw.Text('Daily Breakdown',
-<<<<<<< HEAD
                 style:
                     pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-=======
-                style: pw.TextStyle(font: fontBold, fontSize: 16)),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
               headers: ['Date', 'Orders', 'Revenue'],
@@ -210,11 +171,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 ];
               }).toList(),
               border: pw.TableBorder.all(color: PdfColors.grey300),
-<<<<<<< HEAD
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-=======
-              headerStyle: pw.TextStyle(font: fontBold),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               headerDecoration:
                   const pw.BoxDecoration(color: PdfColors.grey100),
               cellAlignments: {
@@ -237,10 +194,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
-<<<<<<< HEAD
       selectedRoute: '/admin/sales-report',
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Container(
         color: _primaryLight.withOpacity(0.3),
         child: Padding(
@@ -427,81 +381,83 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Summary Cards - Responsive Grid
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 600;
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: isWide ? 4 : 2,
-                        childAspectRatio: isWide ? 2.0 : 1.8,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        children: [
-                          _buildSummaryCard(
-                            'Total Revenue',
-                            '\$${totalRevenue.toStringAsFixed(2)}',
-                            _accentColor,
-                            Icons.attach_money_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Delivered Orders',
-                            '$totalOrders',
-                            Colors.orange,
-                            Icons.shopping_bag_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Average Order',
-                            '\$${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
-                            Colors.purple,
-                            Icons.trending_up_rounded,
-                          ),
-                          _buildSummaryCard(
-                            'Time Period',
-                            _selectedFilter,
-                            Colors.blue,
-                            Icons.calendar_today_rounded,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                  // Summary + Charts + Table in a single scrollable area
+                  Expanded(
+                    child: sortedData.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.bar_chart_rounded,
+                                    size: 80, color: Colors.grey.shade300),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No sales data available',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Delivered orders will appear here',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500),
+                                ),
+                              ],
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Summary Cards - Responsive Grid
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final isWide =
+                                        constraints.maxWidth > 600;
+                                    return GridView.count(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      crossAxisCount: isWide ? 4 : 2,
+                                      childAspectRatio:
+                                          isWide ? 2.0 : 1.8,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      children: [
+                                        _buildSummaryCard(
+                                          'Total Revenue',
+                                          '\$${totalRevenue.toStringAsFixed(2)}',
+                                          _accentColor,
+                                          Icons.attach_money_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Delivered Orders',
+                                          '$totalOrders',
+                                          Colors.orange,
+                                          Icons.shopping_bag_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Average Order',
+                                          '\$${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
+                                          Colors.purple,
+                                          Icons.trending_up_rounded,
+                                        ),
+                                        _buildSummaryCard(
+                                          'Time Period',
+                                          _selectedFilter,
+                                          Colors.blue,
+                                          Icons.calendar_today_rounded,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 24),
 
-                  // Charts Section - Flexible with scroll
-                  if (sortedData.isEmpty)
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.bar_chart_rounded,
-                                size: 80, color: Colors.grey.shade300),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No sales data available',
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Delivered orders will appear here',
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey.shade500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                                // Charts Section
                             // Revenue Chart
                             Container(
                               padding: const EdgeInsets.all(20),
@@ -668,7 +624,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                                       .format(date))),
                                               DataCell(Text(
                                                   data['count'].toString())),
-<<<<<<< HEAD
                                               DataCell(
                                                 Text(
                                                   '\$${(data['revenue'] as double).toStringAsFixed(2)}',
@@ -678,15 +633,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                                   ),
                                                 ),
                                               ),
-=======
-                                              DataCell(Text(
-                                                '\$${(data['revenue'] as double).toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _accentColor,
-                                                ),
-                                              )),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                                             ],
                                           );
                                         }).toList(),

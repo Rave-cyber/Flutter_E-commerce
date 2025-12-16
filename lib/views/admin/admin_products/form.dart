@@ -81,11 +81,15 @@ class _AdminProductFormState extends State<AdminProductForm> {
     _imageUrl = product?.image ?? '';
     _isArchived = product?.is_archived ?? false;
 
+    // Add listener for name changes to update SKU
+    _nameController.addListener(_updateSKU);
+
     _initData();
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_updateSKU);
     _nameController.dispose();
     _descController.dispose();
     _basePriceController.dispose();
@@ -93,7 +97,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
     super.dispose();
   }
 
-<<<<<<< HEAD
   /// Generate SKU based on category, brand, and timestamp
   String _generateSKU(
       CategoryModel category, BrandModel brand, String productName) {
@@ -120,7 +123,8 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   /// Update SKU when category, brand, or name changes
   void _updateSKU() {
-    if (_selectedCategory != null &&
+    if (mounted &&
+        _selectedCategory != null &&
         _selectedBrand != null &&
         _nameController.text.isNotEmpty) {
       setState(() {
@@ -130,8 +134,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
     }
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Future<void> _initData() async {
     await _loadDropdowns();
     await _loadAttributes();
@@ -139,33 +141,55 @@ class _AdminProductFormState extends State<AdminProductForm> {
     if (widget.product != null) {
       await _loadExistingVariants(widget.product!.id);
     }
-    setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _loadDropdowns() async {
     final categories = await _categoryService.getCategories().first;
     final brands = await _brandService.getBrands().first;
 
-    setState(() {
-      _categories = categories;
-      _brands = brands;
+    if (mounted) {
+      setState(() {
+        _categories = categories;
+        _brands = brands;
 
-      if (widget.product != null) {
-        _selectedCategory = categories.isNotEmpty
-            ? categories.firstWhere(
+        if (widget.product != null) {
+          // Find category by ID, only from non-archived categories
+          try {
+            _selectedCategory = categories.firstWhere(
+              (c) => c.id == widget.product!.category_id && !c.is_archived,
+            );
+          } catch (_) {
+            // If not found or archived, try to find any matching category
+            try {
+              _selectedCategory = categories.firstWhere(
                 (c) => c.id == widget.product!.category_id,
-                orElse: () => categories[0],
-              )
-            : null;
+              );
+            } catch (_) {
+              _selectedCategory = null;
+            }
+          }
 
-        _selectedBrand = brands.isNotEmpty
-            ? brands.firstWhere(
+          // Find brand by ID, only from non-archived brands
+          try {
+            _selectedBrand = brands.firstWhere(
+              (b) => b.id == widget.product!.brand_id && !b.is_archived,
+            );
+          } catch (_) {
+            // If not found or archived, try to find any matching brand
+            try {
+              _selectedBrand = brands.firstWhere(
                 (b) => b.id == widget.product!.brand_id,
-                orElse: () => brands[0],
-              )
-            : null;
-      }
-    });
+              );
+            } catch (_) {
+              _selectedBrand = null;
+            }
+          }
+        }
+      });
+    }
   }
 
   Future<void> _loadAttributes() async {
@@ -176,10 +200,12 @@ class _AdminProductFormState extends State<AdminProductForm> {
       valuesMap[attr.id] = await _attributeService.getAttributeValues(attr.id);
     }
 
-    setState(() {
-      _attributes = attributes;
-      _attributeValues = valuesMap;
-    });
+    if (mounted) {
+      setState(() {
+        _attributes = attributes;
+        _attributeValues = valuesMap;
+      });
+    }
   }
 
   /// Load existing variants and their attribute pairs for editing
@@ -202,9 +228,11 @@ class _AdminProductFormState extends State<AdminProductForm> {
         entries.add(_VariantEntry(variant: v, attributes: uiPairs));
       }
 
-      setState(() {
-        _variants = entries;
-      });
+      if (mounted) {
+        setState(() {
+          _variants = entries;
+        });
+      }
     } catch (e) {
       // ignore or show error
       debugPrint('Failed loading existing variants: $e');
@@ -213,7 +241,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
 
   Future<void> _pickImage() async {
     final picked = await _productService.pickImage();
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _imageUrl = picked.url;
       });
@@ -229,15 +257,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
         image: '',
         base_price: 0,
         sale_price: 0,
-<<<<<<< HEAD
         is_archived: false,
         sku: _generatedSku.isNotEmpty
             ? _generateVariantSKU(_generatedSku, _variants.length)
             : null,
-=======
-        stock: 0,
-        is_archived: false,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         created_at: DateTime.now(),
         updated_at: DateTime.now(),
       );
@@ -248,7 +271,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
   void _removeVariant(int index) {
     setState(() {
       _variants.removeAt(index);
-<<<<<<< HEAD
       // Regenerate SKUs for remaining variants
       _variants.asMap().entries.forEach((entry) {
         if (_generatedSku.isNotEmpty) {
@@ -256,8 +278,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
               _generateVariantSKU(_generatedSku, entry.key);
         }
       });
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     });
   }
 
@@ -372,7 +392,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
               ),
             ),
           ),
-<<<<<<< HEAD
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -388,9 +407,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
               ),
             ),
           ),
-=======
-          const Divider(height: 1),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           Padding(
             padding: const EdgeInsets.all(20),
             child: child,
@@ -407,27 +423,19 @@ class _AdminProductFormState extends State<AdminProductForm> {
     bool obscureText = false,
     TextInputType? keyboardType,
     int maxLines = 1,
-<<<<<<< HEAD
     bool required = false,
     bool readOnly = false,
     VoidCallback? onTap,
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLines: maxLines,
-<<<<<<< HEAD
       readOnly: readOnly,
       onTap: onTap,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
-=======
-      decoration: InputDecoration(
-        labelText: label,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         prefixIcon: icon != null ? Icon(icon) : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -441,17 +449,10 @@ class _AdminProductFormState extends State<AdminProductForm> {
           borderSide: const BorderSide(color: Colors.green),
         ),
         filled: true,
-<<<<<<< HEAD
         fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
       ),
       validator: (value) {
         if (required && (value == null || value.isEmpty)) {
-=======
-        fillColor: Colors.grey.shade50,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           return 'Please enter $label';
         }
         return null;
@@ -466,10 +467,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
     required void Function(T?) onChanged,
     String? Function(T?)? validator,
     IconData? prefixIcon,
-<<<<<<< HEAD
     bool required = false,
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }) {
     return DropdownButtonFormField<T>(
       value: value,
@@ -477,11 +475,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
       onChanged: onChanged,
       validator: validator,
       decoration: InputDecoration(
-<<<<<<< HEAD
         labelText: required ? '$labelText *' : labelText,
-=======
-        labelText: labelText,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -524,11 +518,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
             child: imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
-<<<<<<< HEAD
                     fit: BoxFit.contain,
-=======
-                    fit: BoxFit.cover,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     errorBuilder: (context, error, stackTrace) {
                       return _buildImagePlaceholder();
                     },
@@ -715,14 +705,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
             _nameController,
             'Product Name',
             icon: Icons.shopping_bag,
-<<<<<<< HEAD
             required: true,
-            onTap: () {
-              // Update SKU when name changes
-              _nameController.addListener(_updateSKU);
-            },
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
           const SizedBox(height: 16),
           _buildTextField(
@@ -732,7 +715,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
             maxLines: 4,
           ),
           const SizedBox(height: 16),
-<<<<<<< HEAD
           _buildTextField(
             TextEditingController(text: _generatedSku),
             'SKU (Auto-Generated)',
@@ -740,54 +722,54 @@ class _AdminProductFormState extends State<AdminProductForm> {
             readOnly: true,
           ),
           const SizedBox(height: 16),
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
-          _buildDropdown<CategoryModel>(
+          _buildDropdown<String>(
             labelText: 'Category',
-            value: _selectedCategory,
+            value: _selectedCategory?.id,
             items: _categories
+                .where((c) => !c.is_archived) // Filter out archived categories
                 .map((c) => DropdownMenuItem(
-                      value: c,
+                      value: c.id,
                       child: Text(c.name),
                     ))
                 .toList(),
-<<<<<<< HEAD
             onChanged: (val) {
-              setState(() => _selectedCategory = val);
-              _updateSKU();
+              if (mounted) {
+                setState(() {
+                  _selectedCategory = val != null
+                      ? _categories.firstWhere((c) => c.id == val)
+                      : null;
+                });
+                _updateSKU();
+              }
             },
             prefixIcon: Icons.category,
             validator: (val) => val == null ? 'Please select a category' : null,
             required: true,
-=======
-            onChanged: (val) => setState(() => _selectedCategory = val),
-            prefixIcon: Icons.category,
-            validator: (val) => val == null ? 'Please select a category' : null,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
           const SizedBox(height: 16),
-          _buildDropdown<BrandModel>(
+          _buildDropdown<String>(
             labelText: 'Brand',
-            value: _selectedBrand,
+            value: _selectedBrand?.id,
             items: _brands
+                .where((b) => !b.is_archived) // Filter out archived brands
                 .map((b) => DropdownMenuItem(
-                      value: b,
+                      value: b.id,
                       child: Text(b.name),
                     ))
                 .toList(),
-<<<<<<< HEAD
             onChanged: (val) {
-              setState(() => _selectedBrand = val);
-              _updateSKU();
+              if (mounted) {
+                setState(() {
+                  _selectedBrand = val != null
+                      ? _brands.firstWhere((b) => b.id == val)
+                      : null;
+                });
+                _updateSKU();
+              }
             },
             prefixIcon: Icons.storefront,
             validator: (val) => val == null ? 'Please select a brand' : null,
             required: true,
-=======
-            onChanged: (val) => setState(() => _selectedBrand = val),
-            prefixIcon: Icons.storefront,
-            validator: (val) => val == null ? 'Please select a brand' : null,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
         ],
       ),
@@ -804,20 +786,14 @@ class _AdminProductFormState extends State<AdminProductForm> {
             _basePriceController,
             'Base Price',
             icon: Icons.monetization_on,
-<<<<<<< HEAD
             keyboardType: TextInputType.number,
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
           const SizedBox(height: 16),
           _buildTextField(
             _salePriceController,
             'Sale Price',
             icon: Icons.local_offer,
-<<<<<<< HEAD
             keyboardType: TextInputType.number,
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ),
         ],
       ),
@@ -923,11 +899,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                           initialValue: variant.name,
                           decoration: InputDecoration(
                             labelText: 'Variant Name',
-<<<<<<< HEAD
                             prefixIcon: const Icon(Icons.style),
-=======
-                            prefixIcon: const Icon(Icons.title),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -949,7 +921,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
                         ),
                         const SizedBox(height: 16),
 
-<<<<<<< HEAD
                         // Variant SKU (Auto-generated, read-only)
                         TextFormField(
                           initialValue: variant.sku ?? '',
@@ -975,8 +946,6 @@ class _AdminProductFormState extends State<AdminProductForm> {
                         ),
                         const SizedBox(height: 16),
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         // Variant Image
                         _buildImagePicker(
                           imageUrl: variant.image,
@@ -995,11 +964,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                         Column(
                           children: [
                             TextFormField(
-<<<<<<< HEAD
                               initialValue: '',
-=======
-                              initialValue: variant.base_price.toString(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                               decoration: InputDecoration(
                                 labelText: 'Base Price',
                                 prefixIcon: const Icon(Icons.monetization_on),
@@ -1027,11 +992,7 @@ class _AdminProductFormState extends State<AdminProductForm> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-<<<<<<< HEAD
                               initialValue: '',
-=======
-                              initialValue: variant.sale_price.toString(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                               decoration: InputDecoration(
                                 labelText: 'Sale Price',
                                 prefixIcon: const Icon(Icons.local_offer),
@@ -1323,21 +1284,13 @@ class _AdminProductFormState extends State<AdminProductForm> {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-<<<<<<< HEAD
               color: Colors.black,
-=======
-              color: Colors.green,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ),
           ),
           backgroundColor: Colors.green.shade50,
           elevation: 0,
           leading: IconButton(
-<<<<<<< HEAD
             icon: Icon(Icons.arrow_back, color: Colors.black),
-=======
-            icon: Icon(Icons.arrow_back, color: Colors.green.shade800),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             onPressed: () => Navigator.pop(context),
           ),
         ),

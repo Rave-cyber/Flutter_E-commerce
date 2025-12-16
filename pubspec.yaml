@@ -14,10 +14,7 @@ dependencies:
   firebase_core: ^2.24.0
   cloud_firestore: ^4.15.1
   firebase_auth: ^4.18.1
-<<<<<<< HEAD
   firebase_storage: ^11.7.0
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   google_sign_in: ^6.1.0
   provider: ^6.1.1
   lottie: ^3.3.2
@@ -26,22 +23,14 @@ dependencies:
   shimmer: ^3.0.0
   cloudinary_public: ^0.23.1
   image_picker: ^1.0.8
-<<<<<<< HEAD
-=======
-  intl: ^0.19.0
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   collection: ^1.17.0
   fl_chart: ^0.66.0
   pdf: ^3.10.0
   printing: ^5.11.0
   http: ^1.1.0
   shared_preferences: ^2.5.4
-<<<<<<< HEAD
   intl: ^0.19.0
-=======
-  share_plus: ^7.2.0
-  path_provider: ^2.1.2
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+  share_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:

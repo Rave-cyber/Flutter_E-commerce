@@ -65,10 +65,7 @@ class ProductFilterWidget extends StatelessWidget {
                 child: DropdownButton<int>(
                   value: itemsPerPage,
                   items: const [
-<<<<<<< HEAD
                     DropdownMenuItem(value: 5, child: Text('5')),
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     DropdownMenuItem(value: 10, child: Text('10')),
                     DropdownMenuItem(value: 25, child: Text('25')),
                     DropdownMenuItem(value: 50, child: Text('50')),

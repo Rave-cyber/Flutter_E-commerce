@@ -20,13 +20,9 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
   late TextEditingController _streetAddressController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
-<<<<<<< HEAD
 
   bool _isSaving = false;
   int _currentStep = 0;
-=======
-  bool _isArchived = false;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   // Address dropdown variables
   List<Map<String, dynamic>> _regions = [];
@@ -54,11 +50,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         TextEditingController(text: warehouse?.latitude.toString() ?? '');
     _longitudeController =
         TextEditingController(text: warehouse?.longitude.toString() ?? '');
-<<<<<<< HEAD
 
-=======
-    _isArchived = warehouse?.is_archived ?? false;
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     _loadRegions();
   }
 
@@ -86,7 +78,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
       setState(() {
         _isLoadingRegions = false;
       });
-<<<<<<< HEAD
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -95,14 +86,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
           ),
         );
       }
-=======
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to load regions'),
-          backgroundColor: Colors.red,
-        ),
-      );
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     }
   }
 
@@ -133,7 +116,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         setState(() {
           _isLoadingProvinces = false;
         });
-<<<<<<< HEAD
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -142,14 +124,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
             ),
           );
         }
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load provinces'),
-            backgroundColor: Colors.red,
-          ),
-        );
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       }
     }
   }
@@ -180,7 +154,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         setState(() {
           _isLoadingCities = false;
         });
-<<<<<<< HEAD
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -189,14 +162,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
             ),
           );
         }
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load cities/municipalities'),
-            backgroundColor: Colors.red,
-          ),
-        );
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       }
     }
   }
@@ -225,7 +190,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
         setState(() {
           _isLoadingBarangays = false;
         });
-<<<<<<< HEAD
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -234,14 +198,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
             ),
           );
         }
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load barangays'),
-            backgroundColor: Colors.red,
-          ),
-        );
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       }
     }
   }
@@ -268,7 +224,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     return parts.join(', ');
   }
 
-<<<<<<< HEAD
   // Stepper navigation methods
   void _nextStep() {
     if (_validateCurrentStep()) {
@@ -754,8 +709,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     );
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Future<void> _saveWarehouse() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -772,7 +725,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
       return;
     }
 
-<<<<<<< HEAD
     setState(() => _isSaving = true);
 
     try {
@@ -814,33 +766,10 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-=======
-    final id = widget.warehouse?.id ??
-        DateTime.now().millisecondsSinceEpoch.toString();
-
-    final warehouse = WarehouseModel(
-      id: id,
-      name: _nameController.text.trim(),
-      latitude: double.parse(_latitudeController.text.trim()),
-      longitude: double.parse(_longitudeController.text.trim()),
-      is_archived: _isArchived,
-      created_at: widget.warehouse?.created_at ?? DateTime.now(),
-      updated_at: DateTime.now(),
-    );
-
-    if (widget.warehouse == null) {
-      await _warehouseService.createWarehouse(warehouse);
-    } else {
-      await _warehouseService.updateWarehouse(warehouse);
-    }
-
-    if (context.mounted) Navigator.pop(context);
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   }
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     List<Step> steps = [
       Step(
         title: const Text('Basic Info'),
@@ -959,330 +888,6 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
               steps: steps,
             ),
           ),
-=======
-    return AdminLayout(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // BACK BUTTON
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context),
-            ),
-
-            const SizedBox(height: 8),
-
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Warehouse Name',
-                      prefixIcon: Icon(Icons.warehouse),
-                    ),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ADDRESS SECTION
-                  const Text(
-                    'Complete Address',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // STREET ADDRESS
-                  TextFormField(
-                    controller: _streetAddressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Street Address',
-                      prefixIcon: Icon(Icons.home),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // REGION DROPDOWN
-                  DropdownButtonFormField<Map<String, dynamic>>(
-                    value: _selectedRegion,
-                    decoration: const InputDecoration(
-                      labelText: 'Region',
-                      prefixIcon: Icon(Icons.location_on),
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _isLoadingRegions
-                        ? [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Loading regions...'),
-                            ),
-                          ]
-                        : _regions.map((region) {
-                            return DropdownMenuItem(
-                              value: region,
-                              child:
-                                  Text(region['regionName'] ?? region['name']),
-                            );
-                          }).toList(),
-                    onChanged: _isLoadingRegions ? null : _onRegionChanged,
-                    validator: (value) =>
-                        value == null ? 'Please select a region' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // PROVINCE DROPDOWN
-                  DropdownButtonFormField<Map<String, dynamic>>(
-                    value: _selectedProvince,
-                    decoration: InputDecoration(
-                      labelText: 'Province',
-                      prefixIcon: const Icon(Icons.location_on),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _isLoadingProvinces
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : null,
-                    ),
-                    items: _provinces.isEmpty && !_isLoadingProvinces
-                        ? [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Select a region first'),
-                            ),
-                          ]
-                        : _provinces.map((province) {
-                            return DropdownMenuItem(
-                              value: province,
-                              child: Text(province['name']),
-                            );
-                          }).toList(),
-                    onChanged: _isLoadingProvinces ? null : _onProvinceChanged,
-                    validator: (value) =>
-                        value == null ? 'Please select a province' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // CITY/MUNICIPALITY DROPDOWN
-                  DropdownButtonFormField<Map<String, dynamic>>(
-                    value: _selectedCityMunicipality,
-                    decoration: InputDecoration(
-                      labelText: 'City/Municipality',
-                      prefixIcon: const Icon(Icons.location_on),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _isLoadingCities
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : null,
-                    ),
-                    items: _citiesMunicipalities.isEmpty && !_isLoadingCities
-                        ? [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Select a province first'),
-                            ),
-                          ]
-                        : _citiesMunicipalities.map((cityMunicipality) {
-                            return DropdownMenuItem(
-                              value: cityMunicipality,
-                              child: Text(cityMunicipality['name']),
-                            );
-                          }).toList(),
-                    onChanged:
-                        _isLoadingCities ? null : _onCityMunicipalityChanged,
-                    validator: (value) => value == null
-                        ? 'Please select a city/municipality'
-                        : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // BARANGAY DROPDOWN
-                  DropdownButtonFormField<Map<String, dynamic>>(
-                    value: _selectedBarangay,
-                    decoration: InputDecoration(
-                      labelText: 'Barangay (Optional)',
-                      prefixIcon: const Icon(Icons.location_on),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _isLoadingBarangays
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : null,
-                    ),
-                    items: _barangays.isEmpty && !_isLoadingBarangays
-                        ? [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Select a city/municipality first'),
-                            ),
-                          ]
-                        : _barangays.map((barangay) {
-                            return DropdownMenuItem(
-                              value: barangay,
-                              child: Text(barangay['name']),
-                            );
-                          }).toList(),
-                    onChanged: _isLoadingBarangays
-                        ? null
-                        : (value) {
-                            setState(() {
-                              _selectedBarangay = value;
-                            });
-                          },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // DISPLAY COMPLETE ADDRESS
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Text(
-                      _buildWarehouseAddress().isEmpty
-                          ? 'Complete address will appear here'
-                          : _buildWarehouseAddress(),
-                      style: TextStyle(
-                        color: _buildWarehouseAddress().isEmpty
-                            ? Colors.grey[600]
-                            : Colors.black87,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // COORDINATES SECTION
-                  const Text(
-                    'Coordinates',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _latitudeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Latitude',
-                      prefixIcon: Icon(Icons.my_location),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (val) {
-                      if (val == null || val.isEmpty) {
-                        return 'Required';
-                      }
-                      try {
-                        double.parse(val);
-                        return null;
-                      } catch (e) {
-                        return 'Invalid latitude';
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextFormField(
-                    controller: _longitudeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Longitude',
-                      prefixIcon: Icon(Icons.my_location),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (val) {
-                      if (val == null || val.isEmpty) {
-                        return 'Required';
-                      }
-                      try {
-                        double.parse(val);
-                        return null;
-                      } catch (e) {
-                        return 'Invalid longitude';
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // INFO CARD
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[200]!),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.blue[600],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'You can find coordinates using Google Maps or online coordinate tools. The complete address above helps identify the correct location.',
-                            style: TextStyle(
-                              color: Colors.blue[800],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// ARCHIVE SWITCH
-                  SwitchListTile(
-                    title: const Text('Archived'),
-                    value: _isArchived,
-                    onChanged: (val) => setState(() => _isArchived = val),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: _saveWarehouse,
-                    child: Text(widget.warehouse == null
-                        ? 'Create Warehouse'
-                        : 'Update Warehouse'),
-                  )
-                ],
-              ),
-            ),
-          ],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
     );

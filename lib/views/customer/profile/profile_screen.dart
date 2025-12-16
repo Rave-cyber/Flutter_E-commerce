@@ -2,17 +2,10 @@ import 'package:firebase/views/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-<<<<<<< HEAD
-import '../../customer/checkout/checkout_screen.dart';
-import '../../../models/user_model.dart';
-import '../../../models/customer_model.dart';
-import '../../../services/auth_service.dart';
-=======
 import '../../../models/user_model.dart';
 import '../../../models/customer_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/theme_provider.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import '../../../services/philippine_address_service.dart';
 import '../orders/orders_screen.dart';
 
@@ -37,14 +30,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Color cardColor = Colors.white;
   final Color textPrimary = const Color(0xFF1A1A1A);
   final Color textSecondary = const Color(0xFF64748B);
-<<<<<<< HEAD
-=======
   final Color borderColor = const Color(0xFFE2E8F0);
   final Color successColor = const Color(0xFF10B981);
   final Color errorColor = const Color(0xFFEF4444);
   final Color warningColor = const Color(0xFFF59E0B);
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   String _addressText = '';
 
   @override
@@ -56,16 +46,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-<<<<<<< HEAD
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            backgroundColor: cardColor,
-            expandedHeight: 160,
-=======
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDark;
 
@@ -76,26 +56,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SliverAppBar(
             backgroundColor: isDark ? const Color(0xFF111111) : cardColor,
             expandedHeight: 120,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             floating: false,
             pinned: true,
             elevation: 1,
             shape: const ContinuousRectangleBorder(
               borderRadius: BorderRadius.only(
-<<<<<<< HEAD
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
-              ),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              title: Text(
-                'My Profile',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: textPrimary,
-=======
                 bottomLeft: Radius.circular(24),
                 bottomRight: Radius.circular(24),
               ),
@@ -108,7 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : textPrimary,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   letterSpacing: -0.5,
                 ),
               ),
@@ -123,27 +87,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
-<<<<<<< HEAD
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-=======
                     bottomLeft: Radius.circular(24),
                     bottomRight: Radius.circular(24),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ),
                 ),
               ),
             ),
           ),
           SliverPadding(
-<<<<<<< HEAD
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildProfileHeader(),
-                const SizedBox(height: 32),
-                _buildMenuItems(authService),
-=======
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
@@ -152,7 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItems(authService),
                 const SizedBox(height: 32),
                 _buildVersionInfo(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ]),
             ),
           ),
@@ -162,16 +112,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
-<<<<<<< HEAD
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-=======
     final authService = Provider.of<AuthService>(context);
     final currentUser = authService.currentUser;
 
@@ -183,16 +123,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 16,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             offset: const Offset(0, 4),
           ),
         ],
       ),
-<<<<<<< HEAD
-      padding: const EdgeInsets.all(24),
-=======
       padding: const EdgeInsets.all(20),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Row(
         children: [
           Container(
@@ -206,34 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               boxShadow: [
                 BoxShadow(
                   color: primaryGreen.withOpacity(0.3),
-<<<<<<< HEAD
-                  blurRadius: 12,
-=======
                   blurRadius: 8,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: CircleAvatar(
-<<<<<<< HEAD
-              radius: 48,
-              backgroundColor: Colors.white,
-              backgroundImage: (Provider.of<AuthService>(context)
-                              .currentUser
-                              ?.photoURL !=
-                          null &&
-                      Provider.of<AuthService>(context)
-                          .currentUser!
-                          .photoURL!
-                          .isNotEmpty)
-                  ? NetworkImage(
-                      Provider.of<AuthService>(context).currentUser!.photoURL!)
-                  : null,
-              child: (Provider.of<AuthService>(context).currentUser?.photoURL ??
-                          '')
-                      .isEmpty
-=======
               radius: 42,
               backgroundColor: Colors.white,
               backgroundImage: (currentUser?.photoURL != null &&
@@ -241,7 +154,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ? NetworkImage(currentUser.photoURL!)
                   : null,
               child: (currentUser?.photoURL ?? '').isEmpty
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ? Text(
                       (widget.user.display_name?.isNotEmpty == true
                               ? widget.user.display_name!
@@ -253,25 +165,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           .take(2)
                           .join(),
                       style: const TextStyle(
-<<<<<<< HEAD
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87),
-=======
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     )
                   : null,
             ),
           ),
-<<<<<<< HEAD
-          const SizedBox(width: 20),
-=======
           const SizedBox(width: 16),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,45 +181,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   widget.user.email.split('@').first,
                   style: TextStyle(
-<<<<<<< HEAD
-                    fontSize: 22,
-=======
                     fontSize: 20,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                     letterSpacing: -0.3,
                   ),
                 ),
-<<<<<<< HEAD
-                const SizedBox(height: 6),
-                Text(
-                  widget.user.email,
-                  style: TextStyle(
-                    fontSize: 14,
-=======
                 const SizedBox(height: 4),
                 Text(
                   widget.user.email,
                   style: TextStyle(
                     fontSize: 13,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     color: textSecondary,
                     fontWeight: FontWeight.w400,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-<<<<<<< HEAD
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primaryGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-=======
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -327,7 +206,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: primaryGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(18),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     border: Border.all(
                       color: primaryGreen.withOpacity(0.3),
                       width: 1,
@@ -379,25 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             _buildDivider(),
-<<<<<<< HEAD
-            _buildMenuItem(
-              icon: Icons.location_on_outlined,
-              title: 'Address',
-              subtitle: _addressText.isNotEmpty
-                  ? _addressText
-                  : 'Add your delivery address',
-              onTap: _showEditAddressSheet,
-            ),
-            _buildDivider(),
-            _buildMenuItem(
-              icon: Icons.payment_outlined,
-              title: 'Payment Methods',
-              subtitle: 'Secure payment options',
-              onTap: () => _showGuestMessage(context, 'Payment Methods'),
-            ),
-=======
             _buildAddressSection(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
         const SizedBox(height: 24),
@@ -405,23 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 12),
         _buildMenuItemCard(
           children: [
-<<<<<<< HEAD
-            _buildMenuItem(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              subtitle: 'Customize alerts',
-              onTap: () => _showGuestMessage(context, 'Notification Settings'),
-            ),
-            _buildDivider(),
-            _buildMenuItem(
-              icon: Icons.security_outlined,
-              title: 'Privacy & Security',
-              subtitle: 'Manage your data',
-              onTap: () => _showGuestMessage(context, 'Privacy Settings'),
-            ),
-=======
             _buildAppearanceTile(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
         const SizedBox(height: 24),
@@ -430,17 +274,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildMenuItemCard(
           children: [
             _buildMenuItem(
-<<<<<<< HEAD
-              icon: Icons.help_outline_rounded,
-              title: 'Help & Support',
-              subtitle: 'Get assistance',
-              onTap: () => _showGuestMessage(context, 'Help Center'),
-=======
               icon: Icons.info_outline_rounded,
               title: 'About',
               subtitle: 'App information and version',
               onTap: () => _showAboutDialog(context),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ),
             _buildDivider(),
             _buildMenuItem(
@@ -456,8 +293,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-<<<<<<< HEAD
-=======
   Widget _buildAppearanceTile() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDark;
@@ -501,7 +336,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
@@ -553,21 +387,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: 48,
         decoration: BoxDecoration(
           color: isLogout
-<<<<<<< HEAD
-              ? Colors.red.withOpacity(0.1)
-=======
               ? errorColor.withOpacity(0.1)
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               : primaryGreen.withOpacity(0.1),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(
           icon,
-<<<<<<< HEAD
-          color: isLogout ? Colors.red : primaryGreen,
-=======
           color: isLogout ? errorColor : primaryGreen,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           size: 22,
         ),
       ),
@@ -576,22 +402,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-<<<<<<< HEAD
-          color: isLogout ? Colors.red : textPrimary,
-=======
           color: isLogout ? errorColor : textPrimary,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 13,
-<<<<<<< HEAD
-          color: isLogout ? Colors.red.withOpacity(0.7) : textSecondary,
-=======
           color: isLogout ? errorColor.withOpacity(0.7) : textSecondary,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
       trailing: Container(
@@ -604,19 +422,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Icon(
           Icons.arrow_forward_ios_rounded,
           size: 16,
-<<<<<<< HEAD
-          color: isLogout ? Colors.red : Colors.grey[600],
-=======
           color: isLogout ? errorColor : Colors.grey[600],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         ),
       ),
       onTap: onTap,
     );
   }
 
-<<<<<<< HEAD
-=======
   Widget _buildAddressSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -746,7 +558,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -758,8 +569,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-<<<<<<< HEAD
-=======
   Widget _buildVersionInfo() {
     return Center(
       child: Text(
@@ -772,7 +581,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _showPersonalInfo(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -826,10 +634,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Role',
                 value: widget.user.role.toUpperCase(),
                 valueColor:
-<<<<<<< HEAD
-                    widget.user.role == 'admin' ? Colors.orange : primaryGreen,
-              ),
-=======
                     widget.user.role == 'admin' ? warningColor : successColor,
               ),
               if (widget.customer != null &&
@@ -839,7 +643,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Contact',
                   value: widget.customer!.contact,
                 ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               const SizedBox(height: 24),
               Padding(
                 padding:
@@ -920,11 +723,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-<<<<<<< HEAD
-  void _showGuestMessage(BuildContext context, String feature) {
-=======
   void _showAboutDialog(BuildContext context) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -946,37 +745,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-<<<<<<< HEAD
-                    Icons.construction_rounded,
-=======
                     Icons.shopping_bag_rounded,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     size: 40,
                     color: primaryGreen,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-<<<<<<< HEAD
-                  'Coming Soon',
-=======
                   'Why we built this app',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
                   ),
                 ),
-<<<<<<< HEAD
-                const SizedBox(height: 12),
-                Text(
-                  '$feature is under development and will be available in the next update!',
-=======
                 const SizedBox(height: 8),
                 Text(
                   'This app was crafted to give customers a smooth, modern shopping experience with reliable delivery, transparent pricing, and easy account management.',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -984,8 +769,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 1.5,
                   ),
                 ),
-<<<<<<< HEAD
-=======
                 const SizedBox(height: 16),
                 Text(
                   'Version 1.0.0',
@@ -994,7 +777,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: textSecondary,
                   ),
                 ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
@@ -1006,11 +788,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   child: const Text(
-<<<<<<< HEAD
-                    'Got it',
-=======
                     'Close',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1046,14 +824,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool loadingBarangays = false;
     bool initialized = false;
 
-<<<<<<< HEAD
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-=======
     // Parse existing address
     void parseExistingAddress() {
       if (_addressText.isNotEmpty) {
@@ -1068,15 +838,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       builder: (ctx) {
         return StatefulBuilder(builder: (ctx, setModalState) {
           if (!initialized) {
             initialized = true;
-<<<<<<< HEAD
-=======
             parseExistingAddress();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             Future.microtask(() async {
               try {
                 final r = await PhilippineAddressService.getRegions();
@@ -1084,72 +850,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   regions = r;
                   loadingRegions = false;
                 });
-<<<<<<< HEAD
-              } catch (_) {
-                setModalState(() => loadingRegions = false);
-=======
               } catch (e) {
                 setModalState(() => loadingRegions = false);
                 _showErrorSnackbar('Failed to load regions');
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               }
             });
           }
 
-<<<<<<< HEAD
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Edit Address',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
-                  value: selectedRegion,
-                  decoration: const InputDecoration(
-                    labelText: 'Region',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: loadingRegions
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Loading regions...'),
-                          ),
-                        ]
-                      : regions
-                          .map((region) => DropdownMenuItem(
-                                value: region,
-                                child: Text(
-                                    region['regionName'] ?? region['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingRegions
-                      ? null
-                      : (value) async {
-=======
           return GestureDetector(
             onTap: () => FocusScope.of(ctx).unfocus(),
             child: Container(
@@ -1316,7 +1023,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ))
                             .toList(),
                         onChanged: (value) async {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           setModalState(() {
                             selectedRegion = value;
                             selectedProvince = null;
@@ -1336,47 +1042,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 provinces = p;
                                 loadingProvinces = false;
                               });
-<<<<<<< HEAD
-                            } catch (_) {
-                              setModalState(() => loadingProvinces = false);
-=======
                             } catch (e) {
                               setModalState(() => loadingProvinces = false);
                               _showErrorSnackbar('Failed to load provinces');
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             }
                           } else {
                             setModalState(() => loadingProvinces = false);
                           }
                         },
-<<<<<<< HEAD
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
-                  value: selectedProvince,
-                  decoration: const InputDecoration(
-                    labelText: 'Province',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: provinces.isEmpty && !loadingProvinces
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a region first'),
-                          ),
-                        ]
-                      : provinces
-                          .map((province) => DropdownMenuItem(
-                                value: province,
-                                child: Text(province['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingProvinces
-                      ? null
-                      : (value) async {
-=======
                       ),
                       const SizedBox(height: 16),
 
@@ -1394,7 +1067,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ))
                             .toList(),
                         onChanged: (value) async {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           setModalState(() {
                             selectedProvince = value;
                             selectedCity = null;
@@ -1411,47 +1083,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 cities = c;
                                 loadingCities = false;
                               });
-<<<<<<< HEAD
-                            } catch (_) {
-                              setModalState(() => loadingCities = false);
-=======
                             } catch (e) {
                               setModalState(() => loadingCities = false);
                               _showErrorSnackbar('Failed to load cities');
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             }
                           } else {
                             setModalState(() => loadingCities = false);
                           }
                         },
-<<<<<<< HEAD
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
-                  value: selectedCity,
-                  decoration: const InputDecoration(
-                    labelText: 'City/Municipality',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: cities.isEmpty && !loadingCities
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a province first'),
-                          ),
-                        ]
-                      : cities
-                          .map((city) => DropdownMenuItem(
-                                value: city,
-                                child: Text(city['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingCities
-                      ? null
-                      : (value) async {
-=======
                       ),
                       const SizedBox(height: 16),
 
@@ -1469,7 +1108,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ))
                             .toList(),
                         onChanged: (value) async {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           setModalState(() {
                             selectedCity = value;
                             selectedBarangay = null;
@@ -1485,47 +1123,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 barangays = b;
                                 loadingBarangays = false;
                               });
-<<<<<<< HEAD
-                            } catch (_) {
-                              setModalState(() => loadingBarangays = false);
-=======
                             } catch (e) {
                               setModalState(() => loadingBarangays = false);
                               _showErrorSnackbar('Failed to load barangays');
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             }
                           } else {
                             setModalState(() => loadingBarangays = false);
                           }
                         },
-<<<<<<< HEAD
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<Map<String, dynamic>>(
-                  isExpanded: true,
-                  value: selectedBarangay,
-                  decoration: const InputDecoration(
-                    labelText: 'Barangay (Optional)',
-                    prefixIcon: Icon(Icons.location_on),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: barangays.isEmpty && !loadingBarangays
-                      ? [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('Select a city/municipality first'),
-                          ),
-                        ]
-                      : barangays
-                          .map((brgy) => DropdownMenuItem(
-                                value: brgy,
-                                child: Text(brgy['name']),
-                              ))
-                          .toList(),
-                  onChanged: loadingBarangays
-                      ? null
-                      : (value) {
-=======
                       ),
                       const SizedBox(height: 16),
 
@@ -1543,133 +1148,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ))
                             .toList(),
                         onChanged: (value) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           setModalState(() {
                             selectedBarangay = value;
                           });
                         },
-<<<<<<< HEAD
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: houseController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'House/Unit and Street',
-                    hintText: 'e.g., Unit 3B, 123 Sample St',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: saving
-                        ? null
-                        : () async {
-                            final house = houseController.text.trim();
-                            if (selectedRegion == null ||
-                                selectedProvince == null ||
-                                selectedCity == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Please select your region, province, and city/municipality')),
-                              );
-                              return;
-                            }
-                            if (house.isEmpty || house.length < 3) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Please enter house/unit and street')),
-                              );
-                              return;
-                            }
-                            setModalState(() => saving = true);
-                            try {
-                              final parts = <String>[];
-                              parts.add(house);
-                              if (selectedBarangay != null)
-                                parts.add(selectedBarangay!['name']);
-                              parts.add(selectedCity!['name']);
-                              parts.add(selectedProvince!['name']);
-                              parts.add(selectedRegion!['regionName'] ??
-                                  selectedRegion!['name']);
-                              final finalAddress = parts.join(', ');
-
-                              final auth = Provider.of<AuthService>(context,
-                                  listen: false);
-                              final user = auth.currentUser;
-                              if (user == null) {
-                                throw 'Not logged in';
-                              }
-
-                              final fs = FirebaseFirestore.instance;
-                              final query = await fs
-                                  .collection('customers')
-                                  .where('user_id', isEqualTo: user.uid)
-                                  .limit(1)
-                                  .get();
-                              if (query.docs.isNotEmpty) {
-                                await fs
-                                    .collection('customers')
-                                    .doc(query.docs.first.id)
-                                    .update({'address': finalAddress});
-                              } else {
-                                await fs.collection('customers').add({
-                                  'id': '',
-                                  'user_id': user.uid,
-                                  'firstname': '',
-                                  'middlename': '',
-                                  'lastname': '',
-                                  'address': finalAddress,
-                                  'contact': user.email ?? '',
-                                  'created_at': DateTime.now(),
-                                });
-                              }
-
-                              setState(() {
-                                _addressText = finalAddress;
-                              });
-
-                              if (mounted) Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Address updated')),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text('Failed to update address: $e')),
-                              );
-                            } finally {
-                              if (mounted) setModalState(() => saving = false);
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : const Text('Save Address'),
-                  ),
-                ),
-              ],
-=======
                       ),
                       const SizedBox(height: 24),
 
@@ -1833,7 +1315,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ),
           );
         });
@@ -1841,8 +1322,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-<<<<<<< HEAD
-=======
   Widget _buildFormField({
     required TextEditingController controller,
     required String label,
@@ -1991,6 +1470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showErrorSnackbar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -2011,6 +1491,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSuccessSnackbar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -2030,7 +1511,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _showLogoutConfirmation(BuildContext context, AuthService authService) {
     showDialog(
       context: context,
@@ -2049,21 +1529,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-<<<<<<< HEAD
-                    color: Colors.red.withOpacity(0.1),
-=======
                     color: errorColor.withOpacity(0.1),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.logout_rounded,
                     size: 40,
-<<<<<<< HEAD
-                    color: Colors.red,
-=======
                     color: errorColor,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -2096,11 +1568,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-<<<<<<< HEAD
-                          side: BorderSide(color: Colors.grey[300]!),
-=======
                           side: BorderSide(color: borderColor),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         ),
                         child: Text(
                           'Cancel',
@@ -2129,11 +1597,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
-                          backgroundColor: Colors.red,
-=======
                           backgroundColor: errorColor,
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           minimumSize: const Size(0, 56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

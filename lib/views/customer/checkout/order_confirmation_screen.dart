@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase/firestore_service.dart';
 import 'package:firebase/views/customer/orders/orders_screen.dart';
-
+import 'package:intl/intl.dart';
 class OrderConfirmationScreen extends StatelessWidget {
   final String orderId;
   final double total;
@@ -84,12 +84,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildDetailRow('Order ID', orderId),
                       const Divider(),
-<<<<<<< HEAD
-                      _buildDetailRow('Total Amount', '\$${total.toStringAsFixed(2)}'),
-=======
-                      _buildDetailRow(
-                          'Total Amount', '\₱${total.toStringAsFixed(2)}'),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                      _buildDetailRow('Total Amount', '₱${NumberFormat('#,##0.00').format(total)}'),
                     ],
                   ),
                 ),
@@ -211,7 +206,4 @@ class OrderConfirmationScreen extends StatelessWidget {
     );
   }
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663

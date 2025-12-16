@@ -8,10 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
-<<<<<<< HEAD
-=======
 import 'services/theme_provider.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'firebase_options.dart';
 
 import 'views/splash/splash_screen.dart';

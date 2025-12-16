@@ -7,14 +7,10 @@ list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_windows
   firebase_auth
   firebase_core
-<<<<<<< HEAD
   firebase_storage
-  printing
-=======
   printing
   share_plus
   url_launcher_windows
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

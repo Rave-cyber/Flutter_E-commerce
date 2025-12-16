@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-<<<<<<< HEAD
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
@@ -8,10 +7,6 @@ import 'package:firebase/models/product_variant_model.dart';
 import 'package:firebase/models/user_model.dart';
 import 'package:firebase/services/admin/stock_out_service.dart';
 import 'package:firebase/models/stock_out_model.dart';
-=======
-import 'package:firebase/models/product_variant_model.dart';
-import 'package:firebase/models/user_model.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 import 'models/product.dart'; // Import the correct model
 
 class FirestoreService {
@@ -26,15 +21,22 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       print('Featured products snapshot: ${snapshot.docs.length} documents');
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        print('Featured product data: $data');
-        // ProductModel.fromMap expects the id in the map
-        return ProductModel.fromMap({
-          'id': doc.id,
-          ...data,
-        });
-      }).toList();
+      return snapshot.docs
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            print('Featured product data: $data');
+            // ProductModel.fromMap expects the id in the map
+            return ProductModel.fromMap({
+              'id': doc.id,
+              ...data,
+            });
+          })
+          .toList();
     }).handleError((error) {
       print('Error fetching featured products: $error');
       // Return empty list if query fails
@@ -50,6 +52,11 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
           .map((doc) {
             final data = doc.data();
             return ProductModel.fromMap({
@@ -78,16 +85,23 @@ class FirestoreService {
           .snapshots()
           .map((snapshot) {
         print('All products snapshot: ${snapshot.docs.length} documents');
-        return snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          print(
-              'DEBUG: Product ${doc.id} category field: "${data['category']}"');
-          print('DEBUG: Product ${doc.id} full data: $data');
-          return ProductModel.fromMap({
-            'id': doc.id,
-            ...data,
-          });
-        }).toList();
+        return snapshot.docs
+            .where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              // Filter out variants - variants have 'product_id' field, base products don't
+              return !data.containsKey('product_id');
+            })
+            .map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              print(
+                  'DEBUG: Product ${doc.id} category field: "${data['category']}"');
+              print('DEBUG: Product ${doc.id} full data: $data');
+              return ProductModel.fromMap({
+                'id': doc.id,
+                ...data,
+              });
+            })
+            .toList();
       }).handleError((error) {
         print('Error fetching all products: $error');
         throw error;
@@ -104,10 +118,18 @@ class FirestoreService {
         .map((snapshot) {
       print('Category products snapshot: ${snapshot.docs.length} documents');
       return snapshot.docs
-          .map((doc) => ProductModel.fromMap({
-                'id': doc.id,
-                ...doc.data() as Map<String, dynamic>,
-              }))
+          .where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            // Filter out variants - variants have 'product_id' field, base products don't
+            return !data.containsKey('product_id');
+          })
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return ProductModel.fromMap({
+              'id': doc.id,
+              ...data,
+            });
+          })
           .toList();
     }).handleError((error) {
       print('Error fetching category products: $error');
@@ -169,13 +191,16 @@ class FirestoreService {
     required String productImage,
     required double price,
     required int quantity,
+    String? variantId,
   }) async {
     try {
+      // Use variantId as document ID if it exists, otherwise use productId
+      final docId = variantId ?? productId;
       final cartRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('cart')
-          .doc(productId);
+          .doc(docId);
 
       final doc = await cartRef.get();
       if (doc.exists) {
@@ -186,15 +211,22 @@ class FirestoreService {
         });
       } else {
         // Add new item to cart
-        await cartRef.set({
-          'productId': productId,
+        final cartData = {
+          'productId': productId, // Original product ID
           'productName': productName,
           'productImage': productImage,
           'price': price,
           'quantity': quantity,
           'addedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        };
+        
+        // Add variantId if it's a variant
+        if (variantId != null && variantId.isNotEmpty) {
+          cartData['variantId'] = variantId;
+        }
+        
+        await cartRef.set(cartData);
       }
     } catch (e) {
       print('Error adding to cart: $e');
@@ -224,7 +256,6 @@ class FirestoreService {
       return null;
     }
   }
-<<<<<<< HEAD
   // Add these methods to your existing FirestoreService class:
 
 // Get product variants
@@ -233,14 +264,6 @@ class FirestoreService {
       String productId) {
     return _firestore
         .collection('product_variants') // Changed from 'products/{id}/variants'
-=======
-
-  // Get product variants
-  static Stream<List<ProductVariantModel>> getProductVariants(
-      String productId) {
-    return _firestore
-        .collection('product_variants')
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         .where('product_id', isEqualTo: productId)
         .where('is_archived', isEqualTo: false)
         .snapshots()
@@ -257,7 +280,6 @@ class FirestoreService {
     });
   }
 
-<<<<<<< HEAD
 // Also update the getVariantById method:
   static Future<ProductVariantModel?> getVariantById(
       String productId, String variantId) async {
@@ -266,14 +288,6 @@ class FirestoreService {
           .collection('product_variants') // Changed here too
           .doc(variantId)
           .get();
-=======
-  // Get variant by ID
-  static Future<ProductVariantModel?> getVariantById(
-      String productId, String variantId) async {
-    try {
-      final doc =
-          await _firestore.collection('product_variants').doc(variantId).get();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
       if (doc.exists) {
         final data = doc.data()!;
@@ -289,19 +303,11 @@ class FirestoreService {
       return null;
     } catch (e) {
       print('Error getting variant: $e');
-<<<<<<< HEAD
       throw e;
     }
   }
 
 // Get brand by ID
-=======
-      return null;
-    }
-  }
-
-  // Get brand by ID
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   static Future<Map<String, dynamic>?> getBrandById(String brandId) async {
     try {
       final doc = await _firestore.collection('brands').doc(brandId).get();
@@ -318,11 +324,7 @@ class FirestoreService {
     }
   }
 
-<<<<<<< HEAD
 // Get category by ID
-=======
-  // Get category by ID
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   static Future<Map<String, dynamic>?> getCategoryById(
       String categoryId) async {
     try {
@@ -341,11 +343,7 @@ class FirestoreService {
     }
   }
 
-<<<<<<< HEAD
 // Get all brands
-=======
-  // Get all brands
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   static Stream<List<Map<String, dynamic>>> getAllBrands() {
     return _firestore.collection('brands').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -357,11 +355,7 @@ class FirestoreService {
     });
   }
 
-<<<<<<< HEAD
 // Get all categories
-=======
-  // Get all categories
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   static Stream<List<Map<String, dynamic>>> getAllCategories() {
     return _firestore.collection('categories').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -373,18 +367,10 @@ class FirestoreService {
     });
   }
 
-<<<<<<< HEAD
   // Create order
   static Future<String> createOrder({
     required String userId,
     required String customerId,
-=======
-  // Create order - UPDATED WITH customerName
-  static Future<String> createOrder({
-    required String userId,
-    required String customerId,
-    required String customerName, // ADDED: Customer name parameter
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     required List<Map<String, dynamic>> items,
     required double subtotal,
     required double shipping,
@@ -401,10 +387,6 @@ class FirestoreService {
         'id': orderId,
         'userId': userId,
         'customerId': customerId,
-<<<<<<< HEAD
-=======
-        'customerName': customerName, // ADDED: Store customer name
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         'items': items,
         'subtotal': subtotal,
         'shipping': shipping,
@@ -558,116 +540,77 @@ class FirestoreService {
     });
   }
 
-<<<<<<< HEAD
-  // Add a product rating. If the user has a delivered order for this product,
-  // the rating will be activated immediately. Otherwise it will be saved but
-  // marked as not activated.
-  static Future<void> addProductRating({
-=======
-  // Check if user has already rated this product
-  static Future<Map<String, dynamic>?> getUserRatingForProduct(
-      String userId, String productId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('product_ratings')
-          .where('userId', isEqualTo: userId)
-          .where('productId', isEqualTo: productId)
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }
-      return null;
-    } catch (e) {
-      print('Error getting user rating: $e');
-      return null;
-    }
-  }
-
-  // Add or update a product rating (one per user per product)
+  // Add or update a product rating. If the user has a delivered order for this
+  // product, the rating will be activated immediately. Otherwise it will be
+  // saved but marked as not activated.
   static Future<void> addOrUpdateProductRating({
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     required String productId,
     required String userId,
     required int stars,
     String? comment,
   }) async {
     try {
+      // Check if an existing rating from this user for this product exists
+      final existingSnapshot = await _firestore
+          .collection('product_ratings')
+          .where('productId', isEqualTo: productId)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
       // Check if user has a delivered order containing this product
       final delivered =
           await hasUserDeliveredOrderForProduct(userId, productId);
 
-<<<<<<< HEAD
-      final ratingsRef = _firestore.collection('product_ratings').doc();
-      await ratingsRef.set({
+      final data = {
         'productId': productId,
         'userId': userId,
         'stars': stars,
         'comment': comment ?? '',
         'activated': delivered,
-        'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print('Error adding product rating: $e');
-=======
-      // Check if user already has a rating for this product
-      final existingRating = await getUserRatingForProduct(userId, productId);
+      };
 
-      if (existingRating != null) {
+      if (existingSnapshot.docs.isNotEmpty) {
         // Update existing rating
-        await _firestore
-            .collection('product_ratings')
-            .doc(existingRating['id'])
-            .update({
-          'stars': stars,
-          'comment': comment ?? '',
-          'activated': delivered,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        await existingSnapshot.docs.first.reference.update(data);
       } else {
-        // Add new rating
-        final ratingsRef = _firestore.collection('product_ratings').doc();
-        await ratingsRef.set({
-          'productId': productId,
-          'userId': userId,
-          'stars': stars,
-          'comment': comment ?? '',
-          'activated': delivered,
+        // Create new rating
+        await _firestore.collection('product_ratings').add({
+          ...data,
           'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
         });
       }
     } catch (e) {
       print('Error adding/updating product rating: $e');
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       throw e;
     }
   }
 
-<<<<<<< HEAD
-=======
-  // Add a product rating (deprecated - use addOrUpdateProductRating instead)
-  static Future<void> addProductRating({
-    required String productId,
-    required String userId,
-    required int stars,
-    String? comment,
-  }) async {
-    return addOrUpdateProductRating(
-      productId: productId,
-      userId: userId,
-      stars: stars,
-      comment: comment,
-    );
+  /// Get the current user's rating for a specific product, if it exists.
+  static Future<Map<String, dynamic>?> getUserRatingForProduct(
+      String userId, String productId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('product_ratings')
+          .where('productId', isEqualTo: productId)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final doc = snapshot.docs.first;
+      return {
+        'id': doc.id,
+        ...doc.data(),
+      };
+    } catch (e) {
+      print('Error getting user rating for product: $e');
+      return null;
+    }
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   // Returns true if the given user has at least one order with status
   // 'delivered' that contains the given productId in its items.
   static Future<bool> hasUserDeliveredOrderForProduct(
@@ -696,7 +639,6 @@ class FirestoreService {
     }
   }
 
-<<<<<<< HEAD
   // Helper method to handle stock-out logic for shipped orders
   static Future<void> _handleStockOutForShippedOrder(String orderId) async {
     // 1. Fetch Order Items
@@ -764,11 +706,6 @@ class FirestoreService {
         await _handleStockOutForShippedOrder(orderId);
       }
 
-=======
-  // Update order status (for admin)
-  static Future<void> updateOrderStatus(String orderId, String status) async {
-    try {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       await _firestore.collection('orders').doc(orderId).update({
         'status': status,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -828,20 +765,14 @@ class FirestoreService {
     }
   }
 
-<<<<<<< HEAD
   // Get orders for delivery staff (confirmed and processing statuses, unassigned)
   static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders(
       String deliveryStaffId) {
-=======
-  // Get orders for delivery staff (confirmed and processing statuses)
-  static Stream<List<Map<String, dynamic>>> getDeliveryStaffOrders() {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     return _firestore
         .collection('orders')
         .where('status', whereIn: ['confirmed', 'processing'])
         .snapshots()
         .map((snapshot) {
-<<<<<<< HEAD
           final orders = snapshot.docs
               .map((doc) {
                 final data = doc.data();
@@ -859,15 +790,6 @@ class FirestoreService {
               .where((order) => order != null)
               .cast<Map<String, dynamic>>()
               .toList();
-=======
-          final orders = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'id': doc.id,
-              ...data,
-            };
-          }).toList();
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
           // Sort by createdAt in memory (descending - newest first)
           orders.sort((a, b) {
@@ -888,19 +810,12 @@ class FirestoreService {
   }
 
   // Get shipped orders for delivery staff deliveries
-<<<<<<< HEAD
   static Stream<List<Map<String, dynamic>>> getDeliveryStaffDeliveries(
       String deliveryStaffId) {
     return _firestore
         .collection('orders')
         .where('status', isEqualTo: 'shipped')
         .where('deliveryStaffId', isEqualTo: deliveryStaffId)
-=======
-  static Stream<List<Map<String, dynamic>>> getDeliveryStaffDeliveries() {
-    return _firestore
-        .collection('orders')
-        .where('status', isEqualTo: 'shipped')
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) {
@@ -908,10 +823,7 @@ class FirestoreService {
         return {
           'id': doc.id,
           ...data,
-<<<<<<< HEAD
           ...data,
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
         };
       }).toList();
 
@@ -936,11 +848,8 @@ class FirestoreService {
   static Future<void> markOrderAsShipped(
       String orderId, String deliveryStaffId) async {
     try {
-<<<<<<< HEAD
       await _handleStockOutForShippedOrder(orderId);
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       await _firestore.collection('orders').doc(orderId).update({
         'status': 'shipped',
         'deliveryStaffId': deliveryStaffId,
@@ -974,7 +883,6 @@ class FirestoreService {
     }
   }
 
-<<<<<<< HEAD
   // Get delivery staff data by user ID - IMPROVED with multiple search strategies
   static Future<Map<String, dynamic>?> getDeliveryStaffData(
       String deliveryStaffId) async {
@@ -1148,73 +1056,6 @@ class FirestoreService {
     } catch (e) {
       print('Error unarchiving order: $e');
       throw e;
-=======
-  // NEW: Get customer by user ID
-  static Future<Map<String, dynamic>?> getCustomerByUserId(
-      String userId) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('customers')
-          .where('user_id', isEqualTo: userId)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }
-      return null;
-    } catch (e) {
-      print('Error getting customer by user ID: $e');
-      return null;
-    }
-  }
-
-  // NEW: Fetch customer name from customers collection
-  static Future<String> getCustomerName(String userId) async {
-    try {
-      // First try to get from customers collection
-      final customer = await getCustomerByUserId(userId);
-      if (customer != null) {
-        final firstName = customer['firstname']?.toString().trim() ?? '';
-        final lastName = customer['lastname']?.toString().trim() ?? '';
-        final middleName = customer['middlename']?.toString().trim() ?? '';
-
-        if (firstName.isNotEmpty && lastName.isNotEmpty) {
-          if (middleName.isNotEmpty) {
-            return '$firstName $middleName $lastName';
-          } else {
-            return '$firstName $lastName';
-          }
-        } else if (firstName.isNotEmpty) {
-          return firstName;
-        } else if (lastName.isNotEmpty) {
-          return lastName;
-        }
-      }
-
-      // Fallback to users collection
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      if (userDoc.exists) {
-        final userData = userDoc.data()!;
-        final displayName = userData['displayName']?.toString().trim() ?? '';
-        final email = userData['email']?.toString() ?? '';
-
-        if (displayName.isNotEmpty) {
-          return displayName;
-        } else if (email.isNotEmpty) {
-          return email.split('@').first;
-        }
-      }
-
-      return 'Customer $userId';
-    } catch (e) {
-      print('Error getting customer name: $e');
-      return 'Customer $userId';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     }
   }
 }

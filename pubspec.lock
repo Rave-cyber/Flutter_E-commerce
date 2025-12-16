@@ -265,7 +265,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.17.5"
-<<<<<<< HEAD
   firebase_storage:
     dependency: "direct main"
     description:
@@ -290,7 +289,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.9.7"
-=======
   fixnum:
     dependency: transitive
     description:
@@ -299,7 +297,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   fl_chart:
     dependency: "direct main"
     description:
@@ -551,10 +548,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
+      sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c
       url: "https://pub.dev"
     source: hosted
-    version: "1.17.0"
+    version: "1.16.0"
   mime:
     dependency: transitive
     description:
@@ -580,7 +577,6 @@ packages:
     source: hosted
     version: "1.9.1"
   path_parsing:
-<<<<<<< HEAD
     dependency: transitive
     description:
       name: path_parsing
@@ -589,17 +585,7 @@ packages:
     source: hosted
     version: "1.1.0"
   path_provider:
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     dependency: transitive
-    description:
-      name: path_parsing
-      sha256: "883402936929eac138ee0a45da5b0f2c80f89913e6dc3bf77eb65b84b409c6ca"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  path_provider:
-    dependency: "direct main"
     description:
       name: path_provider
       sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
@@ -718,25 +704,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
-<<<<<<< HEAD
-=======
   share_plus:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: "3ef39599b00059db0990ca2e30fca0a29d8b37aae924d60063f8e0184cf20900"
+      sha256: "59dfd53f497340a0c3a81909b220cfdb9b8973a91055c4e5ab9b9b9ad7c513c0"
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.2"
+    version: "10.0.0"
   share_plus_platform_interface:
     dependency: transitive
     description:
       name: share_plus_platform_interface
-      sha256: "251eb156a8b5fa9ce033747d73535bf53911071f8d3b6f4f0b578505ce0d4496"
+      sha256: cc012a23fc2d479854e6c80150696c4a5f5bb62cb89af4de1c505cf78d0a5d0b
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.0"
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+    version: "5.0.2"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -850,10 +833,10 @@ packages:
     dependency: transitive
     description:
       name: test_api
-      sha256: ab2726c1a94d3176a45960b6234466ec367179b87dd74f1611adb1f3b5fb9d55
+      sha256: "522f00f556e73044315fa4585ec3270f1808a4b186c936e612cab0b565ff1e00"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.7"
+    version: "0.7.6"
   typed_data:
     dependency: transitive
     description:

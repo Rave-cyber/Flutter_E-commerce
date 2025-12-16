@@ -6,10 +6,7 @@ import '../views/auth/login_screen.dart';
 import '../views/delivery_staff/delivery_staff_dashboard/index.dart';
 import '../views/delivery_staff/delivery_staff_orders/index.dart';
 import '../views/delivery_staff/delivery_staff_deliveries/index.dart';
-<<<<<<< HEAD
 import '../views/delivery_staff/delivery_staff_order_history/index.dart';
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class DeliveryStaffSidebarWidget extends StatelessWidget {
   final String? selectedRoute;
@@ -68,7 +65,6 @@ class DeliveryStaffSidebarWidget extends StatelessWidget {
                     route: '/delivery-staff/deliveries',
                     isSelected: selectedRoute == '/delivery-staff/deliveries',
                   ),
-<<<<<<< HEAD
                   _buildMenuItem(
                     context,
                     icon: Icons.history,
@@ -77,8 +73,6 @@ class DeliveryStaffSidebarWidget extends StatelessWidget {
                     isSelected:
                         selectedRoute == '/delivery-staff/order-history',
                   ),
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 ],
               ),
             ),
@@ -370,12 +364,9 @@ class DeliveryStaffSidebarWidget extends StatelessWidget {
       case '/delivery-staff/deliveries':
         targetWidget = const DeliveryStaffDeliveriesScreen();
         break;
-<<<<<<< HEAD
       case '/delivery-staff/order-history':
         targetWidget = const DeliveryStaffOrderHistoryScreen();
         break;
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       default:
         return;
     }

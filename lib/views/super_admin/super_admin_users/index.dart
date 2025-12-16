@@ -4,17 +4,10 @@ import 'package:firebase/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/super_admin_layout.dart';
 import 'form.dart';
-<<<<<<< HEAD
 import '../../../widgets/user_search_widget.dart';
 import '../../../widgets/product_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
 import '../../../widgets/user_details_modal.dart';
-=======
-import '../../../widgets/product_search_widget.dart';
-import '../../../widgets/product_filter_widget.dart';
-import '../../../widgets/product_pagination_widget.dart';
-import '../../../widgets/floating_action_button_widget.dart';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class SuperAdminUsersScreen extends StatefulWidget {
   const SuperAdminUsersScreen({super.key});
@@ -67,7 +60,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
     }
   }
 
-<<<<<<< HEAD
   Future<void> _handleMenuSelection(String value, UserModel user) async {
     switch (value) {
       case 'edit':
@@ -162,8 +154,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
     );
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   @override
   Widget build(BuildContext context) {
     return SuperAdminLayout(
@@ -174,11 +164,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
         child: Column(
           children: [
             // SEARCH FIELD
-<<<<<<< HEAD
             UserSearchWidget(
-=======
-            ProductSearchWidget(
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               controller: _searchController,
               onChanged: () => setState(() {
                 _currentPage = 1;
@@ -186,12 +172,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
             ),
             const SizedBox(height: 16),
 
-<<<<<<< HEAD
             // FILTER AND PER PAGE DROPDOWN - Horizontally Scrollable
-=======
-            // FILTER AND PER PAGE DROPDOWN
-            // We use ProductFilterWidget but adapt it for our roles
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             Material(
               elevation: 3,
               shadowColor: Colors.green.withOpacity(0.2),
@@ -200,7 +181,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-<<<<<<< HEAD
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -262,71 +242,11 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                       ),
                     ],
                   ),
-=======
-                child: Row(
-                  children: [
-                    Icon(Icons.filter_list, color: Colors.green[600]),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Filter:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _roleFilter,
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'all', child: Text('All Roles')),
-                            DropdownMenuItem(
-                                value: 'admin', child: Text('Admins')),
-                            DropdownMenuItem(
-                                value: 'delivery_staff',
-                                child: Text('Delivery Staff')),
-                            DropdownMenuItem(
-                                value: 'customer', child: Text('Customers')),
-                          ],
-                          onChanged: _onFilterChanged,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _itemsPerPage,
-                          items: const [
-                            DropdownMenuItem(value: 10, child: Text('10')),
-                            DropdownMenuItem(value: 25, child: Text('25')),
-                            DropdownMenuItem(value: 50, child: Text('50')),
-                            DropdownMenuItem(value: 100, child: Text('100')),
-                          ],
-                          onChanged: _onItemsPerPageChanged,
-                        ),
-                      ),
-                    ),
-                  ],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-<<<<<<< HEAD
             // USERS LIST WITH BOTTOM CONTROLS
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -335,13 +255,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                     .collection('users')
                     .orderBy('created_at', descending: true)
                     .snapshots(),
-=======
-            // USERS LIST
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                // We are querying the 'users' collection
-                stream: _authService.firestore.collection('users').snapshots(),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -423,10 +336,7 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
 
                   return Column(
                     children: [
-<<<<<<< HEAD
                       // USER LIST
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedUsers.length,
@@ -436,7 +346,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                           },
                         ),
                       ),
-<<<<<<< HEAD
 
                       const SizedBox(height: 16),
 
@@ -464,38 +373,12 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                             },
                           ),
                         ],
-=======
-                      const SizedBox(height: 12),
-
-                      // PAGINATION CONTROLS
-                      ProductPaginationWidget(
-                        currentPage: _currentPage,
-                        onPreviousPage: _prevPage,
-                        onNextPage: () => _nextPage(users.length),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       ),
                     ],
                   );
                 },
               ),
             ),
-<<<<<<< HEAD
-=======
-
-            const SizedBox(height: 16),
-
-            // FLOATING BUTTON
-            FloatingActionButtonWidget(
-              tooltip: 'Add User',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const SuperAdminUsersForm()),
-                );
-              },
-            ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
       ),
@@ -503,7 +386,6 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
   }
 
   Widget _buildUserCard(UserModel user) {
-<<<<<<< HEAD
     return InkWell(
       onTap: () => _showUserDetailsModal(user),
       child: Container(
@@ -652,133 +534,12 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen> {
                             SizedBox(width: 8),
                             Text('Delete', style: TextStyle(color: Colors.red)),
                           ],
-=======
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Material(
-        elevation: 0,
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.green.shade200,
-              width: 1,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // User Avatar
-                Material(
-                  elevation: 4,
-                  shadowColor: Colors.black.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: _getRoleColor(user.role).withOpacity(0.1),
-                    ),
-                    child: Icon(
-                      _getRoleIcon(user.role),
-                      size: 30,
-                      color: _getRoleColor(user.role),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // User Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.display_name ?? 'No Name',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.email_outlined,
-                              size: 14, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              user.email,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // Role Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getRoleColor(user.role).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: _getRoleColor(user.role).withOpacity(0.3)),
-                        ),
-                        child: Text(
-                          user.role.toUpperCase().replaceAll('_', ' '),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _getRoleColor(user.role),
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                         ),
                       ),
                     ],
                   ),
-<<<<<<< HEAD
                 ],
               ),
-=======
-                ),
-
-                // Action Button (View/Edit placeholder)
-                IconButton(
-                  icon: Icon(Icons.chevron_right, color: Colors.grey[400]),
-                  onPressed: () {
-                    // Future: Navigate to details or edit
-                  },
-                ),
-              ],
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             ),
           ),
         ),

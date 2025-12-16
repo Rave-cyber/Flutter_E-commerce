@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../layouts/delivery_staff_layout.dart';
 import '../../../firestore_service.dart';
-<<<<<<< HEAD
 import '../delivery_staff_order_history/index.dart';
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class DeliveryProofForm extends StatefulWidget {
   final Map<String, dynamic> delivery;
@@ -26,10 +23,7 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
 
   XFile? _selectedImage;
   bool _isSubmitting = false;
-<<<<<<< HEAD
   int _currentStep = 0;
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
   @override
   void dispose() {
@@ -37,7 +31,6 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
     super.dispose();
   }
 
-<<<<<<< HEAD
   // Stepper navigation methods
   void _nextStep() {
     if (_validateCurrentStep()) {
@@ -259,15 +252,10 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
 
   // Step 1: Order Summary
   Widget _buildOrderSummaryStep() {
-=======
-  @override
-  Widget build(BuildContext context) {
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     final delivery = widget.delivery;
     final items = (delivery['items'] as List<dynamic>?) ?? [];
     final totalAmount = delivery['total']?.toDouble() ?? 0.0;
 
-<<<<<<< HEAD
     return _buildSectionCard(
       title: 'Order Summary',
       child: Column(
@@ -470,209 +458,6 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
             ),
           ),
         ],
-=======
-    return DeliveryStaffLayout(
-      title: 'Delivery Proof',
-      selectedRoute: '/delivery-staff/deliveries',
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Order summary card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order #${delivery['id'].toString().substring(0, 8)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Items: ${items.length} item(s)',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Total: ₱${totalAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Address: ${delivery['shippingAddress'] ?? 'No address provided'}',
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Contact: ${delivery['contactNumber'] ?? 'No contact number'}',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Photo capture section
-              const Text(
-                'Delivery Proof Photo',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              _selectedImage != null
-                  ? Stack(
-                      children: [
-                        Container(
-                          height: 250,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_selectedImage!.path),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: CircleAvatar(
-                            backgroundColor: Colors.black54,
-                            radius: 16,
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _selectedImage = null;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : GestureDetector(
-                      onTap: _showImageSourceDialog,
-                      child: Container(
-                        height: 250,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.grey,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey.shade50,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo,
-                              size: 64,
-                              color: Colors.grey.shade600,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Tap to add photo',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Camera or Gallery',
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-              const SizedBox(height: 24),
-
-              // Delivery notes section
-              const Text(
-                'Delivery Notes (Optional)',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Enter any delivery notes or comments...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitDeliveryProof,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Text(
-                          'Confirm Delivery',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       ),
     );
   }
@@ -735,10 +520,7 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
   }
 
   Future<void> _submitDeliveryProof() async {
-<<<<<<< HEAD
     if (!_formKey.currentState!.validate()) return;
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -754,7 +536,6 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
     });
 
     try {
-<<<<<<< HEAD
       // Convert XFile to File for upload
       final File imageFile = File(_selectedImage!.path);
 
@@ -776,16 +557,6 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
         // TODO: Get current user ID from authentication service
         deliveryStaffId = 'current_delivery_staff_id'; // Placeholder
       }
-=======
-      // In a real app, you would upload the image to Firebase Storage
-      // For now, we'll simulate with a placeholder URL
-      final String proofImageUrl =
-          'https://example.com/proof_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-      // Get current delivery staff ID (you'll need to implement user authentication)
-      // For now, using a placeholder - replace with actual user ID
-      const String deliveryStaffId = 'current_delivery_staff_id';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
       await FirestoreService.markOrderAsDelivered(
         widget.delivery['id'],
@@ -804,17 +575,12 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
           ),
         );
 
-<<<<<<< HEAD
         // Navigate to order history screen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => const DeliveryStaffOrderHistoryScreen(),
           ),
         );
-=======
-        // Navigate back to deliveries list
-        Navigator.of(context).popUntil((route) => route.isFirst);
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       }
     } catch (e) {
       if (mounted) {
@@ -833,7 +599,6 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
       }
     }
   }
-<<<<<<< HEAD
 
   @override
   Widget build(BuildContext context) {
@@ -961,6 +726,4 @@ class _DeliveryProofFormState extends State<DeliveryProofForm> {
       ),
     );
   }
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 }

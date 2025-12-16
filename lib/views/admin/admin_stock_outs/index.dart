@@ -4,14 +4,11 @@ import '../../../layouts/admin_layout.dart';
 import '/models/stock_out_model.dart';
 import '/services/admin/stock_out_service.dart';
 import 'package:firebase/models/stock_in_out_model.dart';
-<<<<<<< HEAD
 import '../../../widgets/stock_search_widget.dart';
 import '../../../widgets/stock_filter_widget.dart';
 import '../../../widgets/stock_out_card_widget.dart';
 import '../../../widgets/stock_pagination_widget.dart';
 import '../../../widgets/floating_action_button_widget.dart';
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 
 class AdminStockOutIndex extends StatefulWidget {
   const AdminStockOutIndex({Key? key}) : super(key: key);
@@ -56,7 +53,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
         start, end > filtered.length ? filtered.length : end);
   }
 
-<<<<<<< HEAD
   int _getTotalPages(List<StockOutModel> list) {
     // Apply filters (currently no specific filters for stock-outs)
     List<StockOutModel> filtered = list;
@@ -79,8 +75,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
     return (filtered.length + _itemsPerPage - 1) ~/ _itemsPerPage;
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   void _nextPage(int totalItems) {
     if (_currentPage * _itemsPerPage < totalItems) {
       setState(() => _currentPage++);
@@ -93,7 +87,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
     }
   }
 
-<<<<<<< HEAD
   Future<void> _handleMenuSelection(
       String value, StockOutModel stockOut) async {
     switch (value) {
@@ -164,8 +157,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
     }
   }
 
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   /// Show FIFO deduction details in a dialog
   void _showFIFODetails(StockOutModel stockOut) async {
     try {
@@ -247,16 +238,12 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
   @override
   Widget build(BuildContext context) {
     return AdminLayout(
-<<<<<<< HEAD
       selectedRoute: '/admin/stock-outs',
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // SEARCH FIELD
-<<<<<<< HEAD
             StockSearchWidget(
               controller: _searchController,
               onChanged: () => setState(() {
@@ -275,45 +262,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
             const SizedBox(height: 16),
 
             // STOCK-OUT LIST WITH BOTTOM CONTROLS
-=======
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: 'Search Stock-Out (Product, Variant, Reason)',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (_) => setState(() => _currentPage = 1),
-            ),
-            const SizedBox(height: 12),
-
-            // FILTER DROPDOWN
-            Row(
-              children: [
-                const Text('Filter: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: _filterStatus,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'recent', child: Text('Recent')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _filterStatus = val;
-                        _currentPage = 1;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // STOCK-OUT LIST
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
             Expanded(
               child: StreamBuilder<List<StockOutModel>>(
                 stream: _stockOutService.getStockOuts(),
@@ -323,7 +271,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-<<<<<<< HEAD
                     return Center(
                       child: Material(
                         elevation: 4,
@@ -352,31 +299,20 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                         ),
                       ),
                     );
-=======
-                    return const Center(
-                        child: Text('No stock-out records found.'));
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                   }
 
                   final stockOutList = snapshot.data!;
                   final paginatedList =
                       _applyFilterSearchPagination(stockOutList);
-<<<<<<< HEAD
                   final totalPages = _getTotalPages(stockOutList);
 
                   return Column(
                     children: [
                       // STOCK-OUT LIST
-=======
-
-                  return Column(
-                    children: [
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                       Expanded(
                         child: ListView.builder(
                           itemCount: paginatedList.length,
                           itemBuilder: (context, index) {
-<<<<<<< HEAD
                             final stockOut = paginatedList[index];
 
                             return StockOutCardWidget(
@@ -386,100 +322,11 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                               onTap: () => _showFIFODetails(stockOut),
                               onViewFifoDetails: () =>
                                   _showFIFODetails(stockOut),
-=======
-                            final item = paginatedList[index];
-
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: Colors.redAccent,
-                                ),
-                                title: Text(
-                                  item.product_variant_id != null
-                                      ? 'Variant: ${item.product_variant_id!.substring(0, 8).toUpperCase()}'
-                                      : 'Product: ${item.product_id ?? "No Product Assigned"}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  'Quantity: ${item.quantity}\n'
-                                  'Reason: ${item.reason}\n'
-                                  'Date: ${item.created_at?.toString().substring(0, 19) ?? "N/A"}',
-                                ),
-                                isThreeLine: true,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    /// FIFO DETAILS
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.list_alt,
-                                        color: Colors.blue,
-                                      ),
-                                      onPressed: () => _showFIFODetails(item),
-                                      tooltip: 'Show FIFO Deduction Details',
-                                    ),
-
-                                    /// EDIT
-                                    IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blue),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AdminStockOutForm(
-                                                stockOut: item),
-                                          ),
-                                        );
-                                      },
-                                    ),
-
-                                    /// DELETE
-                                    IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
-                                      onPressed: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Confirm Delete'),
-                                            content: const Text(
-                                                'Are you sure you want to delete this stock-out record?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-
-                                        if (confirm == true) {
-                                          await _stockOutService
-                                              .deleteStockOut(item.id);
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                             );
                           },
                         ),
                       ),
 
-<<<<<<< HEAD
                       const SizedBox(height: 16),
 
                       // BOTTOM CONTROLS - Pagination (left) and Add Button (right) in one line
@@ -504,20 +351,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                               );
                             },
                             tooltip: 'Add Stock-Out',
-=======
-                      // PAGINATION CONTROLS
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _prevPage,
-                          ),
-                          Text('Page $_currentPage'),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () => _nextPage(stockOutList.length),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                           ),
                         ],
                       ),
@@ -526,26 +359,6 @@ class _AdminStockOutIndexState extends State<AdminStockOutIndex> {
                 },
               ),
             ),
-<<<<<<< HEAD
-=======
-
-            // FLOATING BUTTON
-            Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AdminStockOutForm(),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.add),
-                tooltip: 'Add Stock-Out',
-              ),
-            ),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
           ],
         ),
       ),

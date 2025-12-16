@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase/firestore_service.dart';
-<<<<<<< HEAD
-import 'package:firebase/models/order_model.dart';
-import 'package:intl/intl.dart';
-=======
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart' show XFile;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
-
+import 'package:intl/intl.dart';
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
 
@@ -23,10 +19,6 @@ class OrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryGreen = const Color(0xFF2C8610);
-<<<<<<< HEAD
-    final Color accentBlue = const Color(0xFF4A90E2);
-=======
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
     final Color backgroundColor = const Color(0xFFF8FAFC);
     final Color cardColor = Colors.white;
     final Color textPrimary = const Color(0xFF1A1A1A);
@@ -243,11 +235,8 @@ class OrderDetailScreen extends StatelessWidget {
                 // Order Summary
                 _buildOrderSummary(
                     order, primaryGreen, cardColor, textPrimary, textSecondary),
-<<<<<<< HEAD
-=======
                 const SizedBox(height: 12),
                 _buildReceiptActions(context, order, primaryGreen, textPrimary),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
                 const SizedBox(height: 20),
 
                 // Shipping Information
@@ -271,8 +260,6 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-<<<<<<< HEAD
-=======
   Widget _buildReceiptActions(BuildContext context, Map<String, dynamic> order,
       Color primaryGreen, Color textPrimary) {
     return Column(
@@ -298,7 +285,6 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
   Widget _buildOrderHeader(
     Map<String, dynamic> order,
     Color primaryGreen,
@@ -403,11 +389,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-<<<<<<< HEAD
-                      '\$${(order['total'] ?? 0.0).toStringAsFixed(2)}',
-=======
-                      '\₱${(order['total'] ?? 0.0).toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                      '₱${NumberFormat('#,##0.00').format((order['total'] ?? 0.0).toDouble())}',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -802,11 +784,7 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-<<<<<<< HEAD
-                      '\$${price.toStringAsFixed(2)} each',
-=======
-                      '\₱${price.toStringAsFixed(2)} each',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                      '₱${NumberFormat('#,##0.00').format(price)} each',
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -823,11 +801,7 @@ class OrderDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-<<<<<<< HEAD
-                '\$${total.toStringAsFixed(2)}',
-=======
-                '\₱${total.toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                '₱${NumberFormat('#,##0.00').format(total)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -915,11 +889,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-<<<<<<< HEAD
-                  '\$${total.toStringAsFixed(2)}',
-=======
-                  '\₱${total.toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+                  '₱${NumberFormat('#,##0.00').format(total)}',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -1127,11 +1097,7 @@ class OrderDetailScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-<<<<<<< HEAD
-                borderRadius: BorderRadius.circular(16),
-=======
                 borderRadius: BorderRadius.circular(8),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
               side: BorderSide(color: Colors.grey[300]!),
             ),
@@ -1155,11 +1121,7 @@ class OrderDetailScreen extends StatelessWidget {
               backgroundColor: primaryGreen,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-<<<<<<< HEAD
-                borderRadius: BorderRadius.circular(16),
-=======
                 borderRadius: BorderRadius.circular(8),
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
               ),
             ),
             child: const Text(
@@ -1189,11 +1151,7 @@ class OrderDetailScreen extends StatelessWidget {
           ),
         ),
         Text(
-<<<<<<< HEAD
-          '\$${amount.toStringAsFixed(2)}',
-=======
-          '\₱${amount.toStringAsFixed(2)}',
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
+          '₱${NumberFormat('#,##0.00').format(amount)}',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -1290,8 +1248,6 @@ class OrderDetailScreen extends StatelessWidget {
         return paymentMethod;
     }
   }
-<<<<<<< HEAD
-=======
 
   Future<void> _downloadReceipt(BuildContext context,
       Map<String, dynamic> order, Color primaryGreen) async {
@@ -1402,8 +1358,9 @@ class OrderDetailScreen extends StatelessWidget {
 
     sb.writeln();
     sb.writeln('-' * 40);
-    sb.writeln('Total: \₱${total.toStringAsFixed(2)}');
+    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
     sb.writeln('=' * 40);
+    sb.writeln('₱${NumberFormat('#,##0.00').format((total.toStringAsFixed(2)))}');
     sb.writeln();
     sb.writeln('Thank you for your purchase!');
     sb.writeln(
@@ -1411,5 +1368,4 @@ class OrderDetailScreen extends StatelessWidget {
 
     return sb.toString();
   }
->>>>>>> 3add35312551b90752a2c004e342857fcb126663
 }
