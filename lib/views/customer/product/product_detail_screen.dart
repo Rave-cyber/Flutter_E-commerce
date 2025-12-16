@@ -165,9 +165,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               // Only update if a variant was previously selected
               if (hadVariantSelected) {
                 _selectedOption = updatedSelection ?? variantsList.first;
-                _isSelectingMainProduct = _selectedOption is! ProductVariantModel
-                    ? true
-                    : false;
+                _isSelectingMainProduct =
+                    _selectedOption is! ProductVariantModel ? true : false;
               } else {
                 // Keep main product selected by default
                 _selectedOption = widget.product;
@@ -344,7 +343,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     if (stock <= 0) {
-      _showSnackBar('Cannot add to cart: This item is out of stock', Colors.red);
+      _showSnackBar(
+          'Cannot add to cart: This item is out of stock', Colors.red);
       return;
     }
 
@@ -509,7 +509,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           if (user != null) {
             // Use variantId as document ID if it exists, otherwise use productId
             final cartItemId = variantId ?? widget.product.id!;
-            
+
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -840,23 +840,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       height: 1.2,
                     ),
                   ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.inventory_2_outlined,
-                            size: 18, color: Colors.grey[700]),
-                        const SizedBox(width: 6),
-                        Text(
-                          stock > 0 ? '$stock in stock' : 'Out of stock',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: stock > 0 ? Colors.grey[700] : Colors.red,
-                            fontWeight:
-                                stock > 0 ? FontWeight.w600 : FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.inventory_2_outlined,
+                        size: 18, color: Colors.grey[700]),
+                    const SizedBox(width: 6),
+                    Text(
+                      stock > 0 ? '$stock in stock' : 'Out of stock',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: stock > 0 ? Colors.grey[700] : Colors.red,
+                        fontWeight:
+                            stock > 0 ? FontWeight.w600 : FontWeight.bold,
+                      ),
                     ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -925,56 +925,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              // Original Product Option
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedOption = widget.product;
-                    _isSelectingMainProduct = true;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: _isSelectingMainProduct
-                        ? LinearGradient(
-                            colors: [
-                              primaryGreen,
-                              primaryGreen.withOpacity(0.8)
-                            ],
-                          )
-                        : null,
-                    color: _isSelectingMainProduct ? null : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isSelectingMainProduct ? primaryGreen : Colors.grey[300]!,
-                      width: _isSelectingMainProduct ? 2 : 1,
+              // Original Product Option - only show when NO variants exist
+              if (_variants.isEmpty)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedOption = widget.product;
+                      _isSelectingMainProduct = true;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
-                    boxShadow: _isSelectingMainProduct
-                        ? [
-                            BoxShadow(
-                              color: primaryGreen.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Text(
-                    'Original',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _isSelectingMainProduct ? Colors.white : Colors.grey[800],
-                      fontWeight:
-                          _isSelectingMainProduct ? FontWeight.bold : FontWeight.w500,
+                    decoration: BoxDecoration(
+                      gradient: _isSelectingMainProduct
+                          ? LinearGradient(
+                              colors: [
+                                primaryGreen,
+                                primaryGreen.withOpacity(0.8)
+                              ],
+                            )
+                          : null,
+                      color: _isSelectingMainProduct ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _isSelectingMainProduct
+                            ? primaryGreen
+                            : Colors.grey[300]!,
+                        width: _isSelectingMainProduct ? 2 : 1,
+                      ),
+                      boxShadow: _isSelectingMainProduct
+                          ? [
+                              BoxShadow(
+                                color: primaryGreen.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      'Original',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: _isSelectingMainProduct
+                            ? Colors.white
+                            : Colors.grey[800],
+                        fontWeight: _isSelectingMainProduct
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
               // Variant Options
               ...List.generate(_variants.length, (index) {
                 final variant = _variants[index];
@@ -1731,11 +1737,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: ElevatedButton(
                       onPressed: null, // Disabled
                       style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                        backgroundColor: Colors.grey[300],
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: Text(
                         'Submit Rating',
