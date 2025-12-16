@@ -159,8 +159,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     divisions: 50,
                     activeColor: primaryGreen,
                     labels: RangeLabels(
-                      '\$${_currentPriceRange.start.round()}',
-                      '\$${_currentPriceRange.end.round()}',
+                      '\₱${_currentPriceRange.start.round()}',
+                      '\₱${_currentPriceRange.end.round()}',
                     ),
                     onChanged: (values) {
                       setModalState(() {
@@ -172,8 +172,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('\$${_currentPriceRange.start.round()}'),
-                      Text('\$${_currentPriceRange.end.round()}'),
+                      Text('\₱${_currentPriceRange.start.round()}'),
+                      Text('\₱${_currentPriceRange.end.round()}'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -490,7 +490,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   Row(
                     children: [
                       Text(
-                        '\$${product.sale_price.toStringAsFixed(2)}',
+                        '\₱${product.sale_price.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

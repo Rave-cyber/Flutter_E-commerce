@@ -139,7 +139,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 children: [
                   pw.Column(children: [
                     pw.Text('Total Revenue', style: pw.TextStyle(fontSize: 12)),
-                    pw.Text('\$${totalRevenue.toStringAsFixed(2)}',
+                    pw.Text('\₱${totalRevenue.toStringAsFixed(2)}',
                         style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
                             fontSize: 18,
@@ -167,7 +167,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 return [
                   DateFormat('yyyy-MM-dd').format(e['date'] as DateTime),
                   e['count'].toString(),
-                  '\$${(e['revenue'] as double).toStringAsFixed(2)}',
+                  '\₱${(e['revenue'] as double).toStringAsFixed(2)}',
                 ];
               }).toList(),
               border: pw.TableBorder.all(color: PdfColors.grey300),
@@ -415,21 +415,19 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                 // Summary Cards - Responsive Grid
                                 LayoutBuilder(
                                   builder: (context, constraints) {
-                                    final isWide =
-                                        constraints.maxWidth > 600;
+                                    final isWide = constraints.maxWidth > 600;
                                     return GridView.count(
                                       shrinkWrap: true,
                                       physics:
                                           const NeverScrollableScrollPhysics(),
                                       crossAxisCount: isWide ? 4 : 2,
-                                      childAspectRatio:
-                                          isWide ? 2.0 : 1.8,
+                                      childAspectRatio: isWide ? 2.0 : 1.8,
                                       crossAxisSpacing: 16,
                                       mainAxisSpacing: 16,
                                       children: [
                                         _buildSummaryCard(
                                           'Total Revenue',
-                                          '\$${totalRevenue.toStringAsFixed(2)}',
+                                          '\₱${totalRevenue.toStringAsFixed(2)}',
                                           _accentColor,
                                           Icons.attach_money_rounded,
                                         ),
@@ -441,7 +439,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                         ),
                                         _buildSummaryCard(
                                           'Average Order',
-                                          '\$${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
+                                          '\₱${(totalRevenue / (totalOrders == 0 ? 1 : totalOrders)).toStringAsFixed(2)}',
                                           Colors.purple,
                                           Icons.trending_up_rounded,
                                         ),
@@ -458,194 +456,199 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                                 const SizedBox(height: 24),
 
                                 // Charts Section
-                            // Revenue Chart
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: _cardBackground,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.08),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          'Revenue Overview',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: _primaryColor,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: _primaryLight,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          _selectedFilter,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: _primaryColor,
-                                          ),
-                                        ),
+                                // Revenue Chart
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: _cardBackground,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.08),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    height: 300,
-                                    child: _buildRevenueChart(sortedData),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Orders Chart
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: _cardBackground,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.08),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          'Orders Overview',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: _primaryColor,
-                                          ),
-                                        ),
-                                      ),
-                                      Icon(Icons.shopping_cart_rounded,
-                                          color: _primaryColor),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    height: 300,
-                                    child: _buildOrdersChart(sortedData),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Data Table Section
-                            if (sortedData.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: _cardBackground,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.08),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Detailed Data',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: _primaryColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    // FIXED: Use SingleChildScrollView for horizontal scrolling
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: DataTable(
-                                        columnSpacing: 32,
-                                        dataRowMinHeight: 40,
-                                        dataRowMaxHeight: 60,
-                                        headingTextStyle: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: _primaryColor,
-                                        ),
-                                        columns: const [
-                                          DataColumn(label: Text('Date')),
-                                          DataColumn(label: Text('Orders')),
-                                          DataColumn(
-                                              label: Text('Revenue'),
-                                              numeric: true),
-                                        ],
-                                        rows: sortedData.map((data) {
-                                          final date = data['date'] as DateTime;
-                                          String dateFormat = 'MMM dd';
-                                          if (_selectedFilter == 'Today') {
-                                            dateFormat = 'HH:mm';
-                                          } else if (_selectedFilter ==
-                                              'Year') {
-                                            dateFormat = 'MMM yyyy';
-                                          }
-                                          return DataRow(
-                                            cells: [
-                                              DataCell(Text(
-                                                  DateFormat(dateFormat)
-                                                      .format(date))),
-                                              DataCell(Text(
-                                                  data['count'].toString())),
-                                              DataCell(
-                                                Text(
-                                                  '\$${(data['revenue'] as double).toStringAsFixed(2)}',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: _accentColor,
-                                                  ),
-                                                ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              'Revenue Overview',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: _primaryColor,
                                               ),
-                                            ],
-                                          );
-                                        }).toList(),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: _primaryLight,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              _selectedFilter,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: _primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        height: 300,
+                                        child: _buildRevenueChart(sortedData),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            const SizedBox(height: 32),
-                          ],
-                        ),
-                      ),
-                    ),
+
+                                // Orders Chart
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: _cardBackground,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.08),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              'Orders Overview',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: _primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(Icons.shopping_cart_rounded,
+                                              color: _primaryColor),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        height: 300,
+                                        child: _buildOrdersChart(sortedData),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Data Table Section
+                                if (sortedData.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: _cardBackground,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.08),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Detailed Data',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: _primaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // FIXED: Use SingleChildScrollView for horizontal scrolling
+                                        SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: DataTable(
+                                            columnSpacing: 32,
+                                            dataRowMinHeight: 40,
+                                            dataRowMaxHeight: 60,
+                                            headingTextStyle: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: _primaryColor,
+                                            ),
+                                            columns: const [
+                                              DataColumn(label: Text('Date')),
+                                              DataColumn(label: Text('Orders')),
+                                              DataColumn(
+                                                  label: Text('Revenue'),
+                                                  numeric: true),
+                                            ],
+                                            rows: sortedData.map((data) {
+                                              final date =
+                                                  data['date'] as DateTime;
+                                              String dateFormat = 'MMM dd';
+                                              if (_selectedFilter == 'Today') {
+                                                dateFormat = 'HH:mm';
+                                              } else if (_selectedFilter ==
+                                                  'Year') {
+                                                dateFormat = 'MMM yyyy';
+                                              }
+                                              return DataRow(
+                                                cells: [
+                                                  DataCell(Text(
+                                                      DateFormat(dateFormat)
+                                                          .format(date))),
+                                                  DataCell(Text(data['count']
+                                                      .toString())),
+                                                  DataCell(
+                                                    Text(
+                                                      '\₱${(data['revenue'] as double).toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: _accentColor,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
+                  ),
                 ],
               );
             },
@@ -804,7 +807,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
               return touchedBarSpots.map((barSpot) {
                 return LineTooltipItem(
-                  '\$${barSpot.y.toStringAsFixed(2)}',
+                  '\₱${barSpot.y.toStringAsFixed(2)}',
                   const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

@@ -280,7 +280,7 @@ class _CartScreenState extends State<CartScreen> {
       final availableStock = await _getAvailableStock(productId, variantId);
 
       if (!mounted) return;
-      
+
       if (newQuantity > availableStock) {
         _showSnackBar('Cannot exceed available stock ($availableStock items)');
         return;
@@ -316,19 +316,19 @@ class _CartScreenState extends State<CartScreen> {
           return variantData['stock'] ?? 0;
         }
       }
-      
+
       // Check if productId is actually a variant ID (when variant is added, productId = variant.id)
       final variantCheckDoc = await FirebaseFirestore.instance
           .collection('product_variants')
           .doc(productId)
           .get();
-      
+
       if (variantCheckDoc.exists) {
         // It's a variant
         final variantData = variantCheckDoc.data() as Map<String, dynamic>;
         return variantData['stock'] ?? 0;
       }
-      
+
       // Otherwise, it's a product
       final productDoc = await FirebaseFirestore.instance
           .collection('products')
@@ -339,7 +339,7 @@ class _CartScreenState extends State<CartScreen> {
         final productData = productDoc.data() as Map<String, dynamic>;
         return productData['stock_quantity'] ?? 0;
       }
-      
+
       return 0;
     } catch (e) {
       print('Error fetching stock: $e');
@@ -349,7 +349,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _removeFromCart(String itemId) async {
     if (!mounted) return;
-    
+
     final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) return;
 
@@ -362,7 +362,7 @@ class _CartScreenState extends State<CartScreen> {
           .delete();
 
       if (!mounted) return;
-      
+
       _selectedItems.remove(itemId);
       _updateSelectAllState();
 
@@ -400,7 +400,7 @@ class _CartScreenState extends State<CartScreen> {
       final productId = data['productId'] ?? item.id;
       final variantId = data['variantId'];
       final quantity = data['quantity'] ?? 1;
-      
+
       final availableStock = await _getAvailableStock(productId, variantId);
       if (availableStock <= 0 || quantity > availableStock) {
         final productName = data['productName'] ?? 'Unknown Product';
@@ -409,16 +409,16 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     if (!mounted) return;
-    
+
     if (outOfStockItems.isNotEmpty) {
       setState(() {
         _isLoading = false;
       });
-      
-      final itemList = outOfStockItems.length == 1 
-          ? outOfStockItems.first 
+
+      final itemList = outOfStockItems.length == 1
+          ? outOfStockItems.first
           : '${outOfStockItems.length} items';
-      
+
       _showSnackBar(
         'Cannot proceed to checkout: $itemList ${outOfStockItems.length == 1 ? 'is' : 'are'} out of stock',
       );
@@ -480,7 +480,7 @@ class _CartScreenState extends State<CartScreen> {
       final productId = data['productId'] ?? item.id;
       final variantId = data['variantId'];
       final quantity = data['quantity'] ?? 1;
-      
+
       final availableStock = await _getAvailableStock(productId, variantId);
       if (availableStock <= 0 || quantity > availableStock) {
         final productName = data['productName'] ?? 'Unknown Product';
@@ -489,16 +489,16 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     if (!mounted) return;
-    
+
     if (outOfStockItems.isNotEmpty) {
       setState(() {
         _isLoading = false;
       });
-      
-      final itemList = outOfStockItems.length == 1 
-          ? outOfStockItems.first 
+
+      final itemList = outOfStockItems.length == 1
+          ? outOfStockItems.first
           : '${outOfStockItems.length} items';
-      
+
       _showSnackBar(
         'Cannot proceed to checkout: $itemList ${outOfStockItems.length == 1 ? 'is' : 'are'} out of stock',
       );
@@ -858,7 +858,7 @@ class __CartListContentState extends State<_CartListContent> {
             ),
           ),
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            '\₱${amount.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: isTotal ? 16 : 14,
               fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
@@ -934,7 +934,7 @@ class __CartItemState extends State<_CartItem> {
             .get();
 
         if (!mounted) return;
-        
+
         if (variantDoc.exists) {
           final variantData = variantDoc.data() as Map<String, dynamic>;
           setState(() {
@@ -955,7 +955,7 @@ class __CartItemState extends State<_CartItem> {
             .get();
 
         if (!mounted) return;
-        
+
         if (productDoc.exists) {
           final productData = productDoc.data() as Map<String, dynamic>;
           setState(() {
@@ -993,7 +993,7 @@ class __CartItemState extends State<_CartItem> {
 
   void _stopEditingQuantity() {
     if (!mounted) return;
-    
+
     setState(() {
       _isEditingQuantity = false;
     });
@@ -1102,7 +1102,7 @@ class __CartItemState extends State<_CartItem> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '\$${total.toStringAsFixed(2)}',
+                        '\₱${total.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1113,7 +1113,7 @@ class __CartItemState extends State<_CartItem> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${price.toStringAsFixed(2)} each',
+                    '\₱${price.toStringAsFixed(2)} each',
                     style: TextStyle(
                       fontSize: 12,
                       color: widget.textSecondary,

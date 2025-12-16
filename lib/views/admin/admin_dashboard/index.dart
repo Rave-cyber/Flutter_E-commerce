@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../layouts/admin_layout.dart';
 import '../../../models/product.dart';
-import '../../../models/order_model.dart';
-import '../../../models/customer_model.dart';
-import '../../../models/stock_in_model.dart';
-import '../../../models/stock_out_model.dart';
-import '../../../services/admin/order_service.dart';
-import '../../../services/admin/customer_service.dart';
-import '../../../services/admin/product_sevice.dart';
-import '../../../services/admin/stock_in_service.dart';
-import '../../../services/admin/stock_out_service.dart';
-import 'package:intl/intl.dart';
+import '../../../firestore_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -26,44 +19,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
   DateTime selectedEndDate = DateTime.now();
   String selectedPeriod = 'Last 30 days';
 
-  // Service instances
-  final OrderService _orderService = OrderService();
-  final CustomerService _customerService = CustomerService();
-  final ProductService _productService = ProductService();
-  final StockInService _stockInService = StockInService();
-  final StockOutService _stockOutService = StockOutService();
-
-  // Real-time streams for live data
-  late Stream<List<OrderModel>> _ordersStream;
-  late Stream<List<OrderModel>> _deliveredOrdersStream;
-  late Stream<List<CustomerModel>> _customersStream;
-  late Stream<List<StockInModel>> _stockInsStream;
-  late Stream<List<StockOutModel>> _stockOutsStream;
+  // Modern Green Theme Colors
+  final Color _primaryColor = const Color(0xFF2C8610);
+  final Color _primaryLight = const Color(0xFFF0F9EE);
+  final Color _accentColor = const Color(0xFF4CAF50);
+  final Color _cardBackground = Colors.white;
 
   @override
   void initState() {
     super.initState();
-    _initializeStreams();
-  }
-
-  void _initializeStreams() {
-    _ordersStream = _orderService.streamOrdersByDateRange(
-      selectedStartDate,
-      selectedEndDate,
-    );
-
-    _deliveredOrdersStream = _orderService.streamDeliveredOrdersByDateRange(
-      selectedStartDate,
-      selectedEndDate,
-    );
-
-    _customersStream = _customerService.streamCustomersByDateRange(
-      selectedStartDate,
-      selectedEndDate,
-    );
-
-    _stockInsStream = _stockInService.getStockIns();
-    _stockOutsStream = _stockOutService.getStockOuts();
   }
 
   void _showDateRangePicker() async {
@@ -84,8 +48,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         selectedPeriod =
             '${DateFormat('MMM dd').format(picked.start)} - ${DateFormat('MMM dd, yyyy').format(picked.end)}';
       });
-      // Reinitialize streams with new date range
-      _initializeStreams();
     }
   }
 
@@ -93,346 +55,498 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget build(BuildContext context) {
     return AdminLayout(
       selectedRoute: '/admin/dashboard',
-      child: RefreshIndicator(
-        onRefresh: () async {
-          // Refresh streams by reinitializing them
-          setState(() {
-            _initializeStreams();
-          });
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        color: _primaryLight.withOpacity(0.3),
+        child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                // Replace the Header section in your build method with this:
+
+// Header
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 15,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(Icons.dashboard,
+                                color: _primaryColor, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Dashboard Overview',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: _primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Welcome back! Here\'s your business summary.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Date Range Picker - Moved below with full width
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: _primaryLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _showDateRangePicker,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: _primaryColor,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Filter Period',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        selectedPeriod,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: _primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_drop_down,
+                                        color: _primaryColor,
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Main Content
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: FirestoreService.getAllOrders(),
+                  builder: (context, ordersSnapshot) {
+                    return StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: _getCustomersStream(),
+                      builder: (context, customersSnapshot) {
+                        return StreamBuilder<List<ProductModel>>(
+                          stream: _getProductsStream(),
+                          builder: (context, productsSnapshot) {
+                            if (ordersSnapshot.connectionState ==
+                                    ConnectionState.waiting ||
+                                customersSnapshot.connectionState ==
+                                    ConnectionState.waiting ||
+                                productsSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      _primaryColor),
+                                ),
+                              );
+                            }
+
+                            if (ordersSnapshot.hasError ||
+                                customersSnapshot.hasError ||
+                                productsSnapshot.hasError) {
+                              return Center(
+                                child: Text('Error loading data'),
+                              );
+                            }
+
+                            final orders = ordersSnapshot.data ?? [];
+                            final customers = customersSnapshot.data ?? [];
+                            final products = productsSnapshot.data ?? [];
+
+                            return _buildDashboardContent(
+                              orders,
+                              customers,
+                              products,
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardContent(
+    List<Map<String, dynamic>> orders,
+    List<Map<String, dynamic>> customers,
+    List<ProductModel> products,
+  ) {
+    // Calculate filtered data
+    final filteredOrders = orders.where((order) {
+      final createdAt = (order['createdAt'] as Timestamp?)?.toDate();
+      return createdAt != null &&
+          createdAt.isAfter(selectedStartDate) &&
+          createdAt.isBefore(selectedEndDate.add(const Duration(days: 1)));
+    }).toList();
+
+    final filteredCustomers = customers.where((customer) {
+      final createdAt = (customer['created_at'] as Timestamp?)?.toDate();
+      return createdAt != null &&
+          createdAt.isAfter(selectedStartDate) &&
+          createdAt.isBefore(selectedEndDate.add(const Duration(days: 1)));
+    }).toList();
+
+    // Calculate metrics
+    final totalRevenue = filteredOrders
+        .where((order) => order['status'] == 'delivered')
+        .fold(0.0, (sum, order) => sum + (order['total'] as num).toDouble());
+
+    final totalOrders = filteredOrders.length;
+    final totalCustomers = filteredCustomers.length;
+    final lowStockProducts =
+        products.where((product) => (product.stock_quantity ?? 0) <= 10).length;
+
+    final totalStockValue = products.fold(
+        0.0,
+        (sum, product) =>
+            sum + (product.sale_price * (product.stock_quantity ?? 0)));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Key Metrics Cards - FIXED: Use MediaQuery for responsive layout
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            final isTablet =
+                constraints.maxWidth >= 600 && constraints.maxWidth < 1200;
+            final isDesktop = constraints.maxWidth >= 1200;
+
+            int crossAxisCount = 4;
+            double aspectRatio = 1.5;
+
+            if (isMobile) {
+              crossAxisCount = 2;
+              aspectRatio = 1.2;
+            } else if (isTablet) {
+              crossAxisCount = 4;
+              aspectRatio = 1.3;
+            } else {
+              crossAxisCount = 4;
+              aspectRatio = 1.5;
+            }
+
+            return GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: aspectRatio,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _buildMetricCard(
+                  'Total Revenue',
+                  '₱${NumberFormat('#,###.##').format(totalRevenue)}',
+                  _accentColor,
+                  Icons.monetization_on_rounded,
+                  '${totalOrders} orders',
+                  12.5,
+                ),
+                _buildMetricCard(
+                  'Total Orders',
+                  totalOrders.toString(),
+                  Colors.blue,
+                  Icons.shopping_cart_rounded,
+                  'Active period',
+                  8.3,
+                ),
+                _buildMetricCard(
+                  'New Customers',
+                  totalCustomers.toString(),
+                  Colors.orange,
+                  Icons.people_rounded,
+                  'Registered',
+                  5.7,
+                ),
+                _buildMetricCard(
+                  'Low Stock Items',
+                  lowStockProducts.toString(),
+                  Colors.red,
+                  Icons.warning_rounded,
+                  '₱${NumberFormat('#,###.##').format(totalStockValue)} value',
+                  -2.1,
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+
+        // Charts Section - FIXED: Responsive height
+        Column(
+          children: [
+            _buildSalesTrendChart(filteredOrders),
+            const SizedBox(height: 16),
+            _buildInventoryChart(products),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Bottom Charts
+        Column(
+          children: [
+            _buildCustomerGrowthChart(filteredCustomers),
+            const SizedBox(height: 16),
+            _buildStockMovementChart(),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Recent Activities
+        _buildRecentActivities(filteredOrders),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildMetricCard(
+    String title,
+    String value,
+    Color color,
+    IconData icon,
+    String subtitle,
+    double growthPercent,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmall = constraints.maxHeight < 120;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Date Filter
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Dashboard Overview',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Welcome back! Here\'s your business summary.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Container(
-                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _showDateRangePicker,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                color: Colors.green[600],
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                selectedPeriod,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.green[700],
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                color: Colors.green[600],
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ),
+                    child: Icon(icon, color: color, size: isSmall ? 16 : 20),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: growthPercent >= 0
+                          ? Colors.green.shade50
+                          : Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${growthPercent >= 0 ? '+' : ''}${growthPercent.toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        color: growthPercent >= 0
+                            ? Colors.green.shade600
+                            : Colors.red.shade600,
+                        fontSize: isSmall ? 10 : 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Key Metrics Cards with Real-time Data
-              _buildRealTimeMetrics(),
-
-              const SizedBox(height: 24),
-
-              // Charts Section with Real-time Data
+              const SizedBox(height: 8),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRealTimeSalesChart(),
-                  const SizedBox(height: 16),
-                  _buildRealTimeInventoryChart(),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isSmall ? 18 : 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: isSmall ? 12 : 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: isSmall ? 10 : 12,
+                      color: Colors.grey[500],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Bottom Charts
-              Column(
-                children: [
-                  _buildRealTimeCustomerGrowthChart(),
-                  const SizedBox(height: 16),
-                  _buildStockMovementChart(),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Recent Activities with Real-time Data
-              _buildRealTimeRecentActivities(),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildRealTimeMetrics() {
-    return Column(
-      children: [
-        // Total Revenue
-        StreamBuilder<List<OrderModel>>(
-          stream: _deliveredOrdersStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildMetricCard(
-                'Total Revenue',
-                'Error',
-                Icons.monetization_on,
-                Colors.red,
-                'Failed to load',
-              );
-            }
+  Widget _buildSalesTrendChart(List<Map<String, dynamic>> orders) {
+    final dailySales = _calculateDailySales(orders);
+    final dailySalesList = dailySales.entries.toList();
 
-            if (!snapshot.hasData) {
-              return _buildMetricCard(
-                'Total Revenue',
-                '...',
-                Icons.monetization_on,
-                Colors.green,
-                'Loading...',
-              );
-            }
-
-            final orders = snapshot.data!;
-            final totalRevenue = orders.fold<double>(
-              0.0,
-              (sum, order) => sum + order.total,
-            );
-
-            return _buildMetricCard(
-              'Total Revenue',
-              '₱${NumberFormat('#,###.##').format(totalRevenue)}',
-              Icons.monetization_on,
-              Colors.green,
-              '${orders.length} orders',
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // Total Orders
-        StreamBuilder<List<OrderModel>>(
-          stream: _ordersStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildMetricCard(
-                'Total Orders',
-                'Error',
-                Icons.shopping_cart,
-                Colors.red,
-                'Failed to load',
-              );
-            }
-
-            if (!snapshot.hasData) {
-              return _buildMetricCard(
-                'Total Orders',
-                '...',
-                Icons.shopping_cart,
-                Colors.blue,
-                'Loading...',
-              );
-            }
-
-            final orders = snapshot.data!;
-
-            return _buildMetricCard(
-              'Total Orders',
-              orders.length.toString(),
-              Icons.shopping_cart,
-              Colors.blue,
-              'Active period',
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // New Customers
-        StreamBuilder<List<CustomerModel>>(
-          stream: _customersStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildMetricCard(
-                'New Customers',
-                'Error',
-                Icons.people,
-                Colors.red,
-                'Failed to load',
-              );
-            }
-
-            if (!snapshot.hasData) {
-              return _buildMetricCard(
-                'New Customers',
-                '...',
-                Icons.people,
-                Colors.orange,
-                'Loading...',
-              );
-            }
-
-            final customers = snapshot.data!;
-
-            return _buildMetricCard(
-              'New Customers',
-              customers.length.toString(),
-              Icons.people,
-              Colors.orange,
-              'Registered',
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // Low Stock Items (products are static, so no stream needed)
-        StreamBuilder<List<ProductModel>>(
-          stream: _productService.getProducts(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _buildMetricCard(
-                'Low Stock Items',
-                'Error',
-                Icons.warning,
-                Colors.red,
-                'Failed to load',
-              );
-            }
-
-            if (!snapshot.hasData) {
-              return _buildMetricCard(
-                'Low Stock Items',
-                '...',
-                Icons.warning,
-                Colors.red,
-                'Loading...',
-              );
-            }
-
-            final products = snapshot.data!;
-            final lowStockProducts = products
-                .where((product) => (product.stock_quantity ?? 0) <= 10)
-                .length;
-            final totalStockValue = products.fold<double>(
-                0.0,
-                (sum, product) =>
-                    sum + (product.sale_price * (product.stock_quantity ?? 0)));
-
-            return _buildMetricCard(
-              'Low Stock Items',
-              lowStockProducts.toString(),
-              Icons.warning,
-              Colors.red,
-              '₱${NumberFormat('#,###').format(totalStockValue)} total value',
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRealTimeSalesChart() {
     return Container(
       height: 300,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.trending_up, color: Colors.green[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Sales Trend (Real-time)',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  'Weekly Sales Trend',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: _primaryColor,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<List<OrderModel>>(
-                stream: _deliveredOrdersStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text('Error loading sales data'),
-                    );
-                  }
-
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  final orders = snapshot.data!;
-                  final spots = _getSalesChartData(orders);
-
-                  return LineChart(
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Last 7 Days',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: dailySalesList.isEmpty
+                ? Center(
+                    child: Text(
+                      'No sales data available',
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  )
+                : LineChart(
                     LineChartData(
                       gridData: const FlGridData(show: false),
                       titlesData: FlTitlesData(
@@ -441,22 +555,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             showTitles: true,
                             reservedSize: 30,
                             getTitlesWidget: (value, meta) {
-                              const days = [
-                                '7d ago',
-                                '6d',
-                                '5d',
-                                '4d',
-                                '3d',
-                                '2d',
-                                'Today'
-                              ];
-                              if (value.toInt() >= 0 && value.toInt() < 7) {
-                                return Text(
-                                  days[value.toInt()],
-                                  style: const TextStyle(fontSize: 12),
-                                );
+                              if (value < 0 ||
+                                  value >= dailySalesList.length ||
+                                  !value.isFinite) {
+                                return const SizedBox();
                               }
-                              return const Text('');
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  dailySalesList[value.toInt()].key,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -465,9 +575,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             showTitles: true,
                             reservedSize: 40,
                             getTitlesWidget: (value, meta) {
-                              return Text(
-                                '₱${(value / 1000).toInt()}k',
-                                style: const TextStyle(fontSize: 12),
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 4.0),
+                                child: Text(
+                                  '₱${value.toInt()}k',
+                                  style: const TextStyle(fontSize: 10),
+                                ),
                               );
                             },
                           ),
@@ -478,11 +591,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             sideTitles: SideTitles(showTitles: false)),
                       ),
                       borderData: FlBorderData(show: false),
+                      minX: 0,
+                      maxX: dailySalesList.length > 0
+                          ? (dailySalesList.length - 1).toDouble()
+                          : 6,
+                      minY: 0,
+                      maxY: dailySalesList.isEmpty
+                          ? 10
+                          : (dailySalesList
+                                      .map((e) => e.value)
+                                      .reduce((a, b) => a > b ? a : b) /
+                                  1000) +
+                              2,
                       lineBarsData: [
                         LineChartBarData(
-                          spots: spots,
+                          spots: dailySalesList.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final data = entry.value;
+                            return FlSpot(index.toDouble(), data.value / 1000);
+                          }).toList(),
                           isCurved: true,
-                          color: Colors.green[600],
+                          color: _primaryColor,
                           barWidth: 3,
                           isStrokeCapRound: true,
                           dotData: const FlDotData(show: false),
@@ -492,120 +621,84 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.green.withOpacity(0.3),
-                                Colors.green.withOpacity(0.05),
+                                _primaryColor.withOpacity(0.3),
+                                _primaryColor.withOpacity(0.05),
                               ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  List<FlSpot> _getSalesChartData(List<OrderModel> orders) {
-    Map<String, double> dailyRevenue = {};
+  Widget _buildInventoryChart(List<ProductModel> products) {
+    final int inStock = products
+        .where((p) => (p.stock_quantity ?? 0) > 10 && !(p.is_archived ?? false))
+        .length;
+    final int lowStock = products
+        .where((p) =>
+            (p.stock_quantity ?? 0) > 0 &&
+            (p.stock_quantity ?? 0) <= 10 &&
+            !(p.is_archived ?? false))
+        .length;
+    final int outOfStock = products
+        .where((p) => (p.stock_quantity ?? 0) == 0 && !(p.is_archived ?? false))
+        .length;
 
-    for (OrderModel order in orders) {
-      if (order.createdAt != null) {
-        final dateKey =
-            '${order.createdAt!.year}-${order.createdAt!.month.toString().padLeft(2, '0')}-${order.createdAt!.day.toString().padLeft(2, '0')}';
-        dailyRevenue[dateKey] = (dailyRevenue[dateKey] ?? 0.0) + order.total;
-      }
-    }
-
-    // Convert to chart spots (last 7 days)
-    List<FlSpot> spots = [];
-    for (int i = 6; i >= 0; i--) {
-      final date = DateTime.now().subtract(Duration(days: i));
-      final dateKey =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      spots.add(FlSpot(
-          (6 - i).toDouble(), (dailyRevenue[dateKey] ?? 0.0).toDouble()));
-    }
-
-    return spots;
-  }
-
-  Widget _buildRealTimeInventoryChart() {
     return Container(
       height: 300,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.inventory, color: Colors.green[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Inventory Status (Real-time)',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  'Inventory Status',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: _primaryColor,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<List<ProductModel>>(
-                stream: _productService.getProducts(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text('Error loading inventory data'),
-                    );
-                  }
-
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  final products = snapshot.data!;
-                  final int inStock = products
-                      .where((p) => (p.stock_quantity ?? 0) > 10)
-                      .length;
-                  final int lowStock = products
-                      .where((p) =>
-                          (p.stock_quantity ?? 0) > 0 &&
-                          (p.stock_quantity ?? 0) <= 10)
-                      .length;
-                  final int outOfStock = products
-                      .where((p) => (p.stock_quantity ?? 0) == 0)
-                      .length;
-
-                  return PieChart(
+              ),
+              Icon(Icons.inventory_rounded, color: _primaryColor),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: PieChart(
                     PieChartData(
                       sections: [
                         PieChartSectionData(
                           value: inStock.toDouble(),
                           color: Colors.green,
                           title: '$inStock',
-                          radius: 50,
+                          radius: 35,
                           titleStyle: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -614,9 +707,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           value: lowStock.toDouble(),
                           color: Colors.orange,
                           title: '$lowStock',
-                          radius: 50,
+                          radius: 35,
                           titleStyle: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -625,110 +718,97 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           value: outOfStock.toDouble(),
                           color: Colors.red,
                           title: '$outOfStock',
-                          radius: 50,
+                          radius: 35,
                           titleStyle: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                       ],
                       sectionsSpace: 2,
-                      centerSpaceRadius: 40,
+                      centerSpaceRadius: 30,
                     ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            StreamBuilder<List<ProductModel>>(
-              stream: _productService.getProducts(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const SizedBox.shrink();
-
-                final products = snapshot.data!;
-                final int inStock =
-                    products.where((p) => (p.stock_quantity ?? 0) > 10).length;
-                final int lowStock = products
-                    .where((p) =>
-                        (p.stock_quantity ?? 0) > 0 &&
-                        (p.stock_quantity ?? 0) <= 10)
-                    .length;
-                final int outOfStock =
-                    products.where((p) => (p.stock_quantity ?? 0) == 0).length;
-
-                return Column(
-                  children: [
-                    _buildLegendItem('In Stock', Colors.green, inStock),
-                    _buildLegendItem('Low Stock', Colors.orange, lowStock),
-                    _buildLegendItem('Out of Stock', Colors.red, outOfStock),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRealTimeCustomerGrowthChart() {
-    return Container(
-      height: 250,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.people, color: Colors.blue[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Customer Growth (Real-time)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLegendItem('In Stock (>10)', Colors.green, inStock),
+                      _buildLegendItem(
+                          'Low Stock (1-10)', Colors.orange, lowStock),
+                      _buildLegendItem('Out of Stock', Colors.red, outOfStock),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: StreamBuilder<List<CustomerModel>>(
-                stream: _customersStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text('Error loading customer data'),
-                    );
-                  }
+          ),
+        ],
+      ),
+    );
+  }
 
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+  Widget _buildCustomerGrowthChart(List<Map<String, dynamic>> customers) {
+    final monthlyCustomers = _calculateMonthlyCustomers(customers);
+    final monthlyList = monthlyCustomers.entries.toList();
 
-                  final customers = snapshot.data!;
-                  final groups = _getCustomerGrowthData(customers);
-
-                  return BarChart(
+    return Container(
+      height: 250,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  'Customer Growth',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+              ),
+              Icon(Icons.people_rounded, color: _primaryColor),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: monthlyList.isEmpty
+                ? Center(
+                    child: Text(
+                      'No customer data available',
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  )
+                : BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
-                      maxY:
-                          (customers.length * 1.2).clamp(10.0, double.infinity),
+                      maxY: monthlyList.isEmpty
+                          ? 10
+                          : monthlyList
+                                  .map((e) => e.value)
+                                  .reduce((a, b) => a > b ? a : b)
+                                  .toDouble() +
+                              2,
                       barTouchData: BarTouchData(enabled: false),
                       titlesData: FlTitlesData(
                         show: true,
@@ -741,22 +821,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
+                            reservedSize: 20,
                             getTitlesWidget: (value, meta) {
-                              const months = [
-                                '5mo',
-                                '4mo',
-                                '3mo',
-                                '2mo',
-                                '1mo',
-                                'Now'
-                              ];
-                              if (value.toInt() >= 0 && value.toInt() < 6) {
-                                return Text(
-                                  months[value.toInt()],
-                                  style: const TextStyle(fontSize: 12),
-                                );
+                              if (value < 0 ||
+                                  value >= monthlyList.length ||
+                                  !value.isFinite) {
+                                return const SizedBox();
                               }
-                              return const Text('');
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  monthlyList[value.toInt()].key,
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              );
                             },
                           ),
                         ),
@@ -767,460 +845,312 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                       ),
                       borderData: FlBorderData(show: false),
-                      barGroups: groups,
+                      barGroups: monthlyList.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final data = entry.value;
+                        return BarChartGroupData(
+                          x: index,
+                          barRods: [
+                            BarChartRodData(
+                              toY: data.value.toDouble(),
+                              color: _primaryColor,
+                              width: 16,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                topRight: Radius.circular(4),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+                  ),
+          ),
+        ],
       ),
     );
-  }
-
-  List<BarChartGroupData> _getCustomerGrowthData(
-      List<CustomerModel> customers) {
-    Map<String, int> monthlyCustomers = {};
-
-    for (CustomerModel customer in customers) {
-      if (customer.created_at != null) {
-        final monthKey =
-            '${customer.created_at!.year}-${customer.created_at!.month.toString().padLeft(2, '0')}';
-        monthlyCustomers[monthKey] = (monthlyCustomers[monthKey] ?? 0) + 1;
-      }
-    }
-
-    // Convert to bar chart data (last 6 months)
-    List<BarChartGroupData> groups = [];
-    for (int i = 5; i >= 0; i--) {
-      final date = DateTime.now();
-      date.subtract(Duration(days: 30 * i));
-      final monthKey = '${date.year}-${date.month.toString().padLeft(2, '0')}';
-      groups.add(
-        BarChartGroupData(
-          x: 5 - i,
-          barRods: [
-            BarChartRodData(
-              toY: (monthlyCustomers[monthKey] ?? 0).toDouble(),
-              color: Colors.blue[600],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(4),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return groups;
   }
 
   Widget _buildStockMovementChart() {
     return Container(
       height: 250,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.swap_vert, color: Colors.purple[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
                   'Stock Movement',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: 100,
-                  barTouchData: BarTouchData(enabled: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const weeks = ['W1', 'W2', 'W3', 'W4'];
-                          if (value.toInt() >= 0 && value.toInt() < 4) {
-                            return Text(
-                              weeks[value.toInt()],
-                              style: const TextStyle(fontSize: 12),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: [
-                    BarChartGroupData(
-                      x: 0,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 50,
-                          color: Colors.green[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                        BarChartRodData(
-                          toY: 30,
-                          color: Colors.red[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 1,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 70,
-                          color: Colors.green[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                        BarChartRodData(
-                          toY: 25,
-                          color: Colors.red[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 2,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 40,
-                          color: Colors.green[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                        BarChartRodData(
-                          toY: 35,
-                          color: Colors.red[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                    BarChartGroupData(
-                      x: 3,
-                      barRods: [
-                        BarChartRodData(
-                          toY: 60,
-                          color: Colors.green[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                        BarChartRodData(
-                          toY: 20,
-                          color: Colors.red[600],
-                          width: 8,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            topRight: Radius.circular(2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildMiniLegend('Stock In', Colors.green[600]!),
-                _buildMiniLegend('Stock Out', Colors.red[600]!),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRealTimeRecentActivities() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.history, color: Colors.green[600], size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Recent Activities (Real-time)',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: _primaryColor,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            StreamBuilder<List<OrderModel>>(
-              stream: _ordersStream,
-              builder: (context, ordersSnapshot) {
-                return StreamBuilder<List<StockInModel>>(
-                  stream: _stockInsStream,
-                  builder: (context, stockInsSnapshot) {
-                    return StreamBuilder<List<StockOutModel>>(
-                      stream: _stockOutsStream,
-                      builder: (context, stockOutsSnapshot) {
-                        if (ordersSnapshot.hasError ||
-                            stockInsSnapshot.hasError ||
-                            stockOutsSnapshot.hasError) {
-                          return const Center(
-                            child: Text('Error loading activities'),
-                          );
-                        }
+              ),
+              Icon(Icons.swap_vert_rounded, color: _primaryColor),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _getStockInsStream(),
+              builder: (context, stockInsSnapshot) {
+                return StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _getStockOutsStream(),
+                  builder: (context, stockOutsSnapshot) {
+                    if (stockInsSnapshot.connectionState ==
+                            ConnectionState.waiting ||
+                        stockOutsSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(_primaryColor),
+                        ),
+                      );
+                    }
 
-                        if (!ordersSnapshot.hasData ||
-                            !stockInsSnapshot.hasData ||
-                            !stockOutsSnapshot.hasData) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
+                    final stockIns = stockInsSnapshot.data ?? [];
+                    final stockOuts = stockOutsSnapshot.data ?? [];
+                    final weeklyData =
+                        _calculateWeeklyStockMovement(stockIns, stockOuts);
+                    final weeklyList = weeklyData.entries.toList();
 
-                        List<Widget> activities = [];
-                        final orders = ordersSnapshot.data!;
-                        final stockIns = stockInsSnapshot.data!;
-                        final stockOuts = stockOutsSnapshot.data!;
-
-                        // Add recent orders
-                        activities.addAll(orders
-                            .take(5)
-                            .map((order) => _buildActivityItem(
-                                  Icons.shopping_cart,
-                                  'New order placed',
-                                  'Order #${order.id}',
-                                  order.createdAt ?? DateTime.now(),
-                                  Colors.blue,
-                                ))
-                            .toList());
-
-                        // Add recent stock ins
-                        activities.addAll(stockIns
-                            .take(3)
-                            .map((stock) => _buildActivityItem(
-                                  Icons.add_circle,
-                                  'Stock added',
-                                  '${stock.quantity} units received',
-                                  stock.created_at ?? DateTime.now(),
-                                  Colors.green,
-                                ))
-                            .toList());
-
-                        // Add recent stock outs
-                        activities.addAll(stockOuts
-                            .take(3)
-                            .map((stock) => _buildActivityItem(
-                                  Icons.remove_circle,
-                                  'Stock deducted',
-                                  '${stock.quantity} units removed',
-                                  stock.created_at ?? DateTime.now(),
-                                  Colors.orange,
-                                ))
-                            .toList());
-
-                        // Take only first 8 activities and sort by date
-                        activities = activities.take(8).toList();
-
-                        if (activities.isEmpty) {
-                          return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Text(
-                                'No recent activities',
-                                style: TextStyle(color: Colors.grey),
+                    return weeklyList.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No stock movement data',
+                              style: TextStyle(color: Colors.grey.shade500),
+                            ),
+                          )
+                        : BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: weeklyList.isEmpty
+                                  ? 100
+                                  : weeklyList
+                                          .map((e) =>
+                                              e.value['in']! + e.value['out']!)
+                                          .reduce((a, b) => a > b ? a : b)
+                                          .toDouble() +
+                                      20,
+                              barTouchData: BarTouchData(enabled: false),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                rightTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                topTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 20,
+                                    getTitlesWidget: (value, meta) {
+                                      if (value < 0 ||
+                                          value >= weeklyList.length ||
+                                          !value.isFinite) {
+                                        return const SizedBox();
+                                      }
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 4.0),
+                                        child: Text(
+                                          'W${value.toInt() + 1}',
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                leftTitles: const AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: false,
+                                  ),
+                                ),
                               ),
+                              borderData: FlBorderData(show: false),
+                              barGroups:
+                                  weeklyList.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final data = entry.value.value;
+                                return BarChartGroupData(
+                                  x: index,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: data['in']!.toDouble(),
+                                      color: Colors.green[600]!,
+                                      width: 12,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(2),
+                                        topRight: Radius.circular(2),
+                                      ),
+                                    ),
+                                    BarChartRodData(
+                                      toY: data['out']!.toDouble(),
+                                      color: Colors.red[600]!,
+                                      width: 12,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(2),
+                                        topRight: Radius.circular(2),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
                             ),
                           );
-                        }
-
-                        return Column(children: activities);
-                      },
-                    );
                   },
                 );
               },
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMiniLegend('Stock In', Colors.green[600]!),
+              _buildMiniLegend('Stock Out', Colors.red[600]!),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMetricCard(
-      String title, String value, IconData icon, Color color, String subtitle) {
+  Widget _buildRecentActivities(List<Map<String, dynamic>> orders) {
+    final recentOrders = orders.take(8).toList();
+
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history_rounded, color: _primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Recent Activities',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (recentOrders.isEmpty)
+            Center(
+              child: Text(
+                'No recent activities',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+            )
+          else
+            ...recentOrders.map((order) => _buildActivityItem(
+                  icon: Icons.shopping_cart_rounded,
+                  title: 'Order #${order['id'].substring(0, 8)}',
+                  subtitle:
+                      '₱${NumberFormat('#,###.##').format(order['total'] ?? 0)}',
+                  time: (order['createdAt'] as Timestamp?)?.toDate() ??
+                      DateTime.now(),
+                  color: _getStatusColor(order['status'] ?? ''),
+                )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required DateTime time,
+    required Color color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: color,
-                        size: 24,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Live',
-                        style: TextStyle(
-                          color: Colors.green.shade600,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-        ),
+          Text(
+            DateFormat('MM/dd, HH:mm').format(time),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildLegendItem(String label, Color color, int count) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Container(
@@ -1233,8 +1163,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           const SizedBox(width: 8),
           Text(
-            '$label: $count',
+            '$label:',
             style: const TextStyle(fontSize: 12),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            count.toString(),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -1261,55 +1196,186 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildActivityItem(IconData icon, String title, String subtitle,
-      DateTime time, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            DateFormat('MMM dd, HH:mm').format(time),
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[500],
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'delivered':
+        return Colors.green;
+      case 'shipped':
+        return Colors.blue;
+      case 'confirmed':
+        return Colors.orange;
+      case 'processing':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Helper methods for data processing
+  Map<String, double> _calculateDailySales(List<Map<String, dynamic>> orders) {
+    final now = DateTime.now();
+    final Map<String, double> dailySales = {};
+
+    for (int i = 0; i < 7; i++) {
+      final day = now.subtract(Duration(days: 6 - i));
+      final dayKey = DateFormat('EEE').format(day);
+      dailySales[dayKey] = 0.0;
+    }
+
+    for (final order in orders) {
+      final status = (order['status'] ?? '').toString();
+      if (status != 'delivered') continue;
+
+      final ts = order['createdAt'] as Timestamp?;
+      if (ts == null) continue;
+
+      final date = ts.toDate();
+      final dayKey = DateFormat('EEE').format(date);
+      final total = (order['total'] ?? 0.0) as num;
+
+      if (dailySales.containsKey(dayKey)) {
+        dailySales[dayKey] = dailySales[dayKey]! + total.toDouble();
+      }
+    }
+
+    return dailySales;
+  }
+
+  Map<String, int> _calculateMonthlyCustomers(
+      List<Map<String, dynamic>> customers) {
+    final now = DateTime.now();
+    final Map<String, int> monthlyCustomers = {};
+
+    for (int i = 5; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i, 1);
+      final monthKey = DateFormat('MMM').format(month);
+      monthlyCustomers[monthKey] = 0;
+    }
+
+    for (final customer in customers) {
+      final ts = customer['created_at'] as Timestamp?;
+      if (ts == null) continue;
+
+      final date = ts.toDate();
+      final monthKey = DateFormat('MMM').format(date);
+
+      if (monthlyCustomers.containsKey(monthKey)) {
+        monthlyCustomers[monthKey] = monthlyCustomers[monthKey]! + 1;
+      }
+    }
+
+    return monthlyCustomers;
+  }
+
+  Map<int, Map<String, int>> _calculateWeeklyStockMovement(
+    List<Map<String, dynamic>> stockIns,
+    List<Map<String, dynamic>> stockOuts,
+  ) {
+    final now = DateTime.now();
+    final Map<int, Map<String, int>> weeklyData = {};
+
+    for (int week = 0; week < 4; week++) {
+      weeklyData[week] = {'in': 0, 'out': 0};
+    }
+
+    for (final stock in stockIns) {
+      final ts = stock['created_at'] as Timestamp?;
+      if (ts == null) continue;
+
+      final date = ts.toDate();
+      final weekDiff = now.difference(date).inDays ~/ 7;
+
+      if (weekDiff >= 0 && weekDiff < 4) {
+        final quantity = (stock['quantity'] ?? 0) as num;
+        weeklyData[weekDiff]!['in'] =
+            weeklyData[weekDiff]!['in']! + quantity.toInt();
+      }
+    }
+
+    for (final stock in stockOuts) {
+      final ts = stock['created_at'] as Timestamp?;
+      if (ts == null) continue;
+
+      final date = ts.toDate();
+      final weekDiff = now.difference(date).inDays ~/ 7;
+
+      if (weekDiff >= 0 && weekDiff < 4) {
+        final quantity = (stock['quantity'] ?? 0) as num;
+        weeklyData[weekDiff]!['out'] =
+            weeklyData[weekDiff]!['out']! + quantity.toInt();
+      }
+    }
+
+    return weeklyData;
+  }
+
+  // Firestore Streams
+  Stream<List<ProductModel>> _getProductsStream() {
+    return FirebaseFirestore.instance
+        .collection('products')
+        .where('is_archived', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return !data.containsKey('product_id');
+      }).map((doc) {
+        final data = doc.data();
+        return ProductModel.fromMap({
+          'id': doc.id,
+          ...data,
+        });
+      }).toList();
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> _getCustomersStream() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where('userType', whereIn: ['customer', 'user'])
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'id': doc.id,
+              ...data,
+              'created_at': data['createdAt'] ?? Timestamp.now(),
+            };
+          }).toList();
+        });
+  }
+
+  Stream<List<Map<String, dynamic>>> _getStockInsStream() {
+    return FirebaseFirestore.instance
+        .collection('stock_ins')
+        .where('is_archived', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+          'created_at': data['created_at'] ?? Timestamp.now(),
+        };
+      }).toList();
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> _getStockOutsStream() {
+    return FirebaseFirestore.instance
+        .collection('stock_outs')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+          'created_at': data['created_at'] ?? Timestamp.now(),
+        };
+      }).toList();
+    });
   }
 }
