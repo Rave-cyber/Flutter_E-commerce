@@ -389,8 +389,10 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
     IconData? prefixIcon,
     bool required = false,
     bool isLoading = false,
+    Widget? suffixIcon,
   }) {
     return DropdownButtonFormField<T>(
+      isExpanded: true,
       value: value,
       items: items,
       onChanged: isLoading ? null : onChanged,
@@ -398,13 +400,7 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
       decoration: InputDecoration(
         labelText: required ? '$labelText *' : labelText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-        suffixIcon: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : null,
+        suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -462,30 +458,37 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                       child: Text('Loading regions...'),
                     ),
                   ]
-                : _regions.map((region) {
-                    return DropdownMenuItem(
-                      value: region,
-                      child: SizedBox(
-                        width:
-                            200, // Fixed width to enable horizontal scrolling
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                : _regions
+                    .map((region) => DropdownMenuItem(
+                          value: region,
                           child: Text(region['regionName'] ?? region['name']),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        ))
+                    .toList(),
             onChanged: _onRegionChanged,
             prefixIcon: Icons.location_on,
             validator: (value) =>
                 value == null ? 'Please select a region' : null,
             required: true,
+            suffixIcon: _isLoadingRegions
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
             isLoading: _isLoadingRegions,
           ),
           const SizedBox(height: 16),
           _buildDropdown<Map<String, dynamic>>(
             labelText: 'Province',
             value: _selectedProvince,
+            suffixIcon: _isLoadingProvinces
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
             items: _provinces.isEmpty && !_isLoadingProvinces
                 ? [
                     const DropdownMenuItem(
@@ -493,19 +496,12 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                       child: Text('Select a region first'),
                     ),
                   ]
-                : _provinces.map((province) {
-                    return DropdownMenuItem(
-                      value: province,
-                      child: SizedBox(
-                        width:
-                            200, // Fixed width to enable horizontal scrolling
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                : _provinces
+                    .map((province) => DropdownMenuItem(
+                          value: province,
                           child: Text(province['name']),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        ))
+                    .toList(),
             onChanged: _onProvinceChanged,
             prefixIcon: Icons.location_on,
             validator: (value) =>
@@ -517,6 +513,13 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
           _buildDropdown<Map<String, dynamic>>(
             labelText: 'City/Municipality',
             value: _selectedCityMunicipality,
+            suffixIcon: _isLoadingCities
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
             items: _citiesMunicipalities.isEmpty && !_isLoadingCities
                 ? [
                     const DropdownMenuItem(
@@ -524,19 +527,12 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                       child: Text('Select a province first'),
                     ),
                   ]
-                : _citiesMunicipalities.map((cityMunicipality) {
-                    return DropdownMenuItem(
-                      value: cityMunicipality,
-                      child: SizedBox(
-                        width:
-                            200, // Fixed width to enable horizontal scrolling
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                : _citiesMunicipalities
+                    .map((cityMunicipality) => DropdownMenuItem(
+                          value: cityMunicipality,
                           child: Text(cityMunicipality['name']),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        ))
+                    .toList(),
             onChanged: _onCityMunicipalityChanged,
             prefixIcon: Icons.location_on,
             validator: (value) =>
@@ -548,6 +544,13 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
           _buildDropdown<Map<String, dynamic>>(
             labelText: 'Barangay (Optional)',
             value: _selectedBarangay,
+            suffixIcon: _isLoadingBarangays
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
             items: _barangays.isEmpty && !_isLoadingBarangays
                 ? [
                     const DropdownMenuItem(
@@ -555,19 +558,12 @@ class _AdminWarehouseFormState extends State<AdminWarehouseForm> {
                       child: Text('Select a city/municipality first'),
                     ),
                   ]
-                : _barangays.map((barangay) {
-                    return DropdownMenuItem(
-                      value: barangay,
-                      child: SizedBox(
-                        width:
-                            200, // Fixed width to enable horizontal scrolling
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                : _barangays
+                    .map((barangay) => DropdownMenuItem(
+                          value: barangay,
                           child: Text(barangay['name']),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        ))
+                    .toList(),
             onChanged: (value) {
               setState(() {
                 _selectedBarangay = value;
