@@ -1,16 +1,37 @@
-# firebase
+# Flutter_E-Commerece_Dimdi 
 
-A new Flutter project.
+This is a Laravel Project for IT-14 E-Commerce Subsystem <br> December 16, 2025
 
-## Getting Started
+___
 
-This project is a starting point for a Flutter application.
+<h1>The Program Overall</h1>
 
-A few resources to get you started if this is your first Flutter project:
+___
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+<h3>Customer Side</h3>
+<p align="center">
+  <img src="PicForGithub/Customer.gif" width="300" />
+</p>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<p align="center">
+  <img src="PicForGithub/1.jpg" width="100" />
+  <img src="PicForGithub/2.jpg" width="100" />
+  <img src="PicForGithub/3.jpg" width="100" />
+</p>
+
+<p align="center">
+  <img src="PicForGithub/4.jpg" width="100" />
+  <img src="PicForGithub/5.jpg" width="100" />
+  <img src="PicForGithub/6.jpg" width="100" />
+</p>
+
+___
+
+<h3>Admin Side</h3>
+<p align="center">
+  <img src="PicForGithub/Admin.gif" width="300" />
+</p>
+
+___
+
+<h3>Rider Side</h3>
