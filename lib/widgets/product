@@ -1,0 +1,521 @@
+import 'package:flutter/material.dart';
+import '../../models/product.dart';
+import '../../models/brand_model.dart';
+import '../../models/category_model.dart';
+
+class ProductCardWidget extends StatelessWidget {
+  final ProductModel product;
+  final String Function(String) getCategoryName;
+  final String Function(String) getBrandName;
+  final void Function(String) onMenuSelected;
+
+  const ProductCardWidget({
+    Key? key,
+    required this.product,
+    required this.getCategoryName,
+    required this.getBrandName,
+    required this.onMenuSelected,
+  }) : super(key: key);
+
+  // Helper function to format price with commas
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(2).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match match) => '${match[1]},',
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        elevation: 0,
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.green.shade200,
+              width: 1,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row with Image, Title, and Menu
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product Image - Elevated
+                    Material(
+                      elevation: 4,
+                      shadowColor: Colors.black.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: product.image.isNotEmpty
+                              ? Image.network(
+                                  product.image,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.image_not_supported,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    );
+                                  },
+                                )
+                              : const Icon(
+                                  Icons.image_not_supported,
+                                  size: 40,
+                                  color: Colors.grey,
+                                ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    // Product Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Product Name with Status Icon
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  product.name,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: product.is_archived
+                                        ? Colors.grey
+                                        : Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Animated Status Circle Icon
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: product.is_archived
+                                      ? Colors.grey.shade400
+                                      : Colors.green.shade500,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: product.is_archived
+                                          ? Colors.grey.withOpacity(0.3)
+                                          : Colors.green.withOpacity(0.4),
+                                      blurRadius: 3,
+                                      offset: const Offset(0, 1),
+                                      spreadRadius: 0.5,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // Status Text
+                              Text(
+                                product.is_archived ? 'archived' : 'active',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: product.is_archived
+                                      ? Colors.grey.shade600
+                                      : Colors.green.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Category and Brand - Now vertical layout
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Category
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.category,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      getCategoryName(product.category_id),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              // Brand
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.storefront,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      getBrandName(product.brand_id),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 3-Dots Menu - Elevated
+                    Material(
+                      elevation: 2,
+                      shadowColor: Colors.black.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[50],
+                      child: PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Colors.grey[700],
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 8,
+                        onSelected: onMenuSelected,
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 20),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value:
+                                product.is_archived ? 'unarchive' : 'archive',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  product.is_archived
+                                      ? Icons.unarchive
+                                      : Icons.archive,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(product.is_archived
+                                    ? 'Unarchive'
+                                    : 'Archive'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, size: 20, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Divider
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.green.shade200,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Bottom Row with Stock and Price
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Stock Info - With Animated Icon Effects
+                    Row(
+                      children: [
+                        // Animated Stock Icon with Effects
+                        AnimatedStockIcon(
+                          stockQuantity: product.stock_quantity ?? 0,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Stock: ${product.stock_quantity ?? 0}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: (product.stock_quantity ?? 0) > 10
+                                ? Colors.green[600]
+                                : (product.stock_quantity ?? 0) > 0
+                                    ? Colors.orange[600]
+                                    : Colors.red[600],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Price with Animated Peso Icon
+                    Row(
+                      children: [
+                        // Animated Peso Symbol
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 2000),
+                          curve: Curves.easeInOut,
+                          child: Text(
+                            '₱',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade600,
+                              shadows: [
+                                Shadow(
+                                  offset: const Offset(1, 1),
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatPrice(product.sale_price),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Separate widget for animated stock icon
+class AnimatedStockIcon extends StatefulWidget {
+  final int stockQuantity;
+
+  const AnimatedStockIcon({
+    Key? key,
+    required this.stockQuantity,
+  }) : super(key: key);
+
+  @override
+  State<AnimatedStockIcon> createState() => _AnimatedStockIconState();
+}
+
+class _AnimatedStockIconState extends State<AnimatedStockIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(
+        seconds: widget.stockQuantity == 0 ? 1 : 2,
+      ),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _pulseAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _animationController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Color iconColor = widget.stockQuantity > 10
+        ? Colors.green[600]!
+        : widget.stockQuantity > 0
+            ? Colors.orange[600]!
+            : Colors.red[600]!;
+
+    Color backgroundColor = widget.stockQuantity > 10
+        ? Colors.green.withOpacity(0.15)
+        : widget.stockQuantity > 0
+            ? Colors.orange.withOpacity(0.15)
+            : Colors.red.withOpacity(0.15);
+
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: backgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Icon(
+                  Icons.inventory_2,
+                  size: 18,
+                  color: iconColor,
+                ),
+                // Pulsing ring effect for low/out of stock
+                if (widget.stockQuantity <= 10)
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: RingPainter(
+                        animation: _pulseAnimation,
+                        color: iconColor.withOpacity(
+                          widget.stockQuantity == 0 ? 0.8 : 0.6,
+                        ),
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Custom painter for pulsing ring effect
+class RingPainter extends CustomPainter {
+  final Animation<double> animation;
+  final Color color;
+  final double strokeWidth;
+
+  RingPainter({
+    required this.animation,
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) * animation.value;
+    
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+    
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(RingPainter oldDelegate) {
+    return animation != oldDelegate.animation || color != oldDelegate.color || strokeWidth != oldDelegate.strokeWidth;
+  }
+}
