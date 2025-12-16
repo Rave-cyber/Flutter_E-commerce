@@ -984,6 +984,7 @@ class _SuperAdminUsersFormState extends State<SuperAdminUsersForm> {
     bool isLoading = false,
   }) {
     return DropdownButtonFormField<T>(
+      isExpanded: true,
       value: value,
       items: items,
       onChanged: isLoading ? null : onChanged,
